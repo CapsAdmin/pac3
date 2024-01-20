@@ -42,6 +42,9 @@ function PART:Initialize()
 end
 
 function PART:OnShow(from_rendering)
+	local pos = self:GetWorldPosition()
+	if pos:DistToSqr(pac.EyePos) > pac.sounds_draw_dist_sqr then return end
+
 	if not from_rendering then
 		self.played_overlapping = false
 		self:PlaySound()
@@ -80,10 +83,31 @@ function PART:OnHide()
 	end
 end
 
+--this is not really stopping the sound, rather putting the volume very low so the sounds don't replay when going back in range
+function PART:Silence(b)
+	if not self.csptch then return end
+	if not self.csptch:IsPlaying() then return end
+
+	if b then
+		self.csptch:ChangeVolume(0.01, 0)
+	else
+		self.csptch:ChangeVolume(math.Clamp(self.Volume * pac.volume, 0.001, 1), 0)
+	end
+end
+
 function PART:OnThink()
+	local pos = self:GetWorldPosition()
+	if pos:DistToSqr(pac.EyePos) > pac.sounds_draw_dist_sqr then
+		self.out_of_range = true
+		self:Silence(true)
+	else
+		if self.out_of_range then self:Silence(false) end
+		self.out_of_range = false
+	end
 	if not self.csptch then
 		self:PlaySound()
-	else
+	end
+	if self.csptch then
 		if self.Loop then
 			pac.playing_sound = true
 			if not self.csptch:IsPlaying() then self.csptch:Play() end
@@ -148,7 +172,7 @@ function PART:SetVolume(num)
 	end
 
 	if self.csptch then
-		self.csptch:ChangeVolume(math.Clamp(self.Volume, 0.001, 1), 0)
+		self.csptch:ChangeVolume(math.Clamp(self.Volume * pac.volume, 0.001, 1), 0)
 	end
 end
 
@@ -244,6 +268,8 @@ function PART:PlaySound(osnd, ovol)
 			vol = self.Volume
 		end
 
+		vol = vol * pac.volume
+
 		local pitch
 
 		if self.MinPitch == self.MaxPitch then
@@ -277,9 +303,29 @@ function PART:PlaySound(osnd, ovol)
 	end
 end
 
-function PART:StopSound()
+function PART:StopSound(force_stop)
 	if self.csptch then
 		self.csptch:Stop()
+	end
+	if force_stop and self.Overlapping then
+		local ent = self.RootOwner and self:GetRootPart():GetOwner() or self:GetOwner()
+		if IsValid(ent) then
+			local sounds = self.Sound:Split(";")
+			if string.match(sounds[1],"%[(%d-),(%d-)%]") then
+				local min, max = string.match(sounds[1],"%[(%d-),(%d-)%]")
+				if max < min then
+					max = min
+				end
+				for i=min, max, 1 do
+					snd = self.Sound:gsub("(%[%d-,%d-%])", i)
+					ent:StopSound(snd)
+				end
+			else
+				for i,snd in ipairs(sounds) do
+					ent:StopSound(snd)
+				end
+			end
+		end
 	end
 end
 

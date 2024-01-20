@@ -783,6 +783,8 @@ do
 	end
 
 	function META:SetVolume(volumeFraction)
+		pac.volume = pac.volume or 1
+		volumeFraction = volumeFraction * pac.volume
 		if self.Volume == volumeFraction then return self end
 
 		self.Volume = volumeFraction

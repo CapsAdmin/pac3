@@ -659,6 +659,28 @@ function pac.UpdateButtonEvents(ply, key, down)
 	end
 end
 
+function pac.StopSound()
+	for _,part in pairs(all_parts) do
+		if part.ClassName == "sound" or part.ClassName == "sound2" or part.ClassName == "ogg" or part.ClassName == "webaudio" then
+			part:StopSound(true)
+		end
+	end
+end
+
+function pac.ForceUpdateSoundVolumes()
+	for _,part in pairs(all_parts) do
+		if part.ClassName == "sound" then
+			if part.csptch then part.csptch:ChangeVolume(math.Clamp(part.Volume * pac.volume, 0.001, 1), 0) end
+		elseif part.ClassName == "sound2" or part.ClassName == "ogg" then
+			if part.last_stream and part.last_stream.SetVolume then part.last_stream:SetVolume(part.Volume * pac.volume) end
+		elseif part.ClassName == "webaudio" then
+			for key, stream in pairs(part.streams) do
+				if stream and stream.SetVolume then stream:SetVolume(part.Volume * pac.volume) end
+			end
+		end
+	end
+end
+
 cvars.AddChangeCallback("pac_hide_disturbing", function()
 	for _, part in pairs(all_parts) do
 		if part:IsValid() then

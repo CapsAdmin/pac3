@@ -121,6 +121,38 @@ local calcview_consents = {}
 local active_force_ids = {}
 local active_grabbed_ents = {}
 
+
+local friendly_NPC_preferences = {}
+--we compare player's preference with the disposition's overall "friendliness". if relationship is more friendly than the preference, do not affect
+local disposition_friendliness_level = {
+	[D_ER] = 0,	--Error
+	[D_HT] = 0,	--Hate
+	[D_FR] = 1,	--Frightened / Fear
+	[D_LI] = 2,	--Like
+	[D_NU] = 1,	--Neutral
+}
+
+
+local function NPCDispositionAllowsIt(ply, ent)
+
+	if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return true end
+
+	if not friendly_NPC_preferences[ply] then return true end
+
+	local player_friendliness = friendly_NPC_preferences[ply]
+	local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
+
+	if player_friendliness == 0 then --me agressive
+		return true --hurt anyone
+	elseif player_friendliness == 1 then --me not fully agressive
+		return relationship_friendliness <= 1 --hurt who is neutral or hostile
+	elseif player_friendliness == 2 then --me mostly friendly
+		return relationship_friendliness == 0 --hurt who is hostile
+	end
+
+	return true
+end
+
 local damage_types = {
 	generic = 0, --generic damage
 	crush = 1, --caused by physics interaction
@@ -696,6 +728,8 @@ if SERVER then
 		for i,v in pairs(ents_hits) do
 			if not (v:IsPlayer() or v:IsNPC() or string.find(v:GetClass(), "npc_")) and not tbl.PointEntities then ents_hits[i] = nil end
 			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
+
+			if not NPCDispositionAllowsIt(ply, v) then ents_hits[i] = nil end
 
 			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil
 			else
@@ -1342,11 +1376,13 @@ if SERVER then
 
 	--consent message from clients
 	net.Receive("pac_signal_player_combat_consent", function(len,ply)
+		local friendly_NPC_preference = net.ReadUInt(2) -- GetConVar("pac_client_npc_exclusion_consent"):GetInt()
 		local grab = net.ReadBool() -- GetConVar("pac_client_grab_consent"):GetBool()
 		local damagezone = net.ReadBool() -- GetConVar("pac_client_damage_zone_consent"):GetBool()
 		local calcview = net.ReadBool() -- GetConVar("pac_client_lock_camera_consent"):GetBool()
 		local force = net.ReadBool() -- GetConVar("pac_client_force_consent"):GetBool()
 		local hitscan = net.ReadBool() -- GetConVar("pac_client_hitscan_consent"):GetBool()
+		friendly_NPC_preferences[ply] = friendly_NPC_preference
 		grab_consents[ply] = grab
 		damage_zone_consents[ply] = damagezone
 		calcview_consents[ply] = calcview
@@ -2137,6 +2173,7 @@ if SERVER then
 			bulletinfo.Callback = function(atk, trc, dmg)
 				dmg:SetDamageType(bulletinfo.dmgtype)
 				if trc.Hit and IsValid(trc.Entity) then
+					if not NPCDispositionAllowsIt(ply, trc.Entity) then return {effects = false, damage = false} end
 					local distance = (trc.HitPos):Distance(trc.StartPos)
 					local fraction = math.Clamp(1 - (1-bulletinfo.DamageFalloffFraction)*(distance / bulletinfo.DamageFalloffDistance),bulletinfo.DamageFalloffFraction,1)
 					local ent = trc.Entity
@@ -2299,12 +2336,7 @@ if SERVER then
 	if not FINAL_BLOCKED_COMBAT_FEATURES["hitscan"] then DeclareHitscanReceivers() end
 	if not FINAL_BLOCKED_COMBAT_FEATURES["health_modifier"] then DeclareHealthModifierReceivers() end
 
-	concommand.Add("pac_sv_combat_reinitialize_missing_receivers", function(ply)
-		if IsValid(ply) then
-			if not ply:IsAdmin() or not pac.RatelimitPlayer( ply, "pac_sv_combat_reinitialize_missing_receivers", 3, 5, {"Player ", ply, " is spamming pac_sv_combat_reinitialize_missing_receivers!"} ) then
-				return
-			end
-		end
+	local function ReinitializeCombatReceivers()
 		for name,blocked in pairs(FINAL_BLOCKED_COMBAT_FEATURES) do
 			local update = blocked and (blocked == GetConVar("pac_sv_"..name):GetBool())
 			local new_bool = not (blocked or not GetConVar("pac_sv_"..name):GetBool())
@@ -2322,6 +2354,26 @@ if SERVER then
 		net.Start("pac_inform_blocked_parts")
 		net.WriteTable(FINAL_BLOCKED_COMBAT_FEATURES)
 		net.Broadcast()
+	end
+
+	concommand.Add("pac_sv_combat_reinitialize_missing_receivers", function(ply)
+		if IsValid(ply) then
+			if not ply:IsAdmin() or not pac.RatelimitPlayer( ply, "pac_sv_combat_reinitialize_missing_receivers", 3, 5, {"Player ", ply, " is spamming pac_sv_combat_reinitialize_missing_receivers!"} ) then
+				return
+			end
+			ReinitializeCombatReceivers()
+		end
+		
+	end)
+
+	util.AddNetworkString("pac_request_blocked_parts_reinitialization")
+	net.Receive("pac_request_blocked_parts_reinitialization", function(len, ply)
+		if IsValid(ply) then
+			if not ply:IsAdmin() or not pac.RatelimitPlayer( ply, "pac_sv_combat_reinitialize_missing_receivers", 3, 5, {"Player ", ply, " is spamming pac_sv_combat_reinitialize_missing_receivers!"} ) then
+				return
+			end
+			ReinitializeCombatReceivers()
+		end
 	end)
 
 	net.Receive("pac_request_blocked_parts", function(len, ply)
@@ -2329,9 +2381,24 @@ if SERVER then
 		net.WriteTable(FINAL_BLOCKED_COMBAT_FEATURES)
 		net.Send(ply)
 	end)
+	
 end
 
 if CLIENT then
+	killicon.Add( "pac_bullet_emitter", "icon16/user_gray.png", Color(255,255,255) )
+	
+	concommand.Add("pac_sv_reinitialize_missing_combat_parts_remotely", function(ply)
+		if IsValid(ply) then
+			if not ply:IsAdmin() then
+				return
+			end
+			net.Start("pac_request_blocked_parts_reinitialization")
+			net.SendToServer()
+		end
+	end)
+
+
+	CreateConVar("pac_client_npc_exclusion_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to protect some npcs based on their disposition or faction. So far it only works with Dispositions.0 = ignore factions and relationships and target any NPC\n1 = protect friendlies\n2 = protect friendlies and neutrals")
 	CreateConVar("pac_client_grab_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to being grabbed by other players in PAC3 with the lock part")
 	CreateConVar("pac_client_lock_camera_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to having lock parts override your view")
 	CreateConVar("pac_client_damage_zone_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to receiving damage by other players in PAC3 with the damage zone part")
@@ -2374,6 +2441,7 @@ if CLIENT then
 
 	local function SendConsents()
 		net.Start("pac_signal_player_combat_consent")
+		net.WriteUInt(GetConVar("pac_client_npc_exclusion_consent"):GetInt(),2)
 		net.WriteBool(GetConVar("pac_client_grab_consent"):GetBool())
 		net.WriteBool(GetConVar("pac_client_damage_zone_consent"):GetBool())
 		net.WriteBool(GetConVar("pac_client_lock_camera_consent"):GetBool())
@@ -2414,7 +2482,7 @@ if CLIENT then
 		pac.Blocked_Combat_Parts = net.ReadTable()
 	end)
 
-	local consent_cvars = {"pac_client_grab_consent", "pac_client_lock_camera_consent", "pac_client_damage_zone_consent", "pac_client_force_consent", "pac_client_hitscan_consent"}
+	local consent_cvars = {"pac_client_npc_exclusion_consent", "pac_client_grab_consent", "pac_client_lock_camera_consent", "pac_client_damage_zone_consent", "pac_client_force_consent", "pac_client_hitscan_consent"}
 	for _,cmd in ipairs(consent_cvars) do
 		cvars.AddChangeCallback(cmd, SendConsents)
 	end

@@ -8,6 +8,7 @@ PART.ClassName = "sound2"
 PART.Icon = 'icon16/music.png'
 PART.Group = 'effects'
 
+
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("Path", "", {editor_panel = "sound"})
@@ -129,13 +130,29 @@ BIND("VolumeLFOTime")
 
 BIND("Doppler")
 
+function PART:Silence(b)
+	if b then
+		if self.last_stream and self.last_stream.SetVolume then self.last_stream:SetVolume(0) end
+	else
+		if self.last_stream and self.last_stream.SetVolume then self.last_stream:SetVolume(self.Volume * pac.volume) end
+	end
+end
+
 function PART:OnThink()
 	local owner = self:GetRootPart():GetOwner()
+	local pos = self:GetWorldPosition()
+	if pos:DistToSqr(pac.EyePos) > pac.sounds_draw_dist_sqr then
+		self.out_of_range = true
+		self:Silence(true)
+	else
+		if self.out_of_range then self:Silence(false) end
+		self.out_of_range = false
+	end
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
-		if self.PlayCount == 0 then
+		if self.PlayCount == 0 and not self.stopsound then
 			stream:Resume()
 		end
 
@@ -270,6 +287,8 @@ end
 function PART:PlaySound(_, additiveVolumeFraction)
 	--PrintTable(self.streams)
 	additiveVolumeFraction = additiveVolumeFraction or 0
+	local pos = self:GetWorldPosition()
+	if pos:DistToSqr(pac.EyePos) > pac.sounds_draw_dist_sqr then return end
 
 	local stream = table.Random(self.streams) or NULL
 	if not stream:IsValid() then return end
@@ -320,7 +339,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	self.last_stream = stream
 end
 
-function PART:StopSound()
+function PART:StopSound(force_stop)
 	for key, stream in pairs(self.streams) do
 		if stream:IsValid() then
 			if self.PauseOnHide then
@@ -328,6 +347,7 @@ function PART:StopSound()
 			elseif self.StopOnHide then
 				stream:Stop()
 			end
+			if force_stop then stream:Stop() self.stopsound = true end
 		end
 	end
 end
@@ -336,6 +356,7 @@ function PART:OnShow(from_rendering)
 	if not from_rendering then
 		self:PlaySound()
 	end
+	self.stopsound = false
 end
 
 function PART:OnHide()

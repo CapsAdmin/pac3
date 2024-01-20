@@ -13,6 +13,8 @@ local Color = Color
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+local draw_distance = CreateClientConVar("pac_limit_text_2d_draw_distance", "1000", true, false, "How far to see other players' text parts using 2D modes. They will start fading out 200 units before this distance.")
+
 local default_fonts = {
 	"BudgetLabel",
 	"CenterPrintText",
@@ -434,17 +436,11 @@ function PART:OnDraw()
 				end
 
 				surface.SetTextPos(pos2d.x, pos2d.y)
-				local dist = (EyePos() - self:GetWorldPosition()):Length()
-				local fadestartdist = 200
-				local fadeenddist = 1000
-				if fadestartdist == 0 then fadestartdist = 0.1 end
-				if fadeenddist == 0 then fadeenddist = 0.1 end
+				local dist = (pac.EyePos - self:GetWorldPosition()):Length()
 
-				if fadestartdist > fadeenddist then
-					local temp = fadestartdist
-					fadestartdist = fadeenddist
-					fadeenddist = temp
-				end
+				--clamp down the part's requested values with the viewer client's cvar
+				local fadestartdist = math.max(draw_distance:GetInt() - 200,0)
+				local fadeenddist = math.max(draw_distance:GetInt(),0)
 
 				if dist < fadeenddist then
 					if dist < fadestartdist then
@@ -453,10 +449,8 @@ function PART:OnDraw()
 						elseif self.DrawMode == "SurfaceText" then
 							surface.DrawText(DisplayText, self.ForceAdditive)
 						end
-
 					else
-						local fade = math.pow(math.Clamp(1 - (dist-fadestartdist)/fadeenddist,0,1),3)
-
+						local fade = math.pow(math.Clamp(1 - (dist-fadestartdist)/math.max(fadeenddist - fadestartdist,0.1),0,1),3)
 						if self.DrawMode == "DrawTextOutlined2D" then
 							draw.SimpleTextOutlined(DisplayText, self.UsedFont, pos2d.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha*fade), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha*fade))
 						elseif self.DrawMode == "SurfaceText" then

@@ -208,7 +208,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	self.last_stream = stream
 end
 
-function PART:StopSound()
+function PART:StopSound(force_stop)
 	for key, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
@@ -219,6 +219,7 @@ function PART:StopSound()
 				stream:Stop()
 			end
 		end
+		if force_stop then stream:Stop() end
 		::CONTINUE::
 	end
 end

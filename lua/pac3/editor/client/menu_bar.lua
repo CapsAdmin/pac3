@@ -165,11 +165,21 @@ local function populate_options(menu)
 	combat_consents.GetDeleteSelf = function() return false end
 	pnlcc:SetImage("icon16/joystick.png")
 
+	local npc_pref = combat_consents:AddOption(L"Level of protection for friendly NPCs", function()
+		Derma_Query("Prevent friendly fire against NPCs? (damage zone and hitscan)", "NPC relationship preferences (pac_client_npc_exclusion_consent = " .. GetConVar("pac_client_npc_exclusion_consent"):GetInt() .. ")",
+		"Don't protect (0)", function() GetConVar("pac_client_npc_exclusion_consent"):SetInt(0) end,
+		"Protect friendly NPCs (1)", function() GetConVar("pac_client_npc_exclusion_consent"):SetInt(1) end,
+		"Protect friendly and neutral NPCs (2)", function() GetConVar("pac_client_npc_exclusion_consent"):SetInt(2) end,
+		"cancel")
+	end)
+	npc_pref:SetImage("icon16/group.png")
+	npc_pref:SetTooltip("\"Friendliness\" is based on an NPC's Disposition toward you: Error&Hate, Fear&Neutral, Like")
+
 	combat_consents:AddCVar(L"damage_zone part (area damage)", "pac_client_damage_zone_consent", "1", "0")
 	combat_consents:AddCVar(L"hitscan part (bullets)", "pac_client_hitscan_consent", "1", "0")
 	combat_consents:AddCVar(L"force part (physics forces)", "pac_client_force_consent", "1", "0")
-	combat_consents:AddCVar(L"lock part's grab (can take control of your position)", "pac_client_grab_consent", "1", "0")
-	combat_consents:AddCVar(L"lock part's grab calcview (can take control of your view)", "pac_client_lock_camera_consent", "1", "0")
+	combat_consents:AddCVar(L"lock part's grab (can take control of your position and eye angles)", "pac_client_grab_consent", "1", "0")
+	combat_consents:AddCVar(L"lock part's grab calcview (can take control of your view position)", "pac_client_lock_camera_consent", "1", "0"):SetTooltip("You're still not immune to it changing your eye angles.\nCalcviews are a different thing than eye angles.")
 
 
 	menu:AddSpacer()
