@@ -112,7 +112,6 @@ local pre_excluded_ent_classes = {
 }
 
 
-
 local grab_consents = {}
 local damage_zone_consents = {}
 local force_consents = {}
@@ -125,11 +124,11 @@ local active_grabbed_ents = {}
 local friendly_NPC_preferences = {}
 --we compare player's preference with the disposition's overall "friendliness". if relationship is more friendly than the preference, do not affect
 local disposition_friendliness_level = {
-	[D_ER] = 0,	--Error
-	[D_HT] = 0,	--Hate
-	[D_FR] = 1,	--Frightened / Fear
-	[D_LI] = 2,	--Like
-	[D_NU] = 1,	--Neutral
+	[0] = 0,	--D_ER Error
+	[1] = 0,	--D_HT Hate
+	[2] = 1,	--D_FR Frightened / Fear
+	[3] = 2,	--D_LI Like
+	[4] = 1,	--D_NU Neutral
 }
 
 
