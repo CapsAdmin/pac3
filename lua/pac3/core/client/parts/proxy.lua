@@ -49,7 +49,15 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("ZeroEyePitch", false, {description = "For some functions/inputs (eye angles, owner velocity increases, aim length) it will force the angle to be horizon level."})
 		BUILDER:GetSet("ResetVelocitiesOnHide", true, {description = "Because velocity calculators use smoothing that makes the output converge toward a crude rolling average, it might matter whether you want to get a clean slate readout.\n(VelocityRoughness is how close to the snapshots it will be. Lower means smoother but delayed. Higher means less smoothing but it might overshoot and be inaccurate because of frame time works and varies)"})
 		BUILDER:GetSet("VelocityRoughness", 10)
+		BUILDER:GetSet("PreviewOutput", false, {description = "Previews the proxy's output (for yourself) next to the nearest owner entity in the game"})
 
+	BUILDER:SetPropertyGroup("extra expressions")
+		BUILDER:GetSet("ExpressionOnHide", "")
+		BUILDER:GetSet("Extra1", "")
+		BUILDER:GetSet("Extra2", "")
+		BUILDER:GetSet("Extra3", "")
+		BUILDER:GetSet("Extra4", "")
+		BUILDER:GetSet("Extra5", "")
 BUILDER:EndStorableVars()
 
 -- redirect
@@ -407,6 +415,25 @@ PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 		return -1
 	end
 	return 0
+end
+
+for i=1,5,1 do
+	PART.Inputs["var" .. i] = function(self, uid1)
+		if not uid1 then
+			return self["feedback_extra" .. i]
+		elseif self["extra_referred_part"..i] then --a thing to skip part searching when we found the part
+			return self["extra_referred_part"..i]["feedback_extra" .. i]
+		else
+			local owner = self:GetPlayerOwner()
+			local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
+			if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
+			if IsValid(PartA) and PartA.ClassName == "proxy" then
+				self["extra_referred_part"..i] = PartA
+			end
+		end
+		return 0
+	end
+	PART.Inputs["extra" .. i] = PART.Inputs["var" .. i] --alias
 end
 
 PART.Inputs.number_operator_alternative = function(self, comp1, op, comp2, num1, num2)
@@ -850,7 +877,7 @@ do -- health and armor
 	end
 end
 
-do -- weapon and player color
+do -- weapon, player and owner entity/part color
 	local Color = Color
 	local function get_color(self, get, field)
 		local color = field and get(self)[field] or get(self)
@@ -891,6 +918,41 @@ do -- weapon and player color
 		PART.Inputs.weapon_color_r = function(self) return get_color(self, get_weapon_color, "r") end
 		PART.Inputs.weapon_color_g = function(self) return get_color(self, get_weapon_color, "g") end
 		PART.Inputs.weapon_color_b = function(self) return get_color(self, get_weapon_color, "b") end
+	end
+
+	do
+		local function reformat_color(col, proper_in, proper_out)
+			local multiplier = 1
+			if not proper_in then multiplier = multiplier / 255 end
+			if not proper_out then multiplier = multiplier * 255 end
+			col.r = math.Clamp(col.r * multiplier,0,255)
+			col.g = math.Clamp(col.g * multiplier,0,255)
+			col.b = math.Clamp(col.b * multiplier,0,255)
+			col.a = math.Clamp(col.a * multiplier,0,255)
+			return col
+		end
+		local function get_entity_color(self, field)
+			local owner = get_owner(self)
+			local part = self:GetTarget()
+			if not self.RootOwner then --we can get the color from a pac part
+				owner = self:GetParent()
+				if not owner.GetColor then --or from the root owner entity...
+					owner = get_owner(self)
+				end
+			end
+			local color = owner:GetColor()
+			if isvector(color) then --pac parts color are vector. reformat to a color first
+				color = Color(color[1], color[2], color[3], owner.GetAlpha and owner:GetAlpha() or 255)
+			end
+			reformat_color(color, owner.ProperColorRange, part.ProperColorRange) --cram or un-cram the 255 range into 1 or vice versa
+			if field then return color[field] else return color["r"], color["g"], color["b"] end
+		end
+
+		PART.Inputs.ent_color = function(self) return get_entity_color(self) end
+		PART.Inputs.ent_color_r = function(self) return get_entity_color(self, "r") end
+		PART.Inputs.ent_color_g = function(self) return get_entity_color(self, "g") end
+		PART.Inputs.ent_color_b = function(self) return get_entity_color(self, "b") end
+		PART.Inputs.ent_color_a = function(self) return get_entity_color(self, "a") end
 	end
 end
 
@@ -1124,11 +1186,20 @@ local allowed = {
 	boolean = true,
 }
 
-function PART:SetExpression(str)
-	self.Expression = str
-	self.ExpressionFunc = nil
-	self.valid_parts_in_expression = {}
-	self.invalid_parts_in_expression = {}
+function PART:SetExpression(str, slot)
+	if not slot then --that's the default expression
+		self.Expression = str
+		self.ExpressionFunc = nil
+		self.valid_parts_in_expression = {}
+		self.invalid_parts_in_expression = {}
+	elseif slot == 0 then --that's the expression on hide
+		self.ExpressionOnHide = str
+		self.ExpressionOnHideFunc = nil
+	elseif slot <= 5 then --that's one of the custom variables
+		self["CustomVariable" .. slot] = str
+		self["Extra" .. slot .. "Func"] = nil
+		self.has_extras = true
+	end
 
 	if str and str ~= "" then
 		local lib = {}
@@ -1139,15 +1210,67 @@ function PART:SetExpression(str)
 
 		local ok, res = pac.CompileExpression(str, lib)
 		if ok then
-			self.ExpressionFunc = res
-			self.ExpressionError = nil
-			self:SetError()
+			if not slot then --that's the default expression
+				self.ExpressionFunc = res
+				self.ExpressionError = nil
+				self:SetError()
+			elseif slot == 0 then --that's the expression on hide
+				self.ExpressionOnHideFunc = res
+				self.ExpressionOnHideError = nil
+				self:SetError()
+			elseif slot <= 5 then --that's one of the extra custom variables
+				self["Extra" .. slot .. "Func"] = res
+				self["Extra" .. slot .. "Error"] = nil
+				self:SetError()
+			end
+
 		else
-			self.ExpressionFunc = true
-			self.ExpressionError = res
-			self:SetError(res)
+			if not slot then --that's the default expression
+				self.ExpressionFunc = true
+				self.ExpressionError = res
+				self:SetError(res)
+			elseif slot == 0 then --that's the expression on hide
+				self.ExpressionOnHideFunc = true
+				self.ExpressionOnHideError = res
+				self:SetError(res)
+			elseif slot <= 5 then --that's one of the extra custom variables
+				self["Extra" .. slot .. "Func"] = true
+				self["Extra" .. slot .. "Error"] = res
+				self:SetError(res)
+			end
+
 		end
 	end
+end
+
+function PART:SetExpressionOnHide(str)
+	self.ExpressionOnHide = str
+	self:SetExpression(str, 0)
+end
+
+function PART:SetExtra1(str)
+	self.Extra1 = str
+	self:SetExpression(str, 1)
+end
+
+function PART:SetExtra2(str)
+	self.Extra2 = str
+	self:SetExpression(str, 2)
+end
+
+function PART:SetExtra3(str)
+	self.Extra3 = str
+	self:SetExpression(str, 3)
+end
+
+function PART:SetExtra4(str)
+	self.Extra4 = str
+	self:SetExpression(str, 4)
+end
+
+function PART:SetExtra5(str)
+	self.Extra5 = str
+	self:SetExpression(str, 5)
 end
 
 function PART:OnHide()
@@ -1174,6 +1297,10 @@ function PART:OnHide()
 			part:SetEventTrigger(self, false)
 			part.proxy_hide = nil
 		end
+	end
+
+	if self.ExpressionOnHide ~= "" and self.ExpressionOnHideFunc then
+		self:OnThink(true)
 	end
 end
 
@@ -1256,7 +1383,55 @@ function PART:RunExpression(ExpressionFunc)
 	return pcall(ExpressionFunc)
 end
 
-function PART:OnThink()
+local function get_preview_draw_string(self)
+	local str = self.debug_var or ""
+	local name = self.Name
+	if self.Name == "" then
+		name = self:GetTarget().Name
+		if name == "" then
+			name = self:GetTarget():GetNiceName()
+		end
+	end
+	str = name .. "." .. self.VariableName .. " = " .. str
+	return str
+end
+
+local function remove_line_from_previews(self)
+	text_preview_ent_rows = {}
+	if text_preview_ent_rows[self:GetOwner()] then
+		text_preview_ent_rows[self:GetOwner()][self] = {}
+	end
+	pace.flush_proxy_previews = true
+	timer.Simple(0.1, function() pace.flush_proxy_previews = false end)
+end
+
+
+local text_preview_ent_rows = {}
+
+local function draw_proxy_text(self, str)
+	if pace.flush_proxy_previews then text_preview_ent_rows = {} return end
+	local ent = self:GetOwner()
+	local pos = ent:GetPos()
+	local tbl = pos:ToScreen()
+	text_preview_ent_rows[ent] = text_preview_ent_rows[ent] or {}
+	if not text_preview_ent_rows[ent][self] then
+		text_preview_ent_rows[ent][self] = table.Count(text_preview_ent_rows[ent])
+	end
+	tbl.x = tbl.x + 20
+	tbl.y = tbl.y + 10 * text_preview_ent_rows[ent][self]
+	draw.DrawText(get_preview_draw_string(self), "ChatFont", tbl.x, tbl.y)
+end
+
+function PART:OnWorn()
+	remove_line_from_previews(self) --just for a quick refresh
+end
+
+function PART:OnRemove()
+	remove_line_from_previews(self)
+	pac.RemoveHook("HUDPaint", "proxy" .. self.UniqueID)
+end
+
+function PART:OnThink(to_hide)
 	local part = self:GetTarget()
 	if not part:IsValid() then return end
 	if part.ClassName == 'woohoo' then --why a part hardcode exclusion??
@@ -1277,7 +1452,19 @@ function PART:OnThink()
 
 	self:CalcVelocity()
 
+	if self.has_extras then --pre-calculate the extra expressions if needed
+		for i=1,5,1 do
+			if self["Extra" .. i] ~= "" then
+				local ok, x,y,z = self:RunExpression(self["Extra" .. i .. "Func"])
+				if ok then
+					self["feedback_extra" .. i] = x
+				end
+			end
+		end
+	end
+
 	local ExpressionFunc = self.ExpressionFunc
+	if to_hide then ExpressionFunc = self.ExpressionOnHideFunc end
 
 	if not ExpressionFunc then
 		self:SetExpression(self.Expression)
@@ -1406,6 +1593,14 @@ function PART:OnThink()
 		end
 		self:SetError(error_msg)
 	end
+	if self:GetPlayerOwner() == pac.LocalPlayer then
+		if self.PreviewOutput then
+			pac.AddHook("HUDPaint", "proxy" .. self.UniqueID, function() draw_proxy_text(self, str) end)
+		else
+			pac.RemoveHook("HUDPaint", "proxy" .. self.UniqueID)
+		end
+	end
+	
 end
 
 BUILDER:Register()
