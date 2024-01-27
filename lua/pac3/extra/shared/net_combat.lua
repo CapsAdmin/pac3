@@ -58,145 +58,6 @@ cvars.AddChangeCallback("pac_sv_combat_distance_enforced", function() ENFORCE_DI
 local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force...).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
 local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
 
-local damageable_point_ent_classes = {
-	["predicted_viewmodel"] = false,
-	["prop_physics"] = true,
-	["weapon_striderbuster"] = true,
-	["item_item_crate"] = true,
-	["func_breakable_surf"] = true,
-	["func_breakable"] = true,
-	["physics_cannister"] = true
-}
-
-local physics_point_ent_classes = {
-	["prop_physics"] = true,
-	["prop_physics_multiplayer"] = true,
-	["prop_ragdoll"] = true,
-	["weapon_striderbuster"] = true,
-	["item_item_crate"] = true,
-	["func_breakable_surf"] = true,
-	["func_breakable"] = true,
-	["physics_cannister"] = true
-}
-
-local contraption_classes = {
-	["prop_physics"] = true,
-}
-
-local pre_excluded_ent_classes = {
-	["info_player_start"] = true,
-	["aoc_spawnpoint"] = true,
-	["info_player_teamspawn"] = true,
-	["env_tonemap_controller"] = true,
-	["env_fog_controller"] = true,
-	["env_skypaint"] = true,
-	["shadow_control"] = true,
-	["env_sun"] = true,
-	["predicted_viewmodel"] = true,
-	["physgun_beam"] = true,
-	["ambient_generic"] = true,
-	["trigger_once"] = true,
-	["trigger_multiple"] = true,
-	["trigger_hurt"] = true,
-	["info_ladder_dismount"] = true,
-	["info_particle_system"] = true,
-	["env_sprite"] = true,
-	["env_fire"] = true,
-	["env_soundscape"] = true,
-	["env_smokestack"] = true,
-	["light"] = true,
-	["move_rope"] = true,
-	["keyframe_rope"] = true,
-	["env_soundscape_proxy"] = true,
-	["gmod_hands"] = true,
-}
-
-
-local grab_consents = {}
-local damage_zone_consents = {}
-local force_consents = {}
-local hitscan_consents = {}
-local calcview_consents = {}
-local active_force_ids = {}
-local active_grabbed_ents = {}
-
-
-local friendly_NPC_preferences = {}
---we compare player's preference with the disposition's overall "friendliness". if relationship is more friendly than the preference, do not affect
-local disposition_friendliness_level = {
-	[0] = 0,	--D_ER Error
-	[1] = 0,	--D_HT Hate
-	[2] = 1,	--D_FR Frightened / Fear
-	[3] = 2,	--D_LI Like
-	[4] = 1,	--D_NU Neutral
-}
-
-
-local function NPCDispositionAllowsIt(ply, ent)
-
-	if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return true end
-
-	if not friendly_NPC_preferences[ply] then return true end
-
-	local player_friendliness = friendly_NPC_preferences[ply]
-	local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
-
-	if player_friendliness == 0 then --me agressive
-		return true --hurt anyone
-	elseif player_friendliness == 1 then --me not fully agressive
-		return relationship_friendliness <= 1 --hurt who is neutral or hostile
-	elseif player_friendliness == 2 then --me mostly friendly
-		return relationship_friendliness == 0 --hurt who is hostile
-	end
-
-	return true
-end
-
-local damage_types = {
-	generic = 0, --generic damage
-	crush = 1, --caused by physics interaction
-	bullet = 2, --bullet damage
-	slash = 4, --sharp objects, such as manhacks or other npcs attacks
-	burn = 8, --damage from fire
-	vehicle = 16, --hit by a vehicle
-	fall = 32, --fall damage
-	blast = 64, --explosion damage
-	club = 128, --crowbar damage
-	shock = 256, --electrical damage, shows smoke at the damage position
-	sonic = 512, --sonic damage,used by the gargantua and houndeye npcs
-	energybeam = 1024, --laser
-	nevergib = 4096, --don't create gibs
-	alwaysgib = 8192, --always create gibs
-	drown = 16384, --drown damage
-	paralyze = 32768, --same as dmg_poison
-	nervegas = 65536, --neurotoxin damage
-	poison = 131072, --poison damage
-	acid = 1048576, --
-	airboat = 33554432, --airboat gun damage
-	blast_surface = 134217728, --this won't hurt the player underwater
-	buckshot = 536870912, --the pellets fired from a shotgun
-	direct = 268435456, --
-	dissolve = 67108864, --forces the entity to dissolve on death
-	drownrecover = 524288, --damage applied to the player to restore health after drowning
-	physgun = 8388608, --damage done by the gravity gun
-	plasma = 16777216, --
-	prevent_physics_force = 2048, --
-	radiation = 262144, --radiation
-	removenoragdoll = 4194304, --don't create a ragdoll on death
-	slowburn = 2097152, --
-
-	fire = -1, -- ent:Ignite(5)
-
-	-- env_entity_dissolver
-	dissolve_energy = 0,
-	dissolve_heavy_electrical = 1,
-	dissolve_light_electrical = 2,
-	dissolve_core_effect = 3,
-
-	heal = -1,
-	armor = -1,
-}
-
 do	--define a basic class for the bullet emitters
 	local ENT = {}
 	ENT.Type = "anim"
@@ -206,7 +67,145 @@ do	--define a basic class for the bullet emitters
 end
 
 if SERVER then
-
+	local damageable_point_ent_classes = {
+		["predicted_viewmodel"] = false,
+		["prop_physics"] = true,
+		["weapon_striderbuster"] = true,
+		["item_item_crate"] = true,
+		["func_breakable_surf"] = true,
+		["func_breakable"] = true,
+		["physics_cannister"] = true
+	}
+	
+	local physics_point_ent_classes = {
+		["prop_physics"] = true,
+		["prop_physics_multiplayer"] = true,
+		["prop_ragdoll"] = true,
+		["weapon_striderbuster"] = true,
+		["item_item_crate"] = true,
+		["func_breakable_surf"] = true,
+		["func_breakable"] = true,
+		["physics_cannister"] = true
+	}
+	
+	local contraption_classes = {
+		["prop_physics"] = true,
+	}
+	
+	local pre_excluded_ent_classes = {
+		["info_player_start"] = true,
+		["aoc_spawnpoint"] = true,
+		["info_player_teamspawn"] = true,
+		["env_tonemap_controller"] = true,
+		["env_fog_controller"] = true,
+		["env_skypaint"] = true,
+		["shadow_control"] = true,
+		["env_sun"] = true,
+		["predicted_viewmodel"] = true,
+		["physgun_beam"] = true,
+		["ambient_generic"] = true,
+		["trigger_once"] = true,
+		["trigger_multiple"] = true,
+		["trigger_hurt"] = true,
+		["info_ladder_dismount"] = true,
+		["info_particle_system"] = true,
+		["env_sprite"] = true,
+		["env_fire"] = true,
+		["env_soundscape"] = true,
+		["env_smokestack"] = true,
+		["light"] = true,
+		["move_rope"] = true,
+		["keyframe_rope"] = true,
+		["env_soundscape_proxy"] = true,
+		["gmod_hands"] = true,
+	}
+	
+	
+	local grab_consents = {}
+	local damage_zone_consents = {}
+	local force_consents = {}
+	local hitscan_consents = {}
+	local calcview_consents = {}
+	local active_force_ids = {}
+	local active_grabbed_ents = {}
+	
+	
+	local friendly_NPC_preferences = {}
+	--we compare player's preference with the disposition's overall "friendliness". if relationship is more friendly than the preference, do not affect
+	local disposition_friendliness_level = {
+		[0] = 0,	--D_ER Error
+		[1] = 0,	--D_HT Hate
+		[2] = 1,	--D_FR Frightened / Fear
+		[3] = 2,	--D_LI Like
+		[4] = 1,	--D_NU Neutral
+	}
+	
+	
+	local function NPCDispositionAllowsIt(ply, ent)
+	
+		if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return true end
+	
+		if not friendly_NPC_preferences[ply] then return true end
+	
+		local player_friendliness = friendly_NPC_preferences[ply]
+		local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
+	
+		if player_friendliness == 0 then --me agressive
+			return true --hurt anyone
+		elseif player_friendliness == 1 then --me not fully agressive
+			return relationship_friendliness <= 1 --hurt who is neutral or hostile
+		elseif player_friendliness == 2 then --me mostly friendly
+			return relationship_friendliness == 0 --hurt who is hostile
+		end
+	
+		return true
+	end
+	
+	local damage_types = {
+		generic = 0, --generic damage
+		crush = 1, --caused by physics interaction
+		bullet = 2, --bullet damage
+		slash = 4, --sharp objects, such as manhacks or other npcs attacks
+		burn = 8, --damage from fire
+		vehicle = 16, --hit by a vehicle
+		fall = 32, --fall damage
+		blast = 64, --explosion damage
+		club = 128, --crowbar damage
+		shock = 256, --electrical damage, shows smoke at the damage position
+		sonic = 512, --sonic damage,used by the gargantua and houndeye npcs
+		energybeam = 1024, --laser
+		nevergib = 4096, --don't create gibs
+		alwaysgib = 8192, --always create gibs
+		drown = 16384, --drown damage
+		paralyze = 32768, --same as dmg_poison
+		nervegas = 65536, --neurotoxin damage
+		poison = 131072, --poison damage
+		acid = 1048576, --
+		airboat = 33554432, --airboat gun damage
+		blast_surface = 134217728, --this won't hurt the player underwater
+		buckshot = 536870912, --the pellets fired from a shotgun
+		direct = 268435456, --
+		dissolve = 67108864, --forces the entity to dissolve on death
+		drownrecover = 524288, --damage applied to the player to restore health after drowning
+		physgun = 8388608, --damage done by the gravity gun
+		plasma = 16777216, --
+		prevent_physics_force = 2048, --
+		radiation = 262144, --radiation
+		removenoragdoll = 4194304, --don't create a ragdoll on death
+		slowburn = 2097152, --
+	
+		fire = -1, -- ent:Ignite(5)
+	
+		-- env_entity_dissolver
+		dissolve_energy = 0,
+		dissolve_heavy_electrical = 1,
+		dissolve_light_electrical = 2,
+		dissolve_core_effect = 3,
+	
+		heal = -1,
+		armor = -1,
+	}
+	
 	local function CountNetMessage(ply)
 		local stime = SysTime()
 		local ms_basis = enforce_netrate:GetInt()/1000
