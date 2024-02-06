@@ -2139,7 +2139,9 @@ if SERVER then
 
 			bulletinfo.dmgtype_str = table.KeyFromValue(damage_ids, net.ReadUInt(7))
 			bulletinfo.dmgtype = damage_types[bulletinfo.dmgtype_str]
-			bulletinfo.Spread = net.ReadVector()
+			local spreadx = net.ReadUInt(20) / 10000
+			local spready = net.ReadUInt(20) / 10000
+			bulletinfo.Spread = Vector(spreadx, spready, 0)
 			bulletinfo.Damage = net.ReadUInt(28)
 			bulletinfo.Tracer = net.ReadUInt(8)
 			bulletinfo.Force = net.ReadUInt(16)
