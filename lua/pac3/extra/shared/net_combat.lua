@@ -142,14 +142,14 @@ if SERVER then
 	
 	
 	local function NPCDispositionAllowsIt(ply, ent)
-	
+
 		if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return true end
-	
+
 		if not friendly_NPC_preferences[ply] then return true end
-	
+
 		local player_friendliness = friendly_NPC_preferences[ply]
 		local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
-	
+
 		if player_friendliness == 0 then --me agressive
 			return true --hurt anyone
 		elseif player_friendliness == 1 then --me not fully agressive
@@ -157,8 +157,21 @@ if SERVER then
 		elseif player_friendliness == 2 then --me mostly friendly
 			return relationship_friendliness == 0 --hurt who is hostile
 		end
-	
+
 		return true
+	end
+
+	local function NPCDispositionIsFilteredOut(ply, ent, friendly, neutral, hostile)
+		if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return false end
+		local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
+
+		if relationship_friendliness == 0 then --it hostile
+			return not hostile
+		elseif relationship_friendliness == 1 then --it neutral
+			return not neutral
+		elseif relationship_friendliness == 2 then --it friendly
+			return not friendly
+		end
 	end
 	
 	local damage_types = {
@@ -728,6 +741,7 @@ if SERVER then
 			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
 
 			if not NPCDispositionAllowsIt(ply, v) then ents_hits[i] = nil end
+			if NPCDispositionIsFilteredOut(ply,v, tbl.FilterFriendlies, tbl.FilterNeutrals, tbl.FilterHostiles) then ents_hits[i] = nil end
 
 			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil
 			else
@@ -923,10 +937,33 @@ if SERVER then
 			end
 
 			if tbl.DamageType == "heal" then
-
-				ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
+				if tbl.ReverseDoNotKill then --don't heal if health is below critical
+					if ent:Health() > tbl.CriticalHealth then --default behavior
+						ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
+					end --else do nothing
+				else
+					if tbl.DoNotKill then --stop healing at the critical health
+						if ent:Health() < tbl.CriticalHealth then
+							ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.min(tbl.CriticalHealth, ent:GetMaxHealth())))
+						end --else do nothing, we're already above critical
+					else
+						ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
+					end
+				end
 			elseif tbl.DamageType == "armor" then
-				ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
+				if tbl.ReverseDoNotKill then --don't heal if armor is below critical
+					if ent:Armor() > tbl.CriticalHealth then --default behavior
+						ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
+					end --else do nothing
+				else
+					if tbl.DoNotKill then --stop healing at the critical health
+						if ent:Armor() < tbl.CriticalHealth then
+							ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.min(tbl.CriticalHealth, ent:GetMaxArmor())))
+						end --else do nothing, we're already above critical
+					else
+						ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
+					end
+				end
 			else
 				--only "living" entities can be killed, and we checked generic entities with a ghost 0 health previously
 
@@ -963,32 +1000,44 @@ if SERVER then
 					end
 				end
 
-				--leave at a critical health
-				if tbl.DoNotKill then
-					local dmg_info2 = DamageInfo()
-
-					dmg_info2:SetDamagePosition(ent:NearestPoint(pos))
-					dmg_info2:SetReportedPosition(pos)
-					dmg_info2:SetDamage( math.min(ent:Health() - tbl.CriticalHealth, tbl.Damage))
-					dmg_info2:IsBulletDamage(tbl.Bullet)
-					dmg_info2:SetDamageForce(Vector(0,0,0))
-
-					dmg_info2:SetAttacker(attacker)
-
-					dmg_info2:SetInflictor(inflictor)
-
-					ent:TakeDamageInfo(dmg_info2)
-					max_dmg = math.max(max_dmg, dmg_info2:GetDamage())
-
-				--finally we reached the normal damage event!
-				else
-					if string.find(tbl.DamageType, "dissolve") and IsDissolvable(ent) then
-						dissolve(ent, dmg_info:GetInflictor(), damage_types[tbl.DamageType])
+				if tbl.ReverseDoNotKill then
+					--don't damage if health is above critical
+					if ent:Health() < tbl.CriticalHealth then
+						if string.find(tbl.DamageType, "dissolve") and IsDissolvable(ent) then
+							dissolve(ent, dmg_info:GetInflictor(), damage_types[tbl.DamageType])
+						end
+						dmg_info:SetDamagePosition(ent:NearestPoint(pos))
+						dmg_info:SetReportedPosition(pos)
+						ent:TakeDamageInfo(dmg_info)
+						max_dmg = math.max(max_dmg, dmg_info:GetDamage())
 					end
-					dmg_info:SetDamagePosition(ent:NearestPoint(pos))
-					dmg_info:SetReportedPosition(pos)
-					ent:TakeDamageInfo(dmg_info)
-					max_dmg = math.max(max_dmg, dmg_info:GetDamage())
+				else
+					--leave at a critical health
+					if tbl.DoNotKill then
+						local dmg_info2 = DamageInfo()
+
+						dmg_info2:SetDamagePosition(ent:NearestPoint(pos))
+						dmg_info2:SetReportedPosition(pos)
+						dmg_info2:SetDamage( math.min(ent:Health() - tbl.CriticalHealth, tbl.Damage))
+						dmg_info2:IsBulletDamage(tbl.Bullet)
+						dmg_info2:SetDamageForce(Vector(0,0,0))
+
+						dmg_info2:SetAttacker(attacker)
+
+						dmg_info2:SetInflictor(inflictor)
+
+						ent:TakeDamageInfo(dmg_info2)
+						max_dmg = math.max(max_dmg, dmg_info2:GetDamage())
+					--finally we reached the normal damage event!
+					else
+						if string.find(tbl.DamageType, "dissolve") and IsDissolvable(ent) then
+							dissolve(ent, dmg_info:GetInflictor(), damage_types[tbl.DamageType])
+						end
+						dmg_info:SetDamagePosition(ent:NearestPoint(pos))
+						dmg_info:SetReportedPosition(pos)
+						ent:TakeDamageInfo(dmg_info)
+						max_dmg = math.max(max_dmg, dmg_info:GetDamage())
+					end
 				end
 			end
 
@@ -1637,6 +1686,9 @@ if SERVER then
 			tbl.NPC = net.ReadBool()
 			tbl.Players = net.ReadBool()
 			tbl.PointEntities = net.ReadBool()
+			tbl.FilterFriendlies = net.ReadBool()
+			tbl.FilterNeutrals = net.ReadBool()
+			tbl.FilterHostiles = net.ReadBool()
 
 			tbl.HitboxMode = table.KeyFromValue(hitbox_ids, net.ReadUInt(5))
 			tbl.DamageType = table.KeyFromValue(damage_ids, net.ReadUInt(7))
@@ -1649,6 +1701,7 @@ if SERVER then
 			tbl.DamageFalloffPower = net.ReadInt(12) / 8
 			tbl.Bullet = net.ReadBool()
 			tbl.DoNotKill = net.ReadBool()
+			tbl.ReverseDoNotKill = net.ReadBool()
 			tbl.CriticalHealth = net.ReadUInt(16)
 			tbl.RemoveNPCWeaponsOnKill = net.ReadBool()
 

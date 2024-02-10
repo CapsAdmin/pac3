@@ -28,6 +28,9 @@ BUILDER:StartStorableVars()
 		:GetSet("Players",true)
 		:GetSet("NPC",true)
 		:GetSet("PointEntities",true, {description = "Other source engine entities such as item_item_crate and prop_physics"})
+		:GetSet("Friendlies", true, {description = "friendly NPCs can be targeted"})
+		:GetSet("Neutrals", true, {description = "neutral NPCs can be targeted"})
+		:GetSet("Hostiles", true, {description = "hostile NPCs can be targeted"})
 	:SetPropertyGroup("Shape and Sampling")
 		:GetSet("Radius", 20, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
 		:GetSet("Length", 50, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
@@ -113,7 +116,8 @@ BUILDER:StartStorableVars()
 			heal = -1,
 			armor = -1,
 		}})
-		:GetSet("DoNotKill",false, {description = "Will only damage to as low as critical health"})
+		:GetSet("DoNotKill",false, {description = "Only damage to as low as critical health;\nOnly heal to as high as critical health\nIn other words, converge to the critical health"})
+		:GetSet("ReverseDoNotKill",false, {description = "Heal only if health is above critical health;\nDamage only if health is below critical health\nIn other words, move away from the critical health"})
 		:GetSet("CriticalHealth",1, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,65535)) end})
 		:GetSet("MaxHpScaling", 0, {editor_clamp = {0,1}})
 	:SetPropertyGroup("HitOutcome")
@@ -519,6 +523,9 @@ function PART:SendNetMessage()
 	net.WriteBool(self.NPC)
 	net.WriteBool(self.Players)
 	net.WriteBool(self.PointEntities)
+	net.WriteBool(self.Friendlies)
+	net.WriteBool(self.Neutrals)
+	net.WriteBool(self.Hostiles)
 	net.WriteUInt(hitbox_ids[self.HitboxMode] or 1,5)
 	net.WriteUInt(damage_ids[self.DamageType] or 0,7)
 	net.WriteInt(self.Detail,6)
@@ -529,6 +536,7 @@ function PART:SendNetMessage()
 	net.WriteInt(math.floor(math.Clamp(8*self.DamageFalloffPower,-512, 511)), 12)
 	net.WriteBool(self.Bullet)
 	net.WriteBool(self.DoNotKill)
+	net.WriteBool(self.ReverseDoNotKill)
 	net.WriteUInt(self.CriticalHealth, 16)
 	net.WriteBool(self.RemoveNPCWeaponsOnKill)
 	net.SendToServer()
@@ -672,15 +680,17 @@ function PART:OnShow()
 					self.HitSoundPart:PlaySound()
 				end
 			end
-			for ent,_ in pairs(ents_hit) do
-				if IsValid(ent) then
-					local ang = (ent:GetPos() - pos):Angle()
-					if ents_kill[ent] then
-						if self.AllowOverlappingHitMarkers then
+			if self.HitMarkerPart then
+				for ent,_ in pairs(ents_hit) do
+					if IsValid(ent) then
+						local ang = (ent:GetPos() - pos):Angle()
+						if ents_kill[ent] then
+							if self.AllowOverlappingHitMarkers then
+								part_setup_runtimes = part_setup_runtimes + (spawn(self.HitMarkerPart, ent:WorldSpaceCenter(), ang, ent, self.HitMarkerLifetime, owner) or 0)
+							end
+						else
 							part_setup_runtimes = part_setup_runtimes + (spawn(self.HitMarkerPart, ent:WorldSpaceCenter(), ang, ent, self.HitMarkerLifetime, owner) or 0)
 						end
-					else
-						part_setup_runtimes = part_setup_runtimes + (spawn(self.HitMarkerPart, ent:WorldSpaceCenter(), ang, ent, self.HitMarkerLifetime, owner) or 0)
 					end
 				end
 			end
@@ -690,18 +700,20 @@ function PART:OnShow()
 			if ValidSound(self.KillSoundPart) then
 				self.KillSoundPart:PlaySound()
 			end
-
-			for ent,_ in pairs(ents_kill) do
-				if IsValid(ent) then
-					local ang = (ent:GetPos() - pos):Angle()
-					part_setup_runtimes = part_setup_runtimes + (spawn(self.KillMarkerPart, ent:WorldSpaceCenter(), ang, ent, self.KillMarkerLifetime, owner) or 0)
+			if self.KillMarkerPart then
+				for ent,_ in pairs(ents_kill) do
+					if IsValid(ent) then
+						local ang = (ent:GetPos() - pos):Angle()
+						part_setup_runtimes = part_setup_runtimes + (spawn(self.KillMarkerPart, ent:WorldSpaceCenter(), ang, ent, self.KillMarkerLifetime, owner) or 0)
+					end
 				end
 			end
 		end
-		if owner.hitparts then
-			self:SetInfo(table.Count(owner.hitparts) .. " hitmarkers in slot")
+		if self.HitMarkerPart or self.KillMarkerPart then
+			if owner.hitparts then
+				self:SetInfo(table.Count(owner.hitparts) .. " hitmarkers in slot")
+			end
 		end
-
 	end)
 
 end
