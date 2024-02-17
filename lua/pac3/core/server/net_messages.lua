@@ -1,6 +1,8 @@
 
 util.AddNetworkString("pac.AllowPlayerButtons")
 util.AddNetworkString("pac.BroadcastPlayerButton")
+util.AddNetworkString("pac_chat_typing_mirror")
+util.AddNetworkString("pac_chat_typing_mirror_broadcast")
 
 do -- button event
 	net.Receive("pac.AllowPlayerButtons", function(length, client)
@@ -29,3 +31,11 @@ do -- button event
 		broadcast_key(ply, key, false)
 	end)
 end
+
+net.Receive("pac_chat_typing_mirror", function(len, ply)
+	local str = net.ReadString()
+	net.Start("pac_chat_typing_mirror_broadcast")
+	net.WriteString(str)
+	net.WriteEntity(ply)
+	net.Broadcast()
+end)

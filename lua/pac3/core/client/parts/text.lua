@@ -15,6 +15,13 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 local draw_distance = CreateClientConVar("pac_limit_text_2d_draw_distance", "1000", true, false, "How far to see other players' text parts using 2D modes. They will start fading out 200 units before this distance.")
 
+
+net.Receive("pac_chat_typing_mirror_broadcast", function(len)
+	local text = net.ReadString()
+	local ply = net.ReadEntity()
+	ply.pac_mirrored_chat_text = text
+end)
+
 local default_fonts = {
 	"BudgetLabel",
 	"CenterPrintText",
@@ -135,7 +142,9 @@ BUILDER:StartStorableVars()
 			["Ground Entity Class"] = "GroundEntityClass",
 			["Players"] = "Players",
 			["Max Players"] = "MaxPlayers",
-			["Difficulty"] = "GameDifficulty"
+			["Difficulty"] = "GameDifficulty",
+			["Chat Being Typed"] = "ChatTyping",
+			["Last Chat Sent"] = "ChatSent",
 		}})
 		:GetSet("DynamicTextValue", 0)
 		:GetSet("RoundingPosition", 2, {editor_onchange = function(self, num)
@@ -368,6 +377,27 @@ function PART:OnDraw()
 		else DisplayText = "not driving" end
 	elseif self.TextOverride == "Proxy" then
 		DisplayText = ""..math.Round(self.DynamicTextValue,self.RoundingPosition)
+	elseif self.TextOverride == "ChatTyping" then
+		if self:GetPlayerOwner() == pac.LocalPlayer and not pac.broadcast_chat_typing then
+			pac.AddHook("ChatTextChanged", "broadcast_chat_typing", function(text)
+				net.Start("pac_chat_typing_mirror")
+				net.WriteString(text)
+				net.SendToServer()
+			end)
+			pac.AddHook("FinishChat", "end_chat_typing", function(text)
+				net.Start("pac_chat_typing_mirror")
+				net.WriteString("")
+				net.SendToServer()
+			end)
+			pac.broadcast_chat_typing = true
+		end
+		DisplayText = self:GetPlayerOwner().pac_mirrored_chat_text or ""
+	elseif self.TextOverride == "ChatSent" then
+		if self:GetPlayerOwner().pac_say_event then
+			DisplayText = self:GetPlayerOwner().pac_say_event.str
+		else
+			DisplayText = ""
+		end
 	end
 
 	if self.ConcatenateTextAndOverrideValue then
@@ -521,8 +551,21 @@ end
 function PART:OnHide()
 	pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID)
 end
+
 function PART:OnRemove()
 	pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID)
+	local remains_chat_text_part = false
+	for i,v in ipairs(pac.GetLocalParts()) do
+		if v.ClassName == "text" then
+			if v.TextOverride == "ChatTyping" then
+				remains_chat_text_part = true
+			end
+		end
+	end
+	if not remains_chat_text_part then
+		pac.RemoveHook("ChatTextChanged", "broadcast_chat_typing")
+		pac.broadcast_chat_typing = false
+	end
 end
 function PART:SetText(str)
 	self.Text = str
