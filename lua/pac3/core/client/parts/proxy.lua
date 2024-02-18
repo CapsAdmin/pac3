@@ -394,6 +394,8 @@ end
 
 PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 	if not uid1 then return 0 end
+	num1 = num1 or 0
+	num2 = num2 or 1
 	local owner = self:GetPlayerOwner()
 
 	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
@@ -415,6 +417,76 @@ PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 		return -1
 	end
 	return 0
+end
+PART.Inputs.if_else_event = PART.Inputs.event_alternative
+PART.Inputs.if_event = PART.Inputs.event_alternative
+
+--normalized sine
+PART.Inputs.nsin = function(self, radians) return 0.5 + 0.5*math.sin(radians) end
+--normalized sin starting at 0 with timeex
+PART.Inputs.nsin2 = function(self, radians) return 0.5 + 0.5*math.sin(-math.pi/2 + radians) end
+--normalized cos
+PART.Inputs.ncos = function(self, radians) return 0.5 + 0.5*math.cos(radians) end
+--normalized cos starting at 0 with timeex
+PART.Inputs.ncos2 = function(self, radians) return 0.5 + 0.5*math.cos(-math.pi + radians) end
+
+--easy clamp fades
+--speed and two zero-crossing points (when it begins moving, when it goes back to 0)
+PART.Inputs.ezfade = function(self, speed, starttime, endtime)
+	speed = speed or 1
+	starttime = starttime or 0
+	self.time = self.time or pac.RealTime
+	local timeex = pac.RealTime - self.time
+	local start_offset_constant = -starttime * speed
+
+	if not endtime then --only a fadein
+		return math.Clamp(start_offset_constant + timeex * speed, 0, 1)
+	else --fadein fadeout
+		local end_offset_constant = endtime * speed
+		return math.Clamp(start_offset_constant + timeex * speed, 0, 1) * math.Clamp(end_offset_constant - timeex * speed, 0, 1)
+	end
+end
+--four crossing points
+PART.Inputs.ezfade_4pt = function(self, in_starttime, in_endtime, out_starttime, out_endtime)
+	if not in_starttime or not in_endtime then self:SetError("ezfade_4pt needs at least two arguments! (in_starttime, in_endtime, out_starttime, out_endtime)") return 0 end -- needs at least two args. we could assume 0 starting point and first arg is fadein end, but it'll mess up the order and confuse people
+	local fadein_result = 0
+	local fadeout_result = 1
+	local in_speed = 1
+	local out_speed = 1
+
+	self.time = self.time or pac.RealTime
+	local timeex = pac.RealTime - self.time
+
+	if in_starttime == in_endtime then
+		if timeex < in_starttime then
+			fadein_result = 0
+		else
+			fadein_result = 1
+		end
+	else
+		in_speed = 1 / (in_endtime - in_starttime)
+		local start_offset_constant = -in_starttime * in_speed
+		fadein_result = math.Clamp(start_offset_constant + timeex * in_speed, 0, 1)
+	end
+	if not out_starttime then --missing data, assume no fadeout
+		fadeout_result = 1
+	elseif not out_endtime then --missing data, assume no fadeout
+		fadeout_result = 1
+	else
+		if out_starttime ~= out_endtime then
+			out_speed =  1 / (out_endtime - out_starttime)
+			local end_offset_constant = out_endtime * out_speed
+			fadeout_result = math.Clamp(end_offset_constant - timeex * out_speed, 0, 1)
+		else
+			if timeex > out_starttime then
+				fadeout_result = 0
+			else
+				fadeout_result = 1
+			end
+		end
+		
+	end
+	return fadein_result * fadeout_result
 end
 
 for i=1,5,1 do
@@ -455,6 +527,7 @@ PART.Inputs.number_operator_alternative = function(self, comp1, op, comp2, num1,
 	end
 	if b then return num1 or 0 else return num2 or 0 end
 end
+PART.Inputs.if_else = PART.Inputs.number_operator_alternative
 
 PART.Inputs.hexadecimal_level_sequence = function(self, freq, str)
 	if not str then return 0 end
@@ -1084,6 +1157,15 @@ PART.Inputs.flat_dot_right = function(self)
 end
 
 
+PART.Inputs.server_maxplayers = function(self)
+	return game.MaxPlayers()
+end
+PART.Inputs.server_playercount = function(self) return #player.GetAll() end
+PART.Inputs.server_population = PART.Inputs.server_playercount
+PART.Inputs.server_botcount = function(self) return #player.GetBots() end
+PART.Inputs.server_humancount = function(self) return #player.GetHumans() end
+
+
 PART.Inputs.pac_healthbars_total = function(self)
 	local ent = self:GetPlayerOwner()
 	if ent.pac_healthbars then
@@ -1441,9 +1523,9 @@ function PART:OnThink(to_hide)
 		end
 	end
 
-	--foolproofing: scream at the user if they didn't set a variable name
+	--foolproofing: scream at the user if they didn't set a variable name and there's no extra expressions ready to be used
 	if self == pace.current_part then self.touched = true end
-	if self ~= pace.current_part and self.VariableName == "" and self.touched then
+	if self ~= pace.current_part and self.VariableName == "" and self.touched and self.Extra1 == ""	and self.Extra2 == "" and self.Extra3 == "" and self.Extra4 == "" and self.Extra5 == "" then
 		self:AttachEditorPopup("You forgot to set a variable name! The proxy won't work until it knows where to send the math!", true)
 		pace.FlashNotification("An edited proxy still has no variable name! The proxy won't work until it knows where to send the math!")
 		self:SetWarning("You forgot to set a variable name! The proxy won't work until it knows where to send the math!")
