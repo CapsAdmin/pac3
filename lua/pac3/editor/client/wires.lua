@@ -17,13 +17,13 @@ local math_cos = math.cos
 local math_pi = math.pi
 
 local mtVector =  FindMetaTable("Vector")
-local mtColor = FindMetaTable("Color")
+//local mtColor = FindMetaTable("Color")
 local render_startBeam = render.StartBeam
 local render_endBeam = render.EndBeam
 local render_addBeam = render.AddBeam
 local setVecUnpacked = mtVector.SetUnpacked
-local setColUnpacked = mtColor.SetUnpacked
-local colUnpack = mtColor.Unpack
+//local setColUnpacked = mtColor.SetUnpacked
+//local colUnpack = mtColor.Unpack
 
 local black = Color(0,0,0,100)
 local vector_add = Vector(0, 2.5, 0)
@@ -35,8 +35,8 @@ local function DrawHermite(width, x0,y0,x1,y1,c0,c1,alpha,samples)
 	if y0 < 0 and y1 < 0 then return end
 	if y0 > h and y1 > h then return end]]
 
-	local r0,g0,b0,a0 = colUnpack(c0)
-	local r1,g1,b1,a1 = colUnpack(c1)
+	local r0,g0,b0,a0 = c0:Unpack() //colUnpack(c0)
+	local r1,g1,b1,a1 = c1:Unpack() //colUnpack(c1)
 
 	alpha = alpha or 1
 
@@ -67,7 +67,8 @@ local function DrawHermite(width, x0,y0,x1,y1,c0,c1,alpha,samples)
 		local y = CubicHermite(y0, y1, 0, 0, t)
 
 		setVecUnpacked(positions[i+1][1],x,y,0)
-		setColUnpacked(positions[i+1][2],Lerp(t, r0, r1), Lerp(t, g0, g1), Lerp(t, b0, b1), a0 * alpha)
+		positions[i+1][2]:SetUnpacked(Lerp(t, r0, r1), Lerp(t, g0, g1), Lerp(t, b0, b1), a0 * alpha)
+		//setColUnpacked(positions[i+1][2],Lerp(t, r0, r1), Lerp(t, g0, g1), Lerp(t, b0, b1), a0 * alpha)
 	end
 
 	render.PushFilterMag( TEXFILTER.LINEAR )
