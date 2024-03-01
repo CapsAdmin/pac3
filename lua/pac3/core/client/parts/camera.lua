@@ -180,12 +180,14 @@ local remaining_camera_time_buffer = CurTime()
 
 
 function pac.TryToAwakenDormantCameras(calling_part)
+	if pace.still_loading_wearing then return end
 	if pace.Editor:IsValid() then return end
+	if pac.awakening_dormant_cameras then return end
 
 	if not isbool(calling_part) then
 		pac.RebuildCameras()
 	end
-
+	pac.awakening_dormant_cameras = true
 	for _,part in pairs(pac.client_camera_parts) do
 		if part:IsValid() then
 			if part.ClassName == "camera" and part ~= calling_part then
@@ -193,6 +195,9 @@ function pac.TryToAwakenDormantCameras(calling_part)
 			end
 		end
 	end
+	timer.Simple(1, function()
+		pac.awakening_dormant_cameras = nil
+	end)
 
 	pace.EnableView(false)
 end

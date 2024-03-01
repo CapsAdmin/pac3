@@ -704,7 +704,7 @@ do -- hidden / events
 					end
 					if pac.active_camera_manual == self then --we're force-viewing this camera on the editor, assume we want to swap
 						pace.ManuallySelectCamera(self, false)
-					else
+					elseif not pac.awakening_dormant_cameras then
 						pac.TryToAwakenDormantCameras(self)
 					end
 					self:SetSmallIcon("event")
