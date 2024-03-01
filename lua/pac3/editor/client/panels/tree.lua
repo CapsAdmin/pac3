@@ -168,7 +168,7 @@ do
 
 				node.Icon.event_icon:SetVisible(true)
 			else
-				if node.Icon.event_icon then
+				if node.Icon.event_icon and not node.Icon.event_icon_alt then
 					node.Icon.event_icon:SetVisible(false)
 				end
 			end

@@ -860,6 +860,67 @@ do -- event is_touching
 	pace.RegisterPanel(PANEL)
 end
 
+do -- event seen_by_player
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_seen_by_player"
+	PANEL.Base = "pace_properties_number"
+
+	function PANEL:OnValueSet()
+		local function stop()
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_is_touching2")
+		end
+		local last_part = pace.current_part
+
+		hook.Add("PostDrawOpaqueRenderables", "pace_draw_is_touching2", function()
+			local part = pace.current_part
+			if part ~= last_part then stop() return end
+			if not part:IsValid() then stop() return end
+			if part.ClassName ~= "event" then stop() return end
+			if not (part:GetEvent() == "seen_by_player") then stop() return end
+			if not pace.IsActive() then stop() return end
+
+			local extra_radius = part:GetProperty("extra_radius") or 0
+
+			local ent
+			if part.RootOwner then
+				ent = part:GetRootPart():GetOwner()
+			else
+				ent = part:GetOwner()
+			end
+
+			if not IsValid(ent) then stop() return end
+
+			local mins = Vector(-extra_radius,-extra_radius,-extra_radius)
+			local maxs = Vector(extra_radius,extra_radius,extra_radius)
+
+			local b = false
+			local players_see = {}
+			for _,v in ipairs(player.GetAll()) do
+				if v == ent then continue end
+				local eyetrace = v:GetEyeTrace()
+
+				local this_player_sees = false
+				if util.IntersectRayWithOBB(eyetrace.StartPos, eyetrace.HitPos - eyetrace.StartPos, LocalPlayer():GetPos() + LocalPlayer():OBBCenter(), Angle(0,0,0), Vector(-extra_radius,-extra_radius,-extra_radius), Vector(extra_radius,extra_radius,extra_radius)) then
+					b = true
+					this_player_sees = true
+				end
+				if eyetrace.Entity == ent then
+					b = true
+					this_player_sees = true
+				end
+				render.DrawLine(eyetrace.StartPos, eyetrace.HitPos, this_player_sees and Color(255, 0,0) or Color(255,255,255), true)
+			end
+			::CHECKOUT::
+			if self.udata then
+				render.DrawWireframeBox( ent:GetPos() + ent:OBBCenter(), Angle( 0, 0, 0 ), mins, maxs, b and Color(255,0,0) or Color(255,255,255), true )
+			end
+		end)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do --projectile radius
 	local PANEL = {}
 

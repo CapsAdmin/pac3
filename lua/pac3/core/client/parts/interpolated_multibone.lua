@@ -44,6 +44,27 @@ function PART:OnRemove()
 	SafeRemoveEntityDelayed(self.Owner,0.1)
 end
 
+function PART:GetNiceName()
+	if self.Name ~= "" then return self.Name end
+
+	if not self.valid_nodes then return self.FriendlyName end
+	local has_valid_node = false
+	for i,b in ipairs(self.valid_nodes) do
+		if b then has_valid_node = true end
+	end
+	if not has_valid_node then return self.FriendlyName end
+
+	local str = "Interpolator: "
+	local firstnodecounted = false
+	for i=1,20,1 do
+		if IsValid(self["Node"..i]) then
+			str = str .. (firstnodecounted and "; " or "") .. "[" .. i .. "]" .. (self["Node"..i].Name ~= "" and self["Node"..i].Name or  self["Node"..i].ClassName)
+			firstnodecounted = true
+		end
+	end
+	return str
+end
+
 function PART:Initialize()
 	self.nodes = {}
 	self.valid_nodes = {}

@@ -564,6 +564,35 @@ do -- scene graph
 		end
 	end
 
+	function PART:SetSmallIcon(str)
+		if str == "event" then str = "icon16/clock_red.png" end
+		if self.pace_tree_node then
+			if self.pace_tree_node.Icon then
+				if not self.pace_tree_node.Icon.event_icon then
+					local pnl = vgui.Create("DImage", self.pace_tree_node.Icon)
+					self.pace_tree_node.Icon.event_icon_alt = true
+					self.pace_tree_node.Icon.event_icon = pnl
+					pnl:SetSize(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+					pnl:SetPos(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+				end
+				self.pace_tree_node.Icon.event_icon_alt = true
+				self.pace_tree_node.Icon.event_icon:SetImage(str)
+				self.pace_tree_node.Icon.event_icon:SetVisible(true)
+			end
+		end
+	end
+	function PART:RemoveSmallIcon()
+		if self.pace_tree_node then
+			if self.pace_tree_node.Icon then
+				if self.pace_tree_node.Icon.event_icon then
+					self.pace_tree_node.Icon.event_icon_alt = false
+					self.pace_tree_node.Icon.event_icon:SetImage("icon16/clock_red.png")
+					self.pace_tree_node.Icon.event_icon:SetVisible(false)
+				end
+			end
+		end
+	end
+
 end
 
 do -- hidden / events
@@ -669,12 +698,29 @@ do -- hidden / events
 				self.active_events[event_part] = event_part
 				self.active_events_ref_count = self.active_events_ref_count + 1
 				self:CallRecursive("CalcShowHide", false)
+				if self.ClassName == "camera" and pac.LocalPlayer == self:GetPlayerOwner() then
+					if event_part.Event == "command" then
+						pac.camera_linked_command_events[string.Split(event_part.Arguments,"@@")[1]] = true
+					end
+					if pac.active_camera_manual == self then --we're force-viewing this camera on the editor, assume we want to swap
+						pace.ManuallySelectCamera(self, false)
+					else
+						pac.TryToAwakenDormantCameras(self)
+					end
+					self:SetSmallIcon("event")
+				end
 			end
 		else
 			if self.active_events[event_part] then
 				self.active_events[event_part] = nil
 				self.active_events_ref_count = self.active_events_ref_count - 1
 				self:CallRecursive("CalcShowHide", false)
+			end
+			if self.ClassName == "camera" and pac.LocalPlayer == self:GetPlayerOwner() then
+				if pac.active_camera_manual then --we're force-viewing another camera on the editor, since we're showing a new camera, assume we want to swap
+					pace.ManuallySelectCamera(self, true)
+				end
+				self:SetSmallIcon("event")
 			end
 		end
 	end
@@ -698,7 +744,46 @@ do -- hidden / events
 			return "pac_hide_disturbing is set to 1"
 		end
 
+		for i,part in ipairs(self:GetParentList()) do
+			if part:IsHidden() then
+				table_insert(found, tostring(part) .. " is parent hiding")
+			end
+		end
+		if found[1] then
+			return table.concat(found, "\n")
+		end
+
 		return ""
+	end
+
+	function PART:GetReasonsHidden()
+		local found = {}
+
+		for part in pairs(self.active_events) do
+			found[part] = "event hiding"
+		end
+
+		if self.Hide then
+			found[self] = "self hiding"
+		end
+
+		if self.hide_disturbing then
+			if self.Hide then
+				found[self] = "self hiding and disturbing"
+			else
+				found[self] = "disturbing"
+			end
+		end
+
+		for i,part in ipairs(self:GetParentList()) do
+			if not found[part] then
+				if part:IsHidden() then
+					found[part] = "parent hidden"
+				end
+			end
+		end
+
+		return found
 	end
 
 	function PART:CalcShowHide(from_rendering)

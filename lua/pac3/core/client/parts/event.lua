@@ -748,6 +748,47 @@ PART.OldEvents = {
 		end,
 	},
 
+	seen_by_player = {
+		operator_type = "none",
+		tutorial = "looked_at_by_player activates when a player is looking at you, determined by whether a box around you touches the direct eyeangle line",
+		arguments = {{extra_radius = "number"}, {require_line_of_sight = "boolean"}},
+		userdata = {{editor_panel = "seen_by_player"}},
+		callback = function(self, ent, extra_radius, require_line_of_sight)
+			extra_radius = extra_radius or 0
+			self.nextcheck = self.nextcheck or CurTime() + 0.1
+			if CurTime() > self.nextcheck then
+				for _,v in ipairs(player.GetAll()) do
+					if v == ent then continue end
+					local eyetrace = v:GetEyeTrace()
+
+					if util.IntersectRayWithOBB(eyetrace.StartPos, eyetrace.HitPos - eyetrace.StartPos, LocalPlayer():GetPos() + LocalPlayer():OBBCenter(), Angle(0,0,0), Vector(-extra_radius,-extra_radius,-extra_radius), Vector(extra_radius,extra_radius,extra_radius)) then
+						self.trace_success = true
+						self.trace_success_ply = v
+						self.nextcheck = CurTime() + 0.1
+						goto CHECKOUT
+					end
+					if eyetrace.Entity == ent then
+						self.trace_success = true
+						self.trace_success_ply = v
+						self.nextcheck = CurTime() + 0.1
+						goto CHECKOUT
+					end
+				end
+				self.trace_success = false
+				self.nextcheck = CurTime() + 0.1
+			end
+			::CHECKOUT::
+			if require_line_of_sight then
+				return self.trace_success
+					and self.trace_success_ply:IsLineOfSightClear(ent) --check world LOS
+					and ((util.QuickTrace(self.trace_success_ply:EyePos(), ent:EyePos() - self.trace_success_ply:EyePos(), self.trace_success_ply).Entity == ent)
+						or (util.QuickTrace(self.trace_success_ply:EyePos(), ent:GetPos() + ent:OBBCenter() - self.trace_success_ply:EyePos(), self.trace_success_ply).Entity == ent))
+			else
+				return self.trace_success
+			end
+		end,
+	},
+
 	is_flashlight_on = {
 		operator_type = "none",
 		callback = function(self, ent)
@@ -3337,6 +3378,11 @@ pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
 	end
 end)
 
+--for regaining focus on cameras from first person, hacky thing to not loop through localparts every time
+--only if the received command name matches that of a camera's linked command event
+--we won't be finding from substrings
+pac.camera_linked_command_events = {}
+local initially_check_camera_linked_command_events = true
 
 net.Receive("pac_event", function(umr)
 	local ply = net.ReadEntity()
@@ -3351,12 +3397,21 @@ net.Receive("pac_event", function(umr)
 	if ply:IsValid() then
 		ply.pac_command_events = ply.pac_command_events or {}
 		ply.pac_command_events[str] = {name = str, time = pac.RealTime, on = on}
+		if pac.LocalPlayer == ply then
+			if pac.camera_linked_command_events[str] then --if this might be related to a camera
+				pac.TryToAwakenDormantCameras()
+			elseif initially_check_camera_linked_command_events then --if it's not known, check only once for initialize this might be related to a camera
+				pac.TryToAwakenDormantCameras(true)
+				initially_check_camera_linked_command_events = false
+			end
+		end
 	end
 end)
 
 concommand.Add("pac_wipe_events", function(ply)
 	ply.pac_command_events = nil
 	ply.pac_command_event_sequencebases = nil
+	pac.camera_linked_command_events = {}
 end)
 concommand.Add("pac_print_events", function(ply)
 	ply.pac_command_events = ply.pac_command_events or {}
@@ -3624,43 +3679,44 @@ do
 
 		local list = {}
 
-		if true then
-			local colors = {}
 
-			for name,colstr in pairs(pace.command_colors) do
-				colors[colstr] = colors[colstr] or {}
-				colors[colstr][name] = available[name]
+		local colors = {}
+
+		for name,colstr in pairs(pace.command_colors) do
+			colors[colstr] = colors[colstr] or {}
+			colors[colstr][name] = available[name]
+		end
+
+
+		for col,tbl in pairs(colors) do
+
+			local sublist = {}
+			for k,v in pairs(tbl) do
+				table.insert(sublist,available[k])
 			end
 
+			table.sort(sublist, function(a, b) return a.trigger < b.trigger end)
 
-			for col,tbl in pairs(colors) do
-
-				local sublist = {}
-				for k,v in pairs(tbl) do
-					table.insert(sublist,available[k])
-				end
-
-				table.sort(sublist, function(a, b) return a.trigger < b.trigger end)
-
-				for i,v in pairs(sublist) do
-					table.insert(list,v)
-				end
+			for i,v in pairs(sublist) do
+				table.insert(list,v)
 			end
+		end
 
-			local uncolored_sublist = {}
+		local uncolored_sublist = {}
 
-			for k,v in pairs(available) do
-				if uncolored_events[k] then
-					table.insert(uncolored_sublist,available[k])
-				end
+		for k,v in pairs(available) do
+			if uncolored_events[k] then
+				table.insert(uncolored_sublist,available[k])
 			end
+		end
 
-			table.sort(uncolored_sublist, function(a, b) return a.trigger < b.trigger end)
+		table.sort(uncolored_sublist, function(a, b) return a.trigger < b.trigger end)
 
-			for k,v in ipairs(uncolored_sublist) do
-				table.insert(list, v)
-			end
-		else
+		for k,v in ipairs(uncolored_sublist) do
+			table.insert(list, v)
+		end
+
+		--[[legacy behavior
 
 			for k,v in pairs(available) do
 				if k == names[k].name then
@@ -3670,7 +3726,7 @@ do
 			end
 
 			table.sort(list, function(a, b) return a.trigger > b.trigger end)
-		end
+		]]
 
 		return list
 	end

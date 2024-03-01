@@ -89,6 +89,12 @@ do -- to server
 
 		local data = {part = part:ToTable()}
 
+		--hack so that camera part doesn't force-gain focus if it's not manually created, because wearing removes and re-creates parts.
+		pace.hack_camera_part_donot_treat_wear_as_creating_part = true
+		timer.Simple(2, function()
+			pace.hack_camera_part_donot_treat_wear_as_creating_part = nil
+		end)
+
 		if extra then
 			table.Merge(data, extra)
 		end

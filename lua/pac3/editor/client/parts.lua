@@ -334,22 +334,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 	end
 	if class_name == "camera" and GetConVar("pac_copilot_force_preview_cameras"):GetBool() then
-		RunConsoleCommand("pac_enable_editor_view", "0")
-		pace.EnableView(true)
-		pac.RemoveHook("CalcView", "editor")
-		pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
-			part:CalcShowHide()
-			pos, ang, fov, nearz, farz = part:CalcView(_,_,ply:EyeAngles())
-			local temp = {}
-			temp.origin = pos
-			temp.angles = ang
-			temp.fov = fov
-			temp.znear = nearz
-			temp.zfar = farz
-			temp.drawviewer = not part.DrawViewModel
-			return temp
-
-		end)
+		timer.Simple(0.2, function() pace.EnableView(false) end)
 	end
 	if GetConVar("pac_copilot_auto_focus_main_property_when_creating_part"):GetBool() then
 		if star_properties[part.ClassName] then
@@ -1243,17 +1228,7 @@ do -- menu
 		if not obj:HasParent() and obj.ClassName == "group" then
 			pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
 		end
-		if obj.ClassName == "camera" and GetConVar("pac_copilot_force_preview_cameras"):GetBool() then
-			local no_camera_part = true
-			for i,v in ipairs(pac.GetLocalParts()) do
-				if v.ClassName == "camera" then no_camera_part = false end
-			end
-			if no_camera_part then
-				RunConsoleCommand("pac_enable_editor_view", "1")
-				pac.RemoveHook("CalcView", "camera_part")
-				pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
-			end
-		end
+		
 	end
 
 	function pace.SwapBaseMovables(obj1, obj2, promote)
@@ -1933,6 +1908,7 @@ do -- menu
 			--new_operations_order
 			--default_operations_order
 		--if not obj then obj = pace.current_part end
+		if obj then pace.AddClassSpecificPartMenuComponents(menu, obj) end
 		for _,option_name in ipairs(pace.operations_order) do
 			pace.addPartMenuComponent(menu, obj, option_name)
 		end
@@ -2183,6 +2159,91 @@ function pace.GetPartSizeInformation(obj)
 		all_size_raw_bytes = 	all_charsize*2,
 		all_size_nice = 		string.NiceSize(all_charsize*2)
 	}
+end
+
+function pace.AddClassSpecificPartMenuComponents(menu, obj)
+	if obj.ClassName == "camera" then
+		if not obj:IsHidden() then
+			if obj ~= pac.active_camera then
+				menu:AddOption("View this camera", function()
+					pace.ManuallySelectCamera(obj, true)
+				end):SetIcon("icon16/star.png")
+			else
+				menu:AddOption("Unview this camera", function()
+					pace.EnableView(true)
+					pace.ResetView()
+					pac.active_camera_manual = nil
+					if obj.pace_tree_node then
+						if obj.pace_tree_node.Icon then
+							if obj.pace_tree_node.Icon.event_icon then
+								obj.pace_tree_node.Icon.event_icon_alt = false
+								obj.pace_tree_node.Icon.event_icon:SetImage("event")
+								obj.pace_tree_node.Icon.event_icon:SetVisible(false)
+							end
+						end
+					end
+				end):SetIcon("icon16/camera_delete.png")
+			end
+		else
+			menu:AddOption("View this camera", function()
+				local toggleable_command_events = {}
+				for part,reason in pairs(obj:GetReasonsHidden()) do
+					if reason == "event hiding" then
+						if part.Event == "command" then
+							local cmd, time, hide = part:GetParsedArgumentsForObject(part.Events.command)
+							if time == 0 then
+								toggleable_command_events[part] = cmd
+							end
+						end
+					end
+				end
+				for part,cmd in pairs(toggleable_command_events) do
+					RunConsoleCommand("pac_event", cmd, part.Invert and "1" or "0")
+				end
+				timer.Simple(0.1, function()
+					pace.ManuallySelectCamera(obj, true)
+				end)
+			end):SetIcon("icon16/star.png")
+		end
+	elseif obj.ClassName == "command" then
+		menu:AddOption("run command", function() obj:Execute() end):SetIcon("icon16/star.png")
+	elseif obj.ClassName == "sound" or obj.ClassName == "sound2" then
+		menu:AddOption("play sound", function() obj:PlaySound() end):SetIcon("icon16/star.png")
+	elseif obj.ClassName == "projectile" then
+		local pos, ang = obj:GetDrawPosition()
+		menu:AddOption("fire", function() obj:Shoot(pos, ang, obj.NumberProjectiles) end):SetIcon("icon16/star.png")
+	elseif obj.ClassName == "hitscan" then
+		menu:AddOption("fire", function() obj:Shoot() end):SetIcon("icon16/star.png")
+	elseif obj.ClassName == "damage_zone" then
+		menu:AddOption("run command", function() obj:OnShow() end):SetIcon("icon16/star.png")
+	elseif obj.ClassName == "particles" then
+		if obj.FireOnce then
+			menu:AddOption("(FireOnce only) spew", function() obj:OnShow() end):SetIcon("icon16/star.png")
+		end
+	elseif obj.ClassName == "proxy" then
+		if string.find(obj.Expression, "timeex") or string.find(obj.Expression, "ezfade") then
+			menu:AddOption("(timeex) reset clock", function() obj:OnHide() obj:OnShow() end):SetIcon("icon16/star.png")
+		end
+	elseif obj.ClassName == "shake" then
+		menu:AddOption("activate (editor camera should be off)", function() obj:OnHide() obj:OnShow() end):SetIcon("icon16/star.png")
+	elseif obj.ClassName == "event" then
+		if obj.Event == "command" then
+			local cmd, time, hide = obj:GetParsedArgumentsForObject(obj.Events.command)
+			if time == 0 then --toggling mode
+				pac.LocalPlayer.pac_command_events[cmd] = pac.LocalPlayer.pac_command_events[cmd] or {name = cmd, time = pac.RealTime, on = 0}
+				----MORE PAC JANK?? SOMETIMES, THE 2 NOTATION DOESN'T CHANGE THE STATE YET
+				if pac.LocalPlayer.pac_command_events[cmd].on == 1 then
+					menu:AddOption("(command) toggle", function() RunConsoleCommand("pac_event", cmd, "0") end):SetIcon("icon16/star.png")
+				else
+					menu:AddOption("(command) toggle", function() RunConsoleCommand("pac_event", cmd, "1") end):SetIcon("icon16/star.png")
+				end
+				
+			else
+				menu:AddOption("(command) trigger", function() RunConsoleCommand("pac_event", cmd) end):SetIcon("icon16/star.png")
+			end
+			
+		end
+	end
 end
 
 function pace.addPartMenuComponent(menu, obj, option_name)

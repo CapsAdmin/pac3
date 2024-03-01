@@ -139,17 +139,6 @@ function pace.GUIMouseReleased(mc)
 	if pace.editing_viewmodel or pace.editing_hands then return end
 
 	mcode = nil
-	if not GetConVar("pac_enable_editor_view"):GetBool() then pace.EnableView(true)
-	else
-		pac.RemoveHook("CalcView", "camera_part")
-		pac.AddHook("GUIMousePressed", "editor", pace.GUIMousePressed)
-		pac.AddHook("GUIMouseReleased", "editor", pace.GUIMouseReleased)
-		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer, DLib and -4 or ULib and -1 or nil)
-		pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
-		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
-		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
-		pac.AddHook("PostRenderVGUI", "editor", pace.PostRenderVGUI)
-	end
 end
 
 local function set_mouse_pos(x, y)
@@ -166,6 +155,7 @@ local function MovementBindDown(name)
 end
 
 local function CalcDrag()
+	if not pace.properties or not pace.properties.search then return end
 
 	if
 		pace.BusyWithProperties:IsValid() or
@@ -276,6 +266,14 @@ end
 
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)
 local enable_editor_view = CreateClientConVar("pac_enable_editor_view", "1", true)
+cvars.AddChangeCallback("pac_enable_editor_view", function(name, old, new)
+	if new == "1" then
+		pace.EnableView(true)
+	else
+		pace.CameraPartSwapView()
+	end
+end, "pace_update_editor_view")
+
 local lastEntityPos
 
 function pace.CalcView(ply, pos, ang, fov)
@@ -364,13 +362,18 @@ function pace.PostRenderVGUI()
 end
 
 function pace.EnableView(b)
-
 	if b then
 		pac.AddHook("GUIMousePressed", "editor", pace.GUIMousePressed)
 		pac.AddHook("GUIMouseReleased", "editor", pace.GUIMouseReleased)
 		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer, DLib and -4 or ULib and -1 or nil)
-		pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
-		pac.RemoveHook("CalcView", "camera_part")
+		if enable_editor_view:GetBool() then
+			pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
+			pac.RemoveHook("CalcView", "camera_part")
+			pac.active_camera = nil
+		else
+			if pac.HasRemainingCameraPart() then pace.CameraPartSwapView() end
+			pac.RemoveHook("CalcView", "editor")
+		end
 		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
 		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
 		pac.AddHook("PostRenderVGUI", "editor", pace.PostRenderVGUI)
@@ -382,36 +385,69 @@ function pace.EnableView(b)
 		pac.RemoveHook("GUIMouseReleased", "editor")
 		pac.RemoveHook("ShouldDrawLocalPlayer", "editor")
 		pac.RemoveHook("CalcView", "editor")
-		pac.RemoveHook("CalcView", "camera_part")
+		pac.AddHook("CalcView", "camera_part", pac.HandleCameraPart)
 		pac.RemoveHook("HUDPaint", "editor")
 		pac.RemoveHook("HUDShouldDraw", "editor")
 		pac.RemoveHook("PostRenderVGUI", "editor")
 		pace.SetTPose(false)
 	end
+end
 
-	if not enable_editor_view:GetBool() or not pace.Editor:IsValid() then
-		local ply = LocalPlayer()
-		pac.RemoveHook("CalcView", "editor")
-		pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
-			for _, part in pairs(pac.GetLocalParts()) do
-				if part:IsValid() and part.ClassName == "camera" then
-					part:CalcShowHide()
-					local temp = {}
-					if not part:IsHidden() then
-						pos, ang, fov, nearz, farz = part:CalcView(_,_,ply:EyeAngles())
-						temp.origin = pos
-						temp.angles = ang
-						temp.fov = fov
-						temp.znear = nearz
-						temp.zfar = farz
-						temp.drawviewer = not part.DrawViewModel
-						return temp
-					end
+function pace.ManuallySelectCamera(obj, doselect)
+	if obj and doselect then
+		obj:CameraTakePriority(true)
+		pace.CameraPartSwapView(true)
+		pac.active_camera_manual = obj
+	elseif not doselect then
+		for i,v in pairs(pac.GetLocalParts()) do
+			if v.ClassName == "camera" then
+				if not v:IsHidden() and v ~= obj then
+					v:CameraTakePriority(true)
+					pace.CameraPartSwapView(true)
+					pac.active_camera_manual = v
+					return
 				end
 			end
-		end)
-		--pac.RemoveHook("ShouldDrawLocalPlayer", "editor")
+		end
+		pac.active_camera_manual = nil
+	else
+		for i,v in pairs(pac.GetLocalParts()) do
+			if v.ClassName == "camera" then
+				if not v:IsHidden() then
+					v:CameraTakePriority(true)
+					pace.CameraPartSwapView(true)
+					pac.active_camera_manual = v
+					return
+				end
+			end
+		end
 	end
+end
+
+function pace.CameraPartSwapView(force_pac_camera)
+	local pac_camera_parts_should_override = not enable_editor_view:GetBool() or not pace.Editor:IsValid() or pac.HasRemainingCameraPart()
+
+	if pace.Editor:IsValid() and enable_editor_view:GetBool() and not force_pac_camera then pac_camera_parts_should_override = false end
+
+	if pac.HandleCameraPart() == nil then --no cameras
+		if not pace.ShouldDrawLocalPlayer() then
+			pace.EnableView(false)
+		end
+		pac.RemoveHook("CalcView", "camera_part")
+	elseif pac_camera_parts_should_override then --cameras
+		pac.AddHook("CalcView", "camera_part", pac.HandleCameraPart)
+		pac.RemoveHook("CalcView", "editor")
+	else
+		pace.EnableView(enable_editor_view:GetBool())
+		--[[if not GetConVar("pac_copilot_force_preview_cameras"):GetBool() then
+			
+		else
+			pace.EnableView(false)
+		end]]
+	end
+
+
+	return pac.active_camera
 end
 
 local function CalcAnimationFix(ent)
