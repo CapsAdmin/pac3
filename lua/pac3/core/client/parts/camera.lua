@@ -139,6 +139,74 @@ function PART:OnRemove()
 	end
 end
 
+local doing_calcshowhide = false
+
+function PART:PostOnCalcShowHide(hide)
+	if doing_calcshowhide then return end
+	doing_calcshowhide = true
+	timer.Simple(0.3, function()
+		doing_calcshowhide = false
+	end)
+	if hide then
+		if pac.active_camera_manual == self then --we're force-viewing this camera on the editor, assume we want to swap
+			pace.ManuallySelectCamera(self, false)
+		elseif not pac.awakening_dormant_cameras then
+			pac.TryToAwakenDormantCameras(self)
+		end
+		self:SetSmallIcon("event")
+	else
+		if pac.active_camera_manual then --we're force-viewing another camera on the editor, since we're showing a new camera, assume we want to swap
+			pace.ManuallySelectCamera(self, true)
+		end
+		self:SetSmallIcon("event")
+	end
+end
+
+--these hacks are outsourced instead of being on base part
+function PART:SetEventTrigger(event_part, enable)
+	if enable then
+		if not self.active_events[event_part] then
+			self.active_events[event_part] = event_part
+			self.active_events_ref_count = self.active_events_ref_count + 1
+			self:CallRecursive("CalcShowHide", false)
+		end
+
+	else
+		if self.active_events[event_part] then
+			self.active_events[event_part] = nil
+			self.active_events_ref_count = self.active_events_ref_count - 1
+			self:CallRecursive("CalcShowHide", false)
+		end
+	end
+
+	if pac.LocalPlayer == self:GetPlayerOwner() then
+		if event_part.Event == "command" then
+			pac.camera_linked_command_events[string.Split(event_part.Arguments,"@@")[1]] = true
+		end
+
+		self:PostOnCalcShowHide(enable)
+	end
+end
+
+function PART:CalcShowHide(from_rendering)
+	local b = self:IsHidden()
+
+	if b ~= self.last_hidden then
+		if b then
+			self:OnHide(from_rendering)
+		else
+			self:OnShow(from_rendering)
+		end
+		if pac.LocalPlayer == self:GetPlayerOwner() then
+			self:PostOnCalcShowHide(b)
+		end
+	end
+
+	self.last_hidden = b
+end
+
+
+
 function PART:Initialize()
 	if pac.LocalPlayer == self:GetPlayerOwner() then
 		pac.nocams = false
