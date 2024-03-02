@@ -18,7 +18,7 @@ if not file.Exists("pac3_config/pac_editor_partmenu_layouts.txt", "DATA") then
 	pace.operations_order = pace.operations_default
 end
 
-CreateConVar( "pac_hover_color", "255 255 255", FCVAR_ARCHIVE, "R G B value of the highlighting when hovering over pac3 parts, there are also special options: none, ocean, funky, rave, rainbow")
+local hover_color = CreateConVar( "pac_hover_color", "255 255 255", FCVAR_ARCHIVE, "R G B value of the highlighting when hovering over pac3 parts, there are also special options: none, ocean, funky, rave, rainbow")
 CreateConVar( "pac_hover_pulserate", 20, FCVAR_ARCHIVE, "pulse rate of the highlighting when hovering over pac3 parts")
 CreateConVar( "pac_hover_halo_limit", 100, FCVAR_ARCHIVE, "max number of parts before hovering over pac3 parts stops computing to avoid lag")
 
@@ -1398,6 +1398,7 @@ do -- menu
 			--start halo hook
 			pac.AddHook("PreDrawHalos", "BulkSelectHighlights", function()
 				local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
+				if hover_color:GetString() == "none" then return end
 				if mode == 0 then return
 				elseif mode == 1 then ThinkBulkHighlight()
 				elseif mode == 2 then if input.IsKeyDown(input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString())) then ThinkBulkHighlight() end

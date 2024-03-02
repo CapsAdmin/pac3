@@ -129,6 +129,51 @@ local function populate_options(menu)
 		prop_pac_load_mode:AddOption(L"Queue parts if there's one or more groups", function() RunConsoleCommand("pac_autoload_preferred_prop", "2") end)
 
 	menu:AddCVar(L"show parts IDs", "pac_show_uniqueid", "1", "0")
+
+	local halos, pnlh = menu:AddSubMenu("configure hover halo highlights", function() end)
+	halos.GetDeleteSelf = function() return false end
+	pnlh:SetImage("icon16/shading.png")
+	halos:AddCVar(L"disable hover halos", "pac_hover_color", "none", "255 255 255")
+	halos:AddOption("object limit (performance)", function()
+		Derma_StringRequest("pac_hover_halo_limit ", "how many objects can halo at once?", GetConVarNumber("pac_hover_halo_limit"), function(val) RunConsoleCommand("pac_hover_halo_limit", val) end)
+	end):SetImage("icon16/sitemap.png")
+	halos:AddOption("pulse rate", function()
+		Derma_StringRequest("pac_hover_pulserate", "how fast to pulse?", GetConVarNumber("pac_hover_pulserate"), function(val) RunConsoleCommand("pac_hover_pulserate", val) end)
+	end):SetImage("icon16/time.png")
+
+	halos:AddOption("How it reacts to bulk select", function()
+		local bulk_key_option_str = "bulk select key (current bind:" .. GetConVar("pac_bulk_select_key"):GetString() .. ")"
+		Derma_Query("What keys should trigger the hover halo on bulk select?","pac_bulk_select_halo_mode",
+			"passive",function() RunConsoleCommand("pac_bulk_select_halo_mode", 1) end,
+			bulk_key_option_str, function() RunConsoleCommand("pac_bulk_select_halo_mode", 2) end,
+			"control", function() RunConsoleCommand("pac_bulk_select_halo_mode", 3) end,
+			"shift", function() RunConsoleCommand("pac_bulk_select_halo_mode", 4) end
+		)
+	end):SetImage("icon16/table_multiple.png")
+	halos:AddOption("Do not highlight bulk select", function()
+		RunConsoleCommand("pac_bulk_select_halo_mode", "0")
+	end):SetImage("icon16/table_delete.png")
+
+	local halos_color, pnlhclr = halos:AddSubMenu("hover halo color", function() end)
+		pnlhclr:SetImage("icon16/color_wheel.png")
+		halos_color.GetDeleteSelf = function() return false end
+		halos_color:AddOption(L"none (disable halos)", function() RunConsoleCommand("pac_hover_color", "none") end):SetImage('icon16/page_white.png')
+		halos_color:AddOption(L"white (default)", function() RunConsoleCommand("pac_hover_color", "255 255 255") end):SetImage('icon16/bullet_white.png')
+		halos_color:AddOption(L"color (opens a menu)", function()
+			local clr_frame = vgui.Create("DFrame")
+			clr_frame:SetSize(300,200) clr_frame:Center()
+			local clr_pnl = vgui.Create("DColorMixer", clr_frame)
+				clr_frame:SetSize(300,200) clr_pnl:Dock(FILL)
+				clr_frame:RequestFocus()
+				function clr_pnl:ValueChanged(col)
+					hover_color:SetString(col.r .. " " .. col.g .. " " .. col.b)
+				end
+		end):SetImage('icon16/color_swatch.png')
+		halos_color:AddOption(L"ocean", function() RunConsoleCommand("pac_hover_color", "ocean") end):SetImage('icon16/bullet_blue.png')
+		halos_color:AddOption(L"funky", function() RunConsoleCommand("pac_hover_color", "funky") end):SetImage('icon16/color_wheel.png')
+		halos_color:AddOption(L"rave", function() RunConsoleCommand("pac_hover_color", "rave") end):SetImage('icon16/color_wheel.png')
+		halos_color:AddOption(L"rainbow", function() RunConsoleCommand("pac_hover_color", "rainbow") end):SetImage('icon16/rainbow.png')
+
 	local popups, pnlp = menu:AddSubMenu("configure editor popups", function() end)
 		popups.GetDeleteSelf = function() return false end
 		pnlp:SetImage("icon16/comment.png")
