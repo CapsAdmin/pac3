@@ -30,8 +30,8 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("ParticleAngle", Angle(0,0,0))
 		BUILDER:GetSet("AddFrametimeLife", false)
 	BUILDER:SetPropertyGroup("stick")
-		BUILDER:GetSet("AlignToSurface", true)
-		BUILDER:GetSet("StickToSurface", true)
+		BUILDER:GetSet("AlignToSurface", true, {description = "requires 3D set to true"})
+		BUILDER:GetSet("StickToSurface", true, {description = "requires 3D set to true, and sliding set to false"})
 		BUILDER:GetSet("StickLifetime", 2)
 		BUILDER:GetSet("StickStartSize", 20)
 		BUILDER:GetSet("StickEndSize", 0)
@@ -46,11 +46,11 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Color1", Vector(255, 255, 255), {editor_panel = "color"})
 		BUILDER:GetSet("RandomColor", false)
 		BUILDER:GetSet("Lighting", true)
-		BUILDER:GetSet("3D", false)
+		BUILDER:GetSet("3D", false, {description = "The particles are oriented relative to the part instead of the viewer.\nYou might want to set zero angle to false if you use this."})
 		BUILDER:GetSet("DoubleSided", true)
 		BUILDER:GetSet("DrawManual", false)
 	BUILDER:SetPropertyGroup("rotation")
-		BUILDER:GetSet("ZeroAngle",true)
+		BUILDER:GetSet("ZeroAngle",true, {description = "A workaround for non-3D particles' roll with certain oriented textures. Forces 0,0,0 angles when the particle is emitted\nWith round textures you don't notice, but the same cannot be said of textures which need to be upright rather than having strangely tilted copies."})
 		BUILDER:GetSet("RandomRollSpeed", 0)
 		BUILDER:GetSet("RollDelta", 0)
 		BUILDER:GetSet("ParticleAngleVelocity", Vector(50, 50, 50))
@@ -100,7 +100,7 @@ local function StickCallback(particle, hitpos, normal)
 	if particle.Align then
 		local ang = normal:Angle()
 		ang:RotateAroundAxis(normal, particle:GetAngles().y)
-		particle:SetAngles(ang)
+		particle:SetAngles(ang + particle.ParticleAngle + (particle.is_doubleside == true and Angle(180,0,0) or Angle(0,0,0)))
 	end
 
 	if particle.Stick then
@@ -336,18 +336,24 @@ function PART:EmitParticles(pos, ang, real_ang)
 
 				if self["3D"] then
 					if not self.Sliding then
-						if i == 1 then
+						if i == 1 and not self.StickToSurface then
 							particle:SetCollideCallback(RemoveCallback)
 						else
-							particle:SetCollideCallback(StickCallback)
+							if i == 1 then
+								particle:SetCollideCallback(StickCallback)
+							else
+								particle.is_doubleside = true
+								particle:SetCollideCallback(StickCallback)
+							end
 						end
 					end
 
 					particle:SetAngleVelocity(Angle(self.ParticleAngleVelocity.x, self.ParticleAngleVelocity.y, self.ParticleAngleVelocity.z))
 
-					particle.Align = self.Align
-					particle.Stick = self.Stick
-					particle.StickLifeTime = self.StickLifeTime
+					particle.ParticleAngle = self.ParticleAngle
+					particle.Align = self.AlignToSurface
+					particle.Stick = self.StickToSurface
+					particle.StickLifeTime = self.StickLifetime
 					particle.StickStartSize = self.StickStartSize
 					particle.StickEndSize = self.StickEndSize
 					particle.StickStartAlpha = self.StickStartAlpha
