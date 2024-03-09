@@ -493,14 +493,14 @@ for i=1,5,1 do
 	PART.Inputs["var" .. i] = function(self, uid1)
 		if not uid1 then
 			return self["feedback_extra" .. i]
-		elseif self["extra_referred_part"..i] then --a thing to skip part searching when we found the part
-			return self["extra_referred_part"..i]["feedback_extra" .. i]
+		elseif self.last_extra_feedbacks[i][uid1] then --a thing to skip part searching when we found the part
+			return self.last_extra_feedbacks[i][uid1]["feedback_extra" .. i] or 0
 		else
 			local owner = self:GetPlayerOwner()
 			local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
 			if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
 			if IsValid(PartA) and PartA.ClassName == "proxy" then
-				self["extra_referred_part"..i] = PartA
+				self.last_extra_feedbacks[i][uid1] = PartA
 			end
 		end
 		return 0
@@ -1282,6 +1282,13 @@ function PART:SetExpression(str, slot)
 		self["Extra" .. slot .. "Func"] = nil
 		self.has_extras = true
 	end
+	self.last_extra_feedbacks = {
+		[1] = {},
+		[2] = {},
+		[3] = {},
+		[4] = {},
+		[5] = {},
+	}
 
 	if str and str ~= "" then
 		local lib = {}
