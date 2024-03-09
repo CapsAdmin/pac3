@@ -119,18 +119,23 @@ function PART:SetEvent(event)
 	local reset = (self.Arguments == "") or
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 
-	if not self.Events[event] then --invalid event? try a command event
-		if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
-			timer.Simple(0.2, function()
-				if not self.pace_properties or self ~= pace.current_part then return end
-				--now we'll use event as a command name
-				self:SetEvent("command")
-				self.pace_properties["Event"]:SetValue("command")
-				self:SetArguments(event .. "@@0")
-				self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
-				pace.PopulateProperties(self)
-			end)
-			return
+	local owner = self:GetPlayerOwner()
+
+	if owner == pac.LocalPlayer then
+		if event == "command" then owner.pac_command_events = owner.pac_command_events or {} end
+		if not self.Events[event] then --invalid event? try a command event
+			if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
+				timer.Simple(0.2, function()
+					if not self.pace_properties or self ~= pace.current_part then return end
+					--now we'll use event as a command name
+					self:SetEvent("command")
+					self.pace_properties["Event"]:SetValue("command")
+					self:SetArguments(event .. "@@0")
+					self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
+					pace.PopulateProperties(self)
+				end)
+				return
+			end
 		end
 	end
 
@@ -142,14 +147,16 @@ function PART:SetEvent(event)
 	self:fix_event_operator()
 	self:fix_args()
 
-	pace.changed_event = self --a reference to make it refresh the popup label panel
-	pace.changed_event_time = CurTime()
+	if owner == pac.LocalPlayer then
+		pace.changed_event = self --a reference to make it refresh the popup label panel
+		pace.changed_event_time = CurTime()
 
-	if self == pace.current_part and GetConVar("pac_copilot_make_popup_when_selecting_event"):GetBool() then self:AttachEditorPopup() end --don't flood the popup system with superfluous requests when loading an outfit
+		if self == pace.current_part and GetConVar("pac_copilot_make_popup_when_selecting_event"):GetBool() then self:AttachEditorPopup() end --don't flood the popup system with superfluous requests when loading an outfit
 
-	self:GetDynamicProperties(reset)
-	if not GetConVar("pac_editor_remember_divider_height"):GetBool() and IsValid(pace.Editor) then pace.Editor.div:SetTopHeight(ScrH() - 520) end
+		self:GetDynamicProperties(reset)
+		if not GetConVar("pac_editor_remember_divider_height"):GetBool() and IsValid(pace.Editor) then pace.Editor.div:SetTopHeight(ScrH() - 520) end
 
+	end
 end
 
 function PART:Initialize()
