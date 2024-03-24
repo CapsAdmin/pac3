@@ -24,6 +24,7 @@ function PART:OnWorn()
 end
 
 function PART:OnShow(from_rendering)
+	if not pace.still_loading_wearing then return end
 	if not from_rendering and self:GetExecuteOnShow() then
 		timer.Simple(0, function()
 			if self.Hide or self:IsHidden() then return end

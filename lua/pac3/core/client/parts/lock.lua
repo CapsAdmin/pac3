@@ -327,6 +327,7 @@ function PART:OnShow()
 	end)
 	if self.Mode == "Teleport" then
 		if not GetConVar('pac_sv_lock_teleport'):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
+		if pace.still_loading_wearing then return end
 		self.target_ent = nil
 
 		local ang_yaw_only = self:GetWorldAngles()
