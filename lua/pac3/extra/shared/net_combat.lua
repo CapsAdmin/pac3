@@ -461,7 +461,16 @@ if SERVER then
 
 	local function AddDamageScale(ply, id,scale, part_uid)
 		ply.pac_damage_scalings = ply.pac_damage_scalings or {}
-		ply.pac_damage_scalings[part_uid] = {scale = scale, id = id, uid = part_uid}
+		if id == "" then --no mod id = part uid mode, don't overwrite another part
+			ply.pac_damage_scalings[part_uid] = {scale = scale, id = id, uid = part_uid}
+		else --mod id = try to remove competing parts whose multipliers have the same mod id
+			for existing_uid,tbl in pairs(ply.pac_damage_scalings) do
+				if tbl.id == id then
+					ply.pac_damage_scalings[existing_uid] = nil
+				end
+			end
+			ply.pac_damage_scalings[part_uid] = {scale = scale, id = id, uid = part_uid}
+		end
 	end
 
 	local function FixMaxHealths(ply)
