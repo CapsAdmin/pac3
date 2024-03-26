@@ -143,7 +143,7 @@ if SERVER then
 	
 	local function NPCDispositionAllowsIt(ply, ent)
 
-		if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return true end
+		if not (ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity) or not ent.Disposition then return true end
 
 		if not friendly_NPC_preferences[ply] then return true end
 
@@ -162,7 +162,7 @@ if SERVER then
 	end
 
 	local function NPCDispositionIsFilteredOut(ply, ent, friendly, neutral, hostile)
-		if not (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity) or not ent.Disposition then return false end
+		if not (ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity) or not ent.Disposition then return false end
 		local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
 
 		if relationship_friendliness == 0 then --it hostile
@@ -864,7 +864,7 @@ if SERVER then
 					--1.player hurt self if asked
 				local is_player = ent:IsPlayer()
 				local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon())
-				local is_npc = ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity
+				local is_npc = ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity
 
 				if (tbl.AffectSelf) and ent == inflictor then
 					canhit = true
@@ -910,7 +910,7 @@ if SERVER then
 		end
 
 		local function IsLiving(ent) --players and NPCs
-			return ent:IsPlayer() or (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity)
+			return ent:IsPlayer() or (ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity)
 		end
 
 		--final action to apply the DamageInfo
@@ -1171,7 +1171,7 @@ if SERVER then
 			local owner = Try_CPPIGetOwner(ent)
 			local is_player = ent:IsPlayer()
 			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
-			local is_npc = ent.IsVJBaseSNPC or ent.IsDRGEntity or string.find(ent:GetClass(), "npc") or ent:IsNPC()
+			local is_npc = ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity
 
 
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
@@ -1185,7 +1185,7 @@ if SERVER then
 				local is_phys = true
 				if ent_getphysobj ~= nil then
 					phys_ent = ent_getphysobj
-					if (string.find(ent:GetClass(), "npc") ~= nil) then
+					if is_npc then
 						phys_ent = ent
 					end
 				else
@@ -1276,7 +1276,7 @@ if SERVER then
 					end
 				end
 				if is_phys and tbl.AccountMass then
-					if not (string.find(ent:GetClass(), "npc") ~= nil) then
+					if not is_npc then
 						addvel = addvel * (1 / math.max(mass,0.1))
 					else
 						addvel = addvel
@@ -1340,11 +1340,20 @@ if SERVER then
 				elseif is_npc then
 					if tbl.NPC then
 						if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
+							if ent.IsDrGEntity then --welcome to episode 40 of intercompatibility hackery
+								phys_ent = ent.loco
+								local jumpHeight = ent.loco:GetJumpHeight()
+								ent.loco:SetJumpHeight(1)
+								ent.loco:Jump()
+								ent.loco:SetJumpHeight(jumpHeight)
+							end
 							if IsValid(phys_ent) and phys_ent:GetVelocity():Length() > 500 then
 								local vec = oldvel + addvel
 								local clamp_vec = vec:GetNormalized()*500
 								ent:SetVelocity(Vector(0.7 * clamp_vec.x,0.7 * clamp_vec.y,clamp_vec.z)*math.Clamp(1.5*(pos - ent_center):Length()/tbl.Radius,0,1)) --more jank, this one is to prevent some of the weird sliding of npcs by lowering the force as we get closer
-							else ent:SetVelocity((oldvel * final_damping) + addvel) end
+							else
+								ent:SetVelocity((oldvel * final_damping) + addvel)
+							end
 						end
 					end
 
@@ -2059,6 +2068,9 @@ if SERVER then
 					targ_ent.lock_state_applied = true
 				end
 				ApplyLockState(targ_ent, true, no_collide)
+				if targ_ent.IsDrGEntity then
+					targ_ent.loco:SetVelocity(Vector(0,0,0)) --counter gravity speed buildup
+				end
 				if targ_ent:GetClass() == "prop_ragdoll" then targ_ent:GetPhysicsObject():SetPos(pos) end
 
 				--@@note lock assignation! IMPORTANT
