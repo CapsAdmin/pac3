@@ -72,6 +72,7 @@ if SERVER then
 		["prop_physics"] = true,
 		["weapon_striderbuster"] = true,
 		["item_item_crate"] = true,
+		["npc_satchel"] = true,
 		["func_breakable_surf"] = true,
 		["func_breakable"] = true,
 		["physics_cannister"] = true
@@ -140,10 +141,13 @@ if SERVER then
 		[4] = 1,	--D_NU Neutral
 	}
 	
+	local function Is_NPC(ent)
+		return ent:IsNPC() or ent:IsNextBot() or ent.IsDrGEntity or ent.IsVJBaseSNPC
+	end
 	
 	local function NPCDispositionAllowsIt(ply, ent)
 
-		if not (ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity) or not ent.Disposition then return true end
+		if not Is_NPC(ent) or not ent.Disposition then return true end
 
 		if not friendly_NPC_preferences[ply] then return true end
 
@@ -162,7 +166,7 @@ if SERVER then
 	end
 
 	local function NPCDispositionIsFilteredOut(ply, ent, friendly, neutral, hostile)
-		if not (ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity) or not ent.Disposition then return false end
+		if not Is_NPC(ent) or not ent.Disposition then return false end
 		local relationship_friendliness = disposition_friendliness_level[ent:Disposition(ply)]
 
 		if relationship_friendliness == 0 then --it hostile
@@ -289,10 +293,8 @@ if SERVER then
 	local function IsPossibleContraptionEntity(ent)
 		if not IsValid(ent) then return false end
 		local b = (string.find(ent:GetClass(), "phys") ~= nil
-		or string.find(ent:GetClass(), "anchor") ~= nil
-		or string.find(ent:GetClass(), "rope") ~= nil
-		or string.find(ent:GetClass(), "gmod") ~= nil)
-		--print("entity", ent, "contraption?", b)
+		or string.find(ent:GetClass(), "gmod") ~= nil
+		or ent:IsConstraint())
 		return b
 	end
 
@@ -746,8 +748,9 @@ if SERVER then
 		local ply_count = 0
 		local ply_prog_count = 0
 		for i,v in pairs(ents_hits) do
-			if not (v:IsPlayer() or v:IsNPC() or string.find(v:GetClass(), "npc_")) and not tbl.PointEntities then ents_hits[i] = nil end
+			if not (v:IsPlayer() or Is_NPC(v)) and not tbl.PointEntities then ents_hits[i] = nil end
 			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
+			if v:IsConstraint() then ents_hits[i] = nil end
 
 			if not NPCDispositionAllowsIt(ply, v) then ents_hits[i] = nil end
 			if NPCDispositionIsFilteredOut(ply,v, tbl.FilterFriendlies, tbl.FilterNeutrals, tbl.FilterHostiles) then ents_hits[i] = nil end
@@ -863,8 +866,8 @@ if SERVER then
 				--second pass: the damagezone's settings
 					--1.player hurt self if asked
 				local is_player = ent:IsPlayer()
-				local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon())
-				local is_npc = ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity
+				local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_"))
+				local is_npc = Is_NPC(ent)
 
 				if (tbl.AffectSelf) and ent == inflictor then
 					canhit = true
@@ -910,7 +913,7 @@ if SERVER then
 		end
 
 		local function IsLiving(ent) --players and NPCs
-			return ent:IsPlayer() or (ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity)
+			return ent:IsPlayer() or Is_NPC(ent)
 		end
 
 		--final action to apply the DamageInfo
@@ -1063,7 +1066,6 @@ if SERVER then
 
 		--look through each entity
 		for _,ent in pairs(ents_hits) do
-
 			local canhit = DMGAllowed(ent)
 			local oldhp = ent:Health()
 			if canhit then
@@ -1160,10 +1162,10 @@ if SERVER then
 		for i,v in pairs(ents_hits) do
 			if v.CPPICanPickup and not v:CPPICanPickup(ply) then ents_hits[i] = nil end
 			if v.CPPICanPunt and not v:CPPICanPunt(ply) then ents_hits[i] = nil end
-			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectSelf)) then ents_hits[i] = nil
+			if v:IsConstraint() then ents_hits[i] = nil end
+			if pre_excluded_ent_classes[v:GetClass()] or (Is_NPC(v) and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectSelf)) then ents_hits[i] = nil
 			else ent_count = ent_count + 1 end
 		end
-
 		if TooManyEnts(ent_count) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
 		for _,ent in pairs(ents_hits) do
 			local phys_ent
@@ -1171,7 +1173,7 @@ if SERVER then
 			local owner = Try_CPPIGetOwner(ent)
 			local is_player = ent:IsPlayer()
 			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
-			local is_npc = ent:IsNPC() or (string.find(ent:GetClass(), "npc") ~= nil) or ent.IsVJBaseSNPC or ent.IsDrGEntity
+			local is_npc = Is_NPC(ent)
 
 
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
