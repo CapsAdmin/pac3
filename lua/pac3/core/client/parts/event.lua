@@ -2166,6 +2166,7 @@ PART.OldEvents = {
 							return true
 						end
 					end
+					self:SetError()
 				else
 					self:SetError("You set a UID that's not a damage zone!")
 				end
@@ -2213,6 +2214,7 @@ PART.OldEvents = {
 							return true
 						end
 					end
+					self:SetError()
 				else
 					self:SetError("You set a UID that's not a damage zone!")
 				end
@@ -2263,6 +2265,7 @@ PART.OldEvents = {
 					if part.grabbing then
 						return IsValid(part.target_ent)
 					end
+					self:SetError()
 				else
 					self:SetError("You set a UID that's not a lock part!")
 				end
