@@ -440,6 +440,52 @@ PART.OldEvents = {
 		end,
 	},
 
+	is_no_draw = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:GetNoDraw()
+		end,
+	},
+	
+	is_no_target = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:IsFlagSet( FL_NOTARGET )
+		end,
+	},
+
+	get_networked_string = {
+		arguments = {{name = "string"}, {result = "string"}},
+		callback = function(self, ent, name, result)
+				ent = try_viewmodel(ent)
+				return ent:GetNWString(tostring(name)) == tostring(result)
+		end,
+	},
+	
+	get_networked_int = {
+		arguments = {{name = "string"}, {num = "number"}},
+		callback = function(self, ent, name, num)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:GetNWInt(tostring(name), num))
+		end,
+	},
+
+	get_networked_bool = {
+		arguments = {{name = "string"}, {bool = "string"}},
+		callback = function(self, ent, name, bool)
+				ent = try_viewmodel(ent)
+				return ent:GetNWBool(tostring(name)) == tobool(bool)
+		end,
+	},
+	
+	get_networked_float = {
+		arguments = {{name = "string"}, {float = "number"}},
+		callback = function(self, ent, name, float)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:GetNWFloat(tostring(name), float))
+		end,
+	},
+	
 	is_on_fire = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
