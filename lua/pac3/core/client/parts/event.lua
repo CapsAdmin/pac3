@@ -746,27 +746,20 @@ PART.OldEvents = {
 		get_networked = {
 		arguments = {{name = "string"}, {result = "string"}},
 		userdata = {{enums = function()
-			local base_tbl = LocalPlayer():GetNWVarTable()
-			local enum_tbl = {}
-			for k,v in pairs(base_tbl) do
-				enum_tbl[k] = k
-			end
-			return enum_tbl
+			return LocalPlayer():GetNWVarTable()
 		end}},
 		
 		callback = function(self, ent, name, result)
-				ent = try_viewmodel(ent)
-				
-				if ent:GetNWString(tostring(name)) == tostring(result) then
-					return ent:GetNWString(tostring(name)) == tostring(result)
-				elseif ent:GetNWInt(tostring(name)) == result then
-					return self:NumberOperator(ent:GetNWInt(tostring(name), result))
-				elseif ent:GetNWBool(tostring(name)) == tobool(result) then
-					return ent:GetNWBool(tostring(name)) == tobool(result)
-				elseif ent:GetNWFloat(tostring(name)) == result then
-					return self:NumberOperator(ent:GetNWFloat(tostring(name), result))
-				end
-				return false
+			ent = try_viewmodel(ent)
+			local anyvar = ent:GetNWVarTable()[name]
+					
+			if isstring(anyvar) then
+				return self:StringOperator(anyvar, result)
+			elseif isnumber(anyvar) then
+				return self:NumberOperator(anyvar, tonumber(result) or 0)
+			elseif isbool(anyvar) then
+				return anyvar == tobool(result)
+			end
 		end,
 	},
 
@@ -787,20 +780,39 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, name, result)
 				ent = try_viewmodel(ent)
-				return ent:GetNWString(tostring(name)) == tostring(result)
+				return StringOperator(ent:GetNWString(tostring(name)), tostring(result))
 		end,
 	},
 	
 	get_networked_int = {
-		arguments = {{name = "string"}, {num = "number"}},
+		arguments = {{name = "string"}, {num = "number"}},		
+		userdata = {{enums = function()
+			local base_tbl = LocalPlayer():GetNWVarTable()
+			local enum_tbl = {}
+			for k,v in pairs(base_tbl) do
+				if isnumber(v) then
+					enum_tbl[k] = k
+				end
+			end
+			return enum_tbl
+		end}},
 		callback = function(self, ent, name, num)
 				ent = try_viewmodel(ent)
-				return self:NumberOperator(ent:GetNWInt(tostring(name), num))
+				return self:NumberOperator(ent:GetNWInt(tostring(name)), tonumber(num))
 		end,
 	},
 
 	get_networked_bool = {
 		arguments = {{name = "string"}, {bool = "string"}},
+			local base_tbl = LocalPlayer():GetNWVarTable()
+			local enum_tbl = {}
+			for k,v in pairs(base_tbl) do
+				if isbool(v) then
+					enum_tbl[k] = k
+				end
+			end
+			return enum_tbl
+		end}},
 		callback = function(self, ent, name, bool)
 				ent = try_viewmodel(ent)
 				return ent:GetNWBool(tostring(name)) == tobool(bool)
@@ -809,9 +821,18 @@ PART.OldEvents = {
 	
 	get_networked_float = {
 		arguments = {{name = "string"}, {float = "number"}},
+		local base_tbl = LocalPlayer():GetNWVarTable()
+		local enum_tbl = {}
+			for k,v in pairs(base_tbl) do
+				if isnumber(v) then
+					enum_tbl[k] = k
+				end
+			end
+			return enum_tbl
+		end}},
 		callback = function(self, ent, name, float)
 				ent = try_viewmodel(ent)
-				return self:NumberOperator(ent:GetNWFloat(tostring(name), float))
+				return self:NumberOperator(ent:GetNWFloat(tostring(name)), tonumber(float))
 		end,
 	},
 
