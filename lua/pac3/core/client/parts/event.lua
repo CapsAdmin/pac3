@@ -780,7 +780,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, name, result)
 				ent = try_viewmodel(ent)
-				return StringOperator(ent:GetNWString(tostring(name)), tostring(result))
+				return self:StringOperator(ent:GetNWString(tostring(name)), tostring(result))
 		end,
 	},
 	
