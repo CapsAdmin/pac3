@@ -723,6 +723,99 @@ PART.OldEvents = {
 		end,
 	},
 
+
+	is_no_draw = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:GetNoDraw()
+		end,
+	},
+	
+	is_no_target = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:IsFlagSet( FL_NOTARGET )
+		end,
+	},
+
+
+	// This is a function to grab any and all network variables and try to run them with the correct type, as it's possible to have GetNWInt("Pac", 1) and "GetNWString("Pac" ValueHere") 
+	// This code is designed to try and run things correctly and detect specific types of Network Variables, Since GetNWVar does not have the varable display in the table, but GetNW2var does.
+	// It's also useful if a player doesn't know what the displayed function is as a Networked Variable.
+
+		get_networked = {
+		arguments = {{name = "string"}, {result = "string"}},
+		userdata = {{enums = function()
+			local base_tbl = LocalPlayer():GetNWVarTable()
+			local enum_tbl = {}
+			for k,v in pairs(base_tbl) do
+				enum_tbl[k] = k
+			end
+			return enum_tbl
+		end}},
+		
+		callback = function(self, ent, name, result)
+				ent = try_viewmodel(ent)
+				
+				if ent:GetNWString(tostring(name)) == tostring(result) then
+					return ent:GetNWString(tostring(name)) == tostring(result)
+				elseif ent:GetNWInt(tostring(name)) == result then
+					return self:NumberOperator(ent:GetNWInt(tostring(name), result))
+				elseif ent:GetNWBool(tostring(name)) == tobool(result) then
+					return ent:GetNWBool(tostring(name)) == tobool(result)
+				elseif ent:GetNWFloat(tostring(name)) == result then
+					return self:NumberOperator(ent:GetNWFloat(tostring(name), result))
+				end
+				return false
+		end,
+	},
+
+	//These are left in so that if a player knows what a variable is as a network, they can manually and directly get it
+	//In the rare event the operation above has two of the same named variabels (which is rare and stupid, but can happen, so it's better to nip it in the butt instead of trying to argue over it.)
+			
+	get_networked_string = {
+		arguments = {{name = "string"}, {result = "string"}},
+		userdata = {{enums = function()
+			local base_tbl = LocalPlayer():GetNWVarTable()
+			local enum_tbl = {}
+			for k,v in pairs(base_tbl) do
+				if isstring(v) then
+					enum_tbl[k] = k
+				end
+			end
+			return enum_tbl
+		end}},
+		callback = function(self, ent, name, result)
+				ent = try_viewmodel(ent)
+				return ent:GetNWString(tostring(name)) == tostring(result)
+		end,
+	},
+	
+	get_networked_int = {
+		arguments = {{name = "string"}, {num = "number"}},
+		callback = function(self, ent, name, num)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:GetNWInt(tostring(name), num))
+		end,
+	},
+
+	get_networked_bool = {
+		arguments = {{name = "string"}, {bool = "string"}},
+		callback = function(self, ent, name, bool)
+				ent = try_viewmodel(ent)
+				return ent:GetNWBool(tostring(name)) == tobool(bool)
+		end,
+	},
+	
+	get_networked_float = {
+		arguments = {{name = "string"}, {float = "number"}},
+		callback = function(self, ent, name, float)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:GetNWFloat(tostring(name), float))
+		end,
+	},
+
+	
 	client_spawned = {
 		operator_type = "number", preferred_operator = "below",
 		tutorial_explanation = "client_spawned supposedly activates for some time after you spawn",
