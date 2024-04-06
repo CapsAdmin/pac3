@@ -739,9 +739,9 @@ PART.OldEvents = {
 	},
 
 
-	// This is a function to grab any and all network variables and try to run them with the correct type, as it's possible to have GetNWInt("Pac", 1) and "GetNWString("Pac" ValueHere") 
-	// This code is designed to try and run things correctly and detect specific types of Network Variables, Since GetNWVar does not have the varable display in the table, but GetNW2var does.
-	// It's also useful if a player doesn't know what the displayed function is as a Networked Variable.
+	-- This is a function to grab any and all network variables and try to run them with the correct type, as it's possible to have GetNWInt("Pac", 1) and "GetNWString("Pac" ValueHere") 
+	-- This code is designed to try and run things correctly and detect specific types of Network Variables, Since GetNWVar does not have the varable display in the table, but GetNW2var does.
+	-- It's also useful if a player doesn't know what the displayed function is as a Networked Variable.
 
 		get_networked = {
 		arguments = {{name = "string"}, {result = "string"}},
@@ -763,8 +763,8 @@ PART.OldEvents = {
 		end,
 	},
 
-	//These are left in so that if a player knows what a variable is as a network, they can manually and directly get it
-	//In the rare event the operation above has two of the same named variabels (which is rare and stupid, but can happen, so it's better to nip it in the butt instead of trying to argue over it.)
+	-- These are left in so that if a player knows what a variable is as a network, they can manually and directly get it
+	-- Only for the rare event the operation above has two of the same named variabels, or is using only numbers, or bools (which is rare and stupid, but can happen, so it's better to nip it in the butt instead of trying to argue over it.)
 			
 	get_networked_string = {
 		arguments = {{name = "string"}, {result = "string"}},
