@@ -804,6 +804,7 @@ PART.OldEvents = {
 
 	get_networked_bool = {
 		arguments = {{name = "string"}, {bool = "string"}},
+		userdata = {{enums = function()
 			local base_tbl = LocalPlayer():GetNWVarTable()
 			local enum_tbl = {}
 			for k,v in pairs(base_tbl) do
@@ -821,6 +822,7 @@ PART.OldEvents = {
 	
 	get_networked_float = {
 		arguments = {{name = "string"}, {float = "number"}},
+		userdata = {{enums = function()
 		local base_tbl = LocalPlayer():GetNWVarTable()
 		local enum_tbl = {}
 			for k,v in pairs(base_tbl) do
