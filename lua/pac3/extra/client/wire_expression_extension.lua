@@ -31,14 +31,24 @@ local function SetKeyValue(ply, ent, unique_id, key, val)
 	end
 end
 
-net.Receive("pac_e2_setkeyvalue_str", function()
+net.Receive("pac_e2_setkeyvalue", function()
 	local ply = net.ReadEntity()
 
 	if ply:IsValid() then
 		local ent = net.ReadEntity()
 		local id = net.ReadString()
 		local key = net.ReadString()
-		local val = net.ReadString()
+		local type = net.ReadUInt(2) ---@type pac.E2.NetID
+		local val
+		if type == 0 then
+			val = net.ReadString()
+		elseif type == 1 then
+			val = net.ReadFloat()
+		elseif type == 2 then
+			val = net.ReadVector()
+		else
+			val = net.ReadAngle()
+		end
 
 		SetKeyValue(ply, ent, id, key, val)
 	end
