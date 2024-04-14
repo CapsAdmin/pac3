@@ -28,7 +28,7 @@ local function canRunFunction(self, g, k, v)
 
 	if not enabledConvar:GetBool() then return true end
 
-	local allowed = pac.RatelimitPlayer(self.player, "e2_extension", buffer:GetInt(), rate:GetInt())
+	local allowed = pac.RatelimitPlayer(self.player, "e2_extension", buffer:GetInt(), rate:GetFloat())
 	if not allowed then
 		return self:throw("pac3 e2 ratelimit exceeded", false)
 	end
