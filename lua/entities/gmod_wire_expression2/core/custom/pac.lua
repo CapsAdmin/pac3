@@ -3,8 +3,8 @@ E2Lib.RegisterExtension("pac", true)
 util.AddNetworkString("pac_e2_setkeyvalue")
 
 local enabledConvar = CreateConVar("pac_e2_ratelimit_enable", "1", FCVAR_ARCHIVE, "If the e2 ratelimit should be enabled.", 0, 1)
-local rate = CreateConVar("pac_e2_ratelimit_refill", "0.025", FCVAR_ARCHIVE, "The speed at which the ratelimit buffer refills.", 0, 1000)
-local buffer = CreateConVar("pac_e2_ratelimit_buffer", "300", FCVAR_ARCHIVE, "How large the ratelimit buffer should be.", 0, 1000)
+local rate = CreateConVar("pac_e2_ratelimit_refill", "0.025", FCVAR_ARCHIVE, "The amount at which the ratelimit buffer refills per second.", 0, 1000)
+local buffer = CreateConVar("pac_e2_ratelimit_buffer", "300", FCVAR_ARCHIVE, "How many PAC E2 operations are allowed before the rate limit is hit.", 0, 1000)
 local bytes = CreateConVar("pac_e2_bytelimit", "2048", FCVAR_ARCHIVE, "Limit number of bytes sent per second for PAC E2 messages.", 0, 65532)
 
 local byteLimits = WireLib.RegisterPlayerTable()
