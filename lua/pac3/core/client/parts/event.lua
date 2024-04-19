@@ -1463,7 +1463,7 @@ PART.OldEvents = {
 		tutorial_explanation = "fire_bullets supposedly checks what types of bullets you're firing",
 		arguments = {{find_ammo = "string"}, {time = "number"}},
 		callback = function(self, ent, find_ammo, time)
-			local time = time or 0.1
+			time = time or 0.1
 
 			ent = try_viewmodel(ent)
 
