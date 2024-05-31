@@ -358,7 +358,7 @@ do -- projectile entity
 				if self.part_data.DamageType == "heal" then
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-							if ent ~= ply or self.part_data.CollideWithOwner then
+							if (ent ~= ply or self.part_data.CollideWithOwner) and ent:Health() < ent:GetMaxHealth() then
 								ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
 							end
 						end
@@ -369,8 +369,9 @@ do -- projectile entity
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
 							if ent.SetArmor and ent.Armor then
-								if ent ~= ply or self.part_data.CollideWithOwner then
-									ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+								local maxArmor = ent.GetMaxArmor and ent:GetMaxArmor() or 100
+								if (ent ~= ply or self.part_data.CollideWithOwner) and ent:Armor() < maxArmor then
+									ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, maxArmor))
 								end
 							end
 						end
