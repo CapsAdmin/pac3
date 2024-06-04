@@ -1059,10 +1059,8 @@ do
 				self:Remove()
 
 				local count = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
-				local offset = remove_i >= count and count - 1 or remove_i
-				timer.Simple(0, function()
-					timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
-				end)
+				local offset = remove_i >= count and count - 1 or remove_i + 1
+				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
 			end):SetImage("icon16/page_delete.png")
 
 			menu:AddOption(L"set easing style", function()
