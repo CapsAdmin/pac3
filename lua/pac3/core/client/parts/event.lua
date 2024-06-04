@@ -1918,9 +1918,10 @@ PART.OldEvents = {
 	is_sitting = {
 		operator_type = "none",
 		callback = function(self, ent)
-			if not ent:GetVehicle() then return false end
-			if ent.GetSitting then return (IsValid(ent:GetVehicle()) or ent:GetSitting()) and ent:GetVehicle():GetModel() ~= "models/vehicles/prisoner_pod_inner.mdl" end --sit anywhere script
-			return IsValid(ent:GetVehicle()) and ent:GetVehicle():GetModel() ~= "models/vehicles/prisoner_pod_inner.mdl" --no prison pod!
+			if not ent:IsPlayer() then return false end
+			local vehicle = ent:GetVehicle()
+			if ent.GetSitting then return ent:GetSitting() end --sit anywhere script
+			return IsValid(vehicle) and vehicle:GetModel() ~= "models/vehicles/prisoner_pod_inner.mdl" --no prison pod!
 		end
 	},
 
