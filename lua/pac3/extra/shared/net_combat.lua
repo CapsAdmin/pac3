@@ -77,7 +77,7 @@ if SERVER then
 		["func_breakable"] = true,
 		["physics_cannister"] = true
 	}
-	
+
 	local physics_point_ent_classes = {
 		["prop_physics"] = true,
 		["prop_physics_multiplayer"] = true,
@@ -88,11 +88,11 @@ if SERVER then
 		["func_breakable"] = true,
 		["physics_cannister"] = true
 	}
-	
+
 	local contraption_classes = {
 		["prop_physics"] = true,
 	}
-	
+
 	local pre_excluded_ent_classes = {
 		["info_player_start"] = true,
 		["aoc_spawnpoint"] = true,
@@ -120,8 +120,8 @@ if SERVER then
 		["env_soundscape_proxy"] = true,
 		["gmod_hands"] = true,
 	}
-	
-	
+
+
 	local grab_consents = {}
 	local damage_zone_consents = {}
 	local force_consents = {}
@@ -129,8 +129,8 @@ if SERVER then
 	local calcview_consents = {}
 	local active_force_ids = {}
 	local active_grabbed_ents = {}
-	
-	
+
+
 	local friendly_NPC_preferences = {}
 	--we compare player's preference with the disposition's overall "friendliness". if relationship is more friendly than the preference, do not affect
 	local disposition_friendliness_level = {
@@ -140,11 +140,11 @@ if SERVER then
 		[3] = 2,	--D_LI Like
 		[4] = 1,	--D_NU Neutral
 	}
-	
+
 	local function Is_NPC(ent)
 		return ent:IsNPC() or ent:IsNextBot() or ent.IsDrGEntity or ent.IsVJBaseSNPC
 	end
-	
+
 	local function NPCDispositionAllowsIt(ply, ent)
 
 		if not Is_NPC(ent) or not ent.Disposition then return true end
@@ -177,7 +177,7 @@ if SERVER then
 			return not friendly
 		end
 	end
-	
+
 	local damage_types = {
 		generic = 0, --generic damage
 		crush = 1, --caused by physics interaction
@@ -210,19 +210,19 @@ if SERVER then
 		radiation = 262144, --radiation
 		removenoragdoll = 4194304, --don't create a ragdoll on death
 		slowburn = 2097152, --
-	
+
 		fire = -1, -- ent:Ignite(5)
-	
+
 		-- env_entity_dissolver
 		dissolve_energy = 0,
 		dissolve_heavy_electrical = 1,
 		dissolve_light_electrical = 2,
 		dissolve_core_effect = 3,
-	
+
 		heal = -1,
 		armor = -1,
 	}
-	
+
 	local function CountNetMessage(ply)
 		local stime = SysTime()
 		local ms_basis = enforce_netrate:GetInt()/1000
@@ -948,32 +948,37 @@ if SERVER then
 
 			end
 
+			--this may benefit from some flattening treatment, lotta pyramids over here
 			if tbl.DamageType == "heal" then
-				if tbl.ReverseDoNotKill then --don't heal if health is below critical
-					if ent:Health() > tbl.CriticalHealth then --default behavior
-						ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
-					end --else do nothing
-				else
-					if tbl.DoNotKill then --stop healing at the critical health
-						if ent:Health() < tbl.CriticalHealth then
-							ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.min(tbl.CriticalHealth, ent:GetMaxHealth())))
-						end --else do nothing, we're already above critical
+				if ent:Health() < ent:GetMaxHealth() then
+					if tbl.ReverseDoNotKill then --don't heal if health is below critical
+						if ent:Health() > tbl.CriticalHealth then --default behavior
+							ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
+						end --else do nothing
 					else
-						ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
+						if tbl.DoNotKill then --stop healing at the critical health
+							if ent:Health() < tbl.CriticalHealth then
+								ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.min(tbl.CriticalHealth, ent:GetMaxHealth())))
+							end --else do nothing, we're already above critical
+						else
+							ent:SetHealth(math.min(ent:Health() + tbl.Damage, math.max(ent:Health(), ent:GetMaxHealth())))
+						end
 					end
 				end
 			elseif tbl.DamageType == "armor" then
-				if tbl.ReverseDoNotKill then --don't heal if armor is below critical
-					if ent:Armor() > tbl.CriticalHealth then --default behavior
-						ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
-					end --else do nothing
-				else
-					if tbl.DoNotKill then --stop healing at the critical health
-						if ent:Armor() < tbl.CriticalHealth then
-							ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.min(tbl.CriticalHealth, ent:GetMaxArmor())))
-						end --else do nothing, we're already above critical
+				if ent:Armor() < ent:GetMaxArmor() then
+					if tbl.ReverseDoNotKill then --don't heal if armor is below critical
+						if ent:Armor() > tbl.CriticalHealth then --default behavior
+							ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
+						end --else do nothing
 					else
-						ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
+						if tbl.DoNotKill then --stop healing at the critical health
+							if ent:Armor() < tbl.CriticalHealth then
+								ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.min(tbl.CriticalHealth, ent:GetMaxArmor())))
+							end --else do nothing, we're already above critical
+						else
+							ent:SetArmor(math.min(ent:Armor() + tbl.Damage, math.max(ent:Armor(), ent:GetMaxArmor())))
+						end
 					end
 				end
 			else
@@ -2256,17 +2261,25 @@ if SERVER then
 
 					if bulletinfo.dmgtype_str == "heal" then
 						dmg:SetDamageType(0)
-						ent:SetHealth(math.min(ent:Health() + fraction * dmg:GetDamage(), math.max(ent:Health(), ent:GetMaxHealth())))
+
+						if ent:Health() < ent:GetMaxHealth() then
+							ent:SetHealth(math.min(ent:Health() + fraction * dmg:GetDamage(), math.max(ent:Health(), ent:GetMaxHealth())))
+						end
+
 						dmg:SetDamage(0)
 						return
 					elseif bulletinfo.dmgtype_str == "armor" then
 						dmg:SetDamageType(0)
-						ent:SetArmor(math.min(ent:Armor() + fraction * dmg:GetDamage(), math.max(ent:Armor(), ent:GetMaxArmor())))
+
+						if ent:Armor() < ent:GetMaxArmor() then
+							ent:SetArmor(math.min(ent:Armor() + fraction * dmg:GetDamage(), math.max(ent:Armor(), ent:GetMaxArmor())))
+						end
+
 						dmg:SetDamage(0)
 						return
 					end
 					if bulletinfo.DamageFalloff and trc.Hit and IsValid(trc.Entity) then
-						if not bulletinfo.dmgtype_str == "heal" and not bulletinfo.dmgtype_str == "armor" then
+						if bulletinfo.dmgtype_str ~= "heal" and bulletinfo.dmgtype_str ~= "armor" then
 							dmg:SetDamage(fraction * dmg:GetDamage())
 						end
 					end
@@ -2439,7 +2452,7 @@ if SERVER then
 			end
 			ReinitializeCombatReceivers()
 		end
-		
+
 	end)
 
 	util.AddNetworkString("pac_request_blocked_parts_reinitialization")
@@ -2457,12 +2470,12 @@ if SERVER then
 		net.WriteTable(FINAL_BLOCKED_COMBAT_FEATURES)
 		net.Send(ply)
 	end)
-	
+
 end
 
 if CLIENT then
 	killicon.Add( "pac_bullet_emitter", "icon16/user_gray.png", Color(255,255,255) )
-	
+
 	concommand.Add("pac_sv_reinitialize_missing_combat_parts_remotely", function(ply)
 		if IsValid(ply) then
 			if not ply:IsAdmin() then
