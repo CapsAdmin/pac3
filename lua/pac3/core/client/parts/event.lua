@@ -3380,7 +3380,9 @@ end)
 pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_has_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
-
+	if ent.pac_hide_bullets then
+		return false
+	end
 	pac.CallRecursiveOnAllParts("OnFireBullets")
 end)
 
