@@ -16,17 +16,17 @@ local math_min = math.min
 local math_cos = math.cos
 local math_pi = math.pi
 
+local black = Color(0,0,0,100)
+local vector_add = Vector(0, 2.5, 0)
+
 local mtVector =  FindMetaTable("Vector")
-local mtColor = FindMetaTable("Color")
+local mtColor = getmetatable(black)
 local render_startBeam = render.StartBeam
 local render_endBeam = render.EndBeam
 local render_addBeam = render.AddBeam
 local setVecUnpacked = mtVector.SetUnpacked
 local setColUnpacked = mtColor.SetUnpacked
 local colUnpack = mtColor.Unpack
-
-local black = Color(0,0,0,100)
-local vector_add = Vector(0, 2.5, 0)
 
 local function DrawHermite(width, x0,y0,x1,y1,c0,c1,alpha,samples)
 
