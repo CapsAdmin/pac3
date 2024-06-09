@@ -250,7 +250,7 @@ function pac.UnhookEntityRender(ent, part)
 end
 
 pac.AddHook("Think", "events", function()
-	for _, ply in ipairs(player.GetAll()) do
+	for _, ply in player.Iterator() do
 		if not ent_parts[ply] then continue end
 		if pac.IsEntityIgnored(ply) then continue end
 
