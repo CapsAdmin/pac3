@@ -304,7 +304,7 @@ do
 	local up = Vector(0,0,10000)
 
 	hook.Add("HUDPaint", "pac_in_editor", function()
-		for _, ply in ipairs(player.GetAll()) do
+		for _, ply in player.Iterator() do
 			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 
 				if showCameras:GetInt() == 1 then
