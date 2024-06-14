@@ -409,7 +409,7 @@ surface.CreateFont("pac_urlobj_loading",
 -- ugh lol
 local function RealDrawModel(self, ent, pos, ang)
 	if self.Mesh then
-		ent:SetModelScale(0,0)
+		ent:SetModelScale(0.001, 0)
 		ent:DrawModel()
 
 		local matrix = Matrix()

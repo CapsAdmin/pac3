@@ -43,10 +43,10 @@ function pac.GetWorldEntity()
 	if not pac.WorldEntity:IsValid() then
 		local ent = pac.CreateEntity("models/error.mdl")
 
-		ent:SetPos(Vector(0,0,0))
+		ent:SetPos(Vector(0, 0, 0))
 
 		-- go away ugh
-		ent:SetModelScale(0,0)
+		ent:SetMaterial("materials/null")
 
 		ent.IsPACWorldEntity = true
 

@@ -5,25 +5,25 @@ CreateConVar( "pac_model_max_scales", "10000", FCVAR_ARCHIVE, "Maximum scales mo
 
 local pac = pac
 
-local render_SetColorModulation = render.SetColorModulation
-local render_SetBlend = render.SetBlend
-local render_CullMode = render.CullMode
-local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
-local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
-local render_MaterialOverride = render.ModelMaterialOverride
-local cam_PushModelMatrix = cam.PushModelMatrix
-local cam_PopModelMatrix = cam.PopModelMatrix
-local Vector = Vector
-local EF_BONEMERGE = EF_BONEMERGE
-local NULL = NULL
-local Color = Color
-local Matrix = Matrix
-local vector_origin = vector_origin
-local render = render
 local cam = cam
-local surface = surface
+local cam_PopModelMatrix = cam.PopModelMatrix
+local cam_PushModelMatrix = cam.PushModelMatrix
+local Color = Color
+local EF_BONEMERGE = EF_BONEMERGE
+local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
+local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
+local Matrix = Matrix
+local NULL = NULL
+local render = render
+local render_CullMode = render.CullMode
+local render_MaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverrideByIndex = render.MaterialOverrideByIndex
+local render_SetBlend = render.SetBlend
+local render_SetColorModulation = render.SetColorModulation
 local render_SuppressEngineLighting = render.SuppressEngineLighting
+local surface = surface
+local Vector = Vector
+local vector_origin = vector_origin
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
@@ -32,10 +32,10 @@ PART.ClassName = "model2"
 PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
-PART.Icon = 'icon16/shape_square.png'
+PART.Icon = "icon16/shape_square.png"
 PART.is_model_part = true
 PART.ProperColorRange = true
-PART.Group = 'model'
+PART.Group = "model"
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("generic")
@@ -176,7 +176,7 @@ end
 
 function PART:ModelModifiersToString(tbl)
 	local str = ""
-	for k,v in pairs(tbl) do
+	for k, v in pairs(tbl) do
 		str = str .. k .. "=" .. v .. ";"
 	end
 	return str
@@ -304,7 +304,7 @@ end
 
 function PART:OnRemove()
 	if not self.loading then
-		SafeRemoveEntityDelayed(self.Owner,0.1)
+		SafeRemoveEntityDelayed(self.Owner, 0.1)
 	end
 end
 
@@ -433,12 +433,11 @@ end
 
 
 local matrix = Matrix()
-local IDENT_SCALE = Vector(1,1,1)
 local _self, _ent, _pos, _ang
 
 local function ent_draw_model(self, ent, pos, ang)
 	if self.obj_mesh then
-		ent:SetModelScale(0,0)
+		ent:SetModelScale(0.001, 0)
 		ent:DrawModel()
 
 		matrix:Identity()
@@ -487,10 +486,10 @@ function PART:DrawModel(ent, pos, ang)
 	if self.ClassName ~= "entity2" then
 		render.PushFlashlightMode(true)
 
-		material_bound = self:BindMaterials(ent) or material_bound
-		ent.pac_drawing_model = true
-		ProtectedCall(protected_ent_draw_model)
-		ent.pac_drawing_model = false
+			material_bound = self:BindMaterials(ent) or material_bound
+			ent.pac_drawing_model = true
+			ProtectedCall(protected_ent_draw_model)
+			ent.pac_drawing_model = false
 
 		render.PopFlashlightMode()
 	end
@@ -536,7 +535,7 @@ function PART:DrawLoadingText(ent, pos)
 	cam.End2D()
 end
 
-local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
+local ALLOW_TO_MDL = CreateConVar("pac_allow_mdl", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow to use custom MDLs")
 
 function PART:RefreshModel()
 	if self.refreshing_model then return end
@@ -578,7 +577,7 @@ end
 
 local function RealDrawModel(self, ent, pos, ang)
 	if self.Mesh then
-		ent:SetModelScale(0,0)
+		ent:SetModelScale(0.001, 0)
 		ent:DrawModel()
 
 		local matrix = Matrix()
@@ -607,7 +606,7 @@ function PART:ProcessModelChange()
 
 	if path:find("://", nil, true) then
 		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:match("%.obj%p?") or self.ForceObjUrl then
-			path = path:gsub("^objhttp","http"):gsub("^obj:http","http")
+			path = path:gsub("^objhttp", "http"):gsub("^obj:http", "http")
 			self.loading = "downloading obj"
 
 			pac.urlobj.GetObjFromURL(path, false, false,
@@ -722,7 +721,7 @@ function PART:SetModel(path)
 	self:ProcessModelChange()
 end
 
-local NORMAL = Vector(1,1,1)
+local NORMAL = Vector(1, 1, 1)
 
 function PART:CheckScale()
 	local owner = self:GetOwner()
@@ -756,7 +755,7 @@ function PART:SetScale(vec)
 	if largest_scale > 10000 then --warn about the default max scale
 		self:SetError("Scale is being limited due to having an excessive component. Default maximum values are 10000")
 	else self:SetError() end --if ok, clear the warning
-	vec = vec or Vector(1,1,1)
+	vec = vec or Vector(1, 1, 1)
 
 	self.Scale = vec
 
@@ -765,7 +764,7 @@ function PART:SetScale(vec)
 	end
 end
 
-local vec_one = Vector(1,1,1)
+local vec_one = Vector(1, 1, 1)
 
 function PART:ApplyMatrix()
 	local ent = self:GetOwner()
