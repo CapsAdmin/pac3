@@ -4213,6 +4213,8 @@ net.Receive("pac_update_healthbars", function()
 	local ent = net.ReadEntity()
 	local tbl = net.ReadTable()
 
+	if not IsValid(ent) then return end
+
 	ent.pac_healthbars = tbl
 
 	ent.pac_healthbars_layertotals = ent.pac_healthbars_layertotals or {}
