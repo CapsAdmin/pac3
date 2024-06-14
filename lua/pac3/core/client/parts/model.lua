@@ -18,6 +18,7 @@ local render = render
 local render_CullMode = render.CullMode
 local render_MaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverrideByIndex = render.MaterialOverrideByIndex
+local render_RenderFlashlights = render.RenderFlashlights
 local render_SetBlend = render.SetBlend
 local render_SetColorModulation = render.SetColorModulation
 local render_SuppressEngineLighting = render.SuppressEngineLighting
@@ -484,14 +485,12 @@ function PART:DrawModel(ent, pos, ang)
 	_self, _ent, _pos, _ang = self, ent, pos, ang
 
 	if self.ClassName ~= "entity2" then
-		render.PushFlashlightMode(true)
-
+		render_RenderFlashlights(function()
 			material_bound = self:BindMaterials(ent) or material_bound
 			ent.pac_drawing_model = true
 			ProtectedCall(protected_ent_draw_model)
 			ent.pac_drawing_model = false
-
-		render.PopFlashlightMode()
+		end)
 	end
 
 	if self.NoCulling then
