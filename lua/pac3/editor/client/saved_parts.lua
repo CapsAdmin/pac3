@@ -237,7 +237,7 @@ function pace.LoadParts(name, clear, override_part)
 					pace.MessagePrompt(err, "HTTP Request Failed for " .. name, "OK")
 				end)
 			else
-				pace.MessagePrompt( ".txt file expected, got" .. ext, "Invalid file", "OK")
+				pace.MessagePrompt(".txt file expected, got" .. ext, "Invalid file", "OK")
 				return
 			end
 		else
