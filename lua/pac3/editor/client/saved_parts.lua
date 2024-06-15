@@ -224,7 +224,6 @@ function pace.LoadParts(name, clear, override_part)
 
 					local data, err = pace.luadata.Decode(str)
 					if not data then
-						ErrorNoHalt(("URL fail: %s : %s\n"):format(name, err))
 						local message = string.format("URL fail: %s : %s\n", name, err)
 						pace.MessagePrompt(message, "URL Failed", "OK")
 						return
@@ -282,26 +281,19 @@ function pace.LoadParts(name, clear, override_part)
 				end
 
 			else
-
 				if name == "autoload" and (not data or not next(data)) then
-					local err
 					data, err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt", nil, true)
 					if not data then
-						if err then
-							ErrorNoHalt(("Autoload failed: %s\n"):format(err))
-						end
+						pace.MessagePrompt(err, "Autoload failed", "OK")
 						return
 					end
 				elseif not data then
-					ErrorNoHalt(("Decoding %s failed: %s\n"):format(name, err))
+					pace.MessagePrompt(err, ("Decoding %s failed"):format(name), "OK")
 					return
 				end
 
-
 				pace.LoadPartsFromTable(data, clear, override_part)
-
 			end
-
 		end
 	end
 end
