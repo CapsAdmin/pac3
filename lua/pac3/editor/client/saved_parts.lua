@@ -284,7 +284,9 @@ function pace.LoadParts(name, clear, override_part)
 				if name == "autoload" and (not data or not next(data)) then
 					data, err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt", nil, true)
 					if not data then
-						pace.MessagePrompt(err, "Autoload failed", "OK")
+						if err then
+							pace.MessagePrompt(err, "Autoload failed", "OK")
+						end
 						return
 					end
 				elseif not data then
