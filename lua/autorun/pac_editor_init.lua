@@ -13,12 +13,12 @@ if SERVER then
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
 
-		for key, file_name in pairs(files) do
-			AddCSLuaFile(dir .. file_name)
+		for i = 1, #files do
+			AddCSLuaFile(dir .. files[i])
 		end
 
-		for key, folder_name in pairs(folders) do
-			add_files(dir .. folder_name .. "/")
+		for i = 1, #folders do
+			add_files(dir .. folders[i] .. "/")
 		end
 	end
 

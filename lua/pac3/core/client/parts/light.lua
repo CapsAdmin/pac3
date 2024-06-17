@@ -4,8 +4,8 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.FriendlyName = "light"
 PART.ClassName = "light2"
-PART.Group = 'effects'
-PART.Icon = 'icon16/lightbulb.png'
+PART.Group = "effects"
+PART.Icon = "icon16/lightbulb.png"
 PART.ProperColorRange = true
 
 BUILDER:StartStorableVars()
@@ -37,8 +37,9 @@ BUILDER:EndStorableVars()
 
 function PART:GetLight()
 	if not self.light then
-		self.light = DynamicLight(tonumber(string.sub(self:GetPrintUniqueID(),1,7), 16))
+		self.light = DynamicLight(tonumber(string.sub(self:GetPrintUniqueID(), 1, 7), 16))
 	end
+
 	self.light.decay = 0
 	self.light.dietime = math.huge
 
@@ -47,8 +48,10 @@ end
 
 function PART:RemoveLight()
 	if not self.light then return end
+
 	local light = self.light
 	self.light = nil
+
 	-- this prevents fade out when removing the light
 	light.pos = Vector(9999, 9999, 9999)
 	timer.Simple(0, function()
@@ -57,8 +60,7 @@ function PART:RemoveLight()
 end
 
 function PART:GetNiceName()
-	local color = self:GetColor()
-	local hue = pac.ColorToNames({r = color[1] * 255, g = color[2] * 255, b = color[3] * 255})
+	local hue = pac.VectorColorToNames(self:GetColor())
 	return hue .. " light"
 end
 
@@ -83,6 +85,7 @@ function PART:OnDraw()
 	self:GetLight().pos = pos
 	self:GetLight().dir = ang:Forward()
 end
+
 function PART:SetStyle(val)
 	self.Style = val
 	self:GetLight().Style = self.Style

@@ -13,6 +13,9 @@ local Color = Color
 local NULL = NULL
 local table_insert = table.insert
 
+local pac_editor_scale = GetConVar("pac_editor_scale")
+local pac_popups_preferred_location = GetConVar("pac_popups_preferred_location")
+
 local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
@@ -53,6 +56,18 @@ function PART:IsValid()
 	return self.is_valid
 end
 
+local pac_enable_convars = {}
+local function get_enable_convar(classname)
+	local convar = pac_enable_convars[classname]
+
+	if not convar then
+		convar = GetConVar("pac_enable_" .. string.Replace(classname, " ", "_"):lower())
+		pac_enable_convars[classname] = convar
+	end
+
+	return convar
+end
+
 function PART:PreInitialize()
 	self.Children = {}
 	self.ChildrenMap = {}
@@ -62,8 +77,9 @@ function PART:PreInitialize()
 	self.hide_disturbing = false
 	self.active_events = {}
 	self.active_events_ref_count = 0
-	local cvarName = "pac_enable_" .. string.Replace(self.ClassName, " ", "_"):lower()
-	if not GetConVar(cvarName):GetBool() then self:SetWarning("This part class is disabled! Enable it with " .. cvarName .. " 1") end
+
+	local convar = get_enable_convar(self.ClassName)
+	if not convar:GetBool() then self:SetWarning("This part class is disabled! Enable it with " .. convar:GetName() .. " 1") end
 end
 
 function PART:Initialize() end
@@ -81,7 +97,6 @@ end
 
 function PART:GetName()
 	if self.Name == "" then
-
 		-- recursive call guard
 		if self.last_nice_name_frame and self.last_nice_name_frame == pac.FrameNumber then
 			return self.last_nice_name
@@ -94,11 +109,14 @@ function PART:GetName()
 		local count = 0
 
 		if self:HasParent() then
-			for _, val in ipairs(self:GetParent():GetChildren()) do
-				if val:GetNiceName() == nice then
+			local children = self:GetParent():GetChildren()
+			for i = 1, #children do
+				local ent = children[i]
+
+				if ent:GetNiceName() == nice then
 					count = count + 1
 
-					if val == self then
+					if ent == self then
 						num = count
 					end
 				end
@@ -203,13 +221,13 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
-
 		if self.TargetEntity:IsValid() and self.TargetEntity ~= self then
 			return self.TargetEntity:GetOwner()
 		end
 
-
-		for _, parent in ipairs(self:GetParentList()) do
+		local parents = self:GetParentList()
+		for i = 1, #parents do
+			local parent = parents[i]
 
 			-- legacy behavior
 			if parent.ClassName == "event" and not parent.RootOwner then
@@ -241,7 +259,6 @@ do -- owner
 end
 
 do -- scene graph
-
 	function PART:OnParent() end
 	function PART:OnChildAdd() end
 	function PART:OnUnParent() end
@@ -316,8 +333,9 @@ do -- scene graph
 		function PART:InvalidateChildrenList()
 			self.children_list = nil
 
-			for _, parent in ipairs(self:GetParentList()) do
-				parent.children_list = nil
+			local parents = self:GetParentList()
+			for i = 1, #parents do
+				parents[i].children_list = nil
 			end
 		end
 	end
@@ -354,8 +372,9 @@ do -- scene graph
 		function PART:InvalidateParentList()
 			self.parent_list = nil
 
-			for _, child in ipairs(self:GetChildrenList()) do
-				child.parent_list = nil
+			local children = self:GetChildrenList()
+			for i = 1, #children do
+				children[i].parent_list = nil
 			end
 		end
 
@@ -363,8 +382,9 @@ do -- scene graph
 			self.parent_list = quick_copy(parent_list)
 			self.parent_list[1] = parent
 
-			for _, child in ipairs(self:GetChildren()) do
-				child:InvalidateParentListPartial(self.parent_list, self)
+			local children = self:GetChildren()
+			for i = 1, #children do
+				children[i]:InvalidateParentListPartial(self.parent_list, self)
 			end
 		end
 	end
@@ -445,8 +465,9 @@ do -- scene graph
 	function PART:RemoveChild(part)
 		self.ChildrenMap[part] = nil
 
-		for i, val in ipairs(self:GetChildren()) do
-			if val == part then
+		local children = self:GetChildren()
+		for i = 1, #children do
+			if children[i] == part then
 				self:InvalidateChildrenList()
 				table.remove(self.Children, i)
 				part:OnUnParent(self)
@@ -461,13 +482,15 @@ do -- scene graph
 		return self
 	end
 
-	function PART:CallRecursive(func, a,b,c)
+	function PART:CallRecursive(func, a, b, c)
 		assert(c == nil, "EXTEND ME")
 		if self[func] then
 			self[func](self, a,b,c)
 		end
 
-		for _, child in ipairs(self:GetChildrenList()) do
+		local children = self:GetChildrenList()
+		for i = 1, #children do
+			local child = children[i]
 			if child[func] then
 				child[func](child, a,b,c)
 			end
@@ -480,7 +503,9 @@ do -- scene graph
 			self[func](self, a,b,c)
 		end
 
-		for _, child in ipairs(self:GetChildrenList()) do
+		local children = self:GetChildrenList()
+		for i = 1, #children do
+			local child = children[i]
 			if child[func] and self.ClassName == class_name then
 				child[func](child, a,b,c)
 			end
@@ -490,19 +515,22 @@ do -- scene graph
 	function PART:SetKeyValueRecursive(key, val)
 		self[key] = val
 
-		for _, child in ipairs(self:GetChildrenList()) do
-			child[key] = val
+		local children = self:GetChildrenList()
+		for i = 1, #children do
+			children[i][key] = val
 		end
 	end
-
 
 	function PART:RemoveChildren()
 		self:InvalidateChildrenList()
 
-		for i, part in ipairs(self:GetChildren()) do
+		local children = self:GetChildren()
+		for i = 1, #children do
+			local part = children[i]
+
 			part:Remove(true)
-			self.Children[i] = nil
 			self.ChildrenMap[part] = nil
+			self.Children[i] = nil
 		end
 	end
 
@@ -553,7 +581,9 @@ do -- scene graph
 
 		self:InvalidateChildrenList()
 
-		for _, part in ipairs(self:GetChildren()) do
+		local children = self:GetChildren()
+		for i = 1, #children do
+			local part = children[i]
 			local owner_id = part:GetPlayerOwnerId()
 
 			if owner_id then
@@ -572,8 +602,8 @@ do -- scene graph
 					local pnl = vgui.Create("DImage", self.pace_tree_node.Icon)
 					self.pace_tree_node.Icon.event_icon_alt = true
 					self.pace_tree_node.Icon.event_icon = pnl
-					pnl:SetSize(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
-					pnl:SetPos(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+					pnl:SetSize(8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)), 8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)))
+					pnl:SetPos(8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)), 8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)))
 				end
 				self.pace_tree_node.Icon.event_icon_alt = true
 				self.pace_tree_node.Icon.event_icon:SetImage(str)
@@ -656,7 +686,10 @@ do -- hidden / events
 			self:OnShow(true)
 		end
 
-		for _, child in ipairs(self:GetChildrenList()) do
+		local children = self:GetChildrenList()
+		for i = 1, #children do
+			local child = children[i]
+
 			child:SetDrawHidden(false)
 
 			if not child:IsHidden() then
@@ -683,8 +716,9 @@ do -- hidden / events
 			return true
 		end
 
-		for _, parent in ipairs(self:GetParentList()) do
-			if is_hidden(parent) then
+		local parents = self:GetParentList()
+		for i = 1, #parents do
+			if is_hidden(parents[i]) then
 				return true
 			end
 		end
@@ -727,11 +761,15 @@ do -- hidden / events
 			return "pac_hide_disturbing is set to 1"
 		end
 
-		for i,part in ipairs(self:GetParentList()) do
+		local parents = self:GetParentList()
+		for i = 1, #parents do
+			local part = parents[i]
+
 			if part:IsHidden() then
 				table_insert(found, tostring(part) .. " is parent hiding")
 			end
 		end
+
 		if found[1] then
 			return table.concat(found, "\n")
 		end
@@ -758,7 +796,10 @@ do -- hidden / events
 			end
 		end
 
-		for i,part in ipairs(self:GetParentList()) do
+		local parents = self:GetParentList()
+		for i = 1, #parents do
+			local part = parents[i]
+
 			if not found[part] then
 				if part:IsHidden() then
 					found[part] = "parent hidden"
@@ -1055,11 +1096,10 @@ do -- serializing
 			end
 		end
 
-		for _, part in ipairs(self:GetChildren()) do
-			if not self.is_valid or self.is_deattached then
-
-			else
-				table_insert(tbl.children, part:ToTable())
+		local children = self:GetChildren()
+		for i = 1, #children do
+			if self.is_valid and not self.is_deattached then
+				table_insert(tbl.children, children[i]:ToTable())
 			end
 		end
 
@@ -1085,11 +1125,10 @@ do -- serializing
 			end
 		end
 
-		for _, part in ipairs(self:GetChildren()) do
-			if not self.is_valid or self.is_deattached then
-
-			else
-				table_insert(tbl.children, part:ToSaveTable())
+		local children = self:GetChildren()
+		for i = 1, #children do
+			if self.is_valid and not self.is_deattached then
+				table_insert(tbl.children, children[i]:ToSaveTable())
 			end
 		end
 
@@ -1147,11 +1186,10 @@ do -- serializing
                 ::CONTINUE::
 			end
 
-			for _, part in ipairs(self:GetChildren()) do
-				if not self.is_valid or self.is_deattached then
-
-				else
-					table_insert(tbl.children, part:ToUndoTable())
+			local children = self:GetChildren()
+			for i = 1, #children do
+				if self.is_valid and not self.is_deattached then
+					table_insert(tbl.children, children[i]:ToUndoTable())
 				end
 			end
 
@@ -1231,10 +1269,12 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	if not IsValid(self) then return end
 
 	local popup_config_table = tbl or {
-		pac_part = self, obj_type = GetConVar("pac_popups_preferred_location"):GetString(),
+		pac_part = self,
+		obj_type = pac_popups_preferred_location:GetString(),
 		hoverfunc = function() end,
 		doclickfunc = function() end,
-		panel_exp_width = 900, panel_exp_height = 400
+		panel_exp_width = 900,
+		panel_exp_height = 400
 	}
 
 	local default_state = str == nil or str == ""
@@ -1265,7 +1305,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 
 		function tree_node:Think()
 			--if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or input.IsButtonDown(KEY_F1) or force_open) then
-			if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or force_open) then
+			if not part.killpopup and ((self.Label:IsHovered() and pac_popups_preferred_location:GetString() == "pac tree label") or force_open) then
 				if not self.popuppnl_is_up and not IsValid(self.popupinfopnl) and not part.killpopup and not legacy_help_popup_hack then
 					self.popupinfopnl = pac.InfoPopup(
 						info_string,

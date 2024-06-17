@@ -483,7 +483,7 @@ end
 
 if Entity(1):IsPlayer() and not PAC_RESTART then
 	timer.Simple(0, function()
-		for _, v in ipairs(ents.GetAll()) do
+		for _, v in ents.Iterator() do
 			pac.ResetBoneCache(v)
 		end
 	end)

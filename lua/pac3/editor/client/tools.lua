@@ -255,8 +255,9 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 			audio:SetStopOnHide(not part:GetStopOnHide())
 			audio:SetPauseOnHide(part:GetPauseOnHide())
 
-			for k,v in ipairs(part:GetChildren()) do
-				v:SetParent(audio)
+			local children = part:GetChildren()
+			for i = 1, #children do
+				children[i]:SetParent(audio)
 			end
 
 			part:Remove()
@@ -291,8 +292,9 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 					part:SetSize(part:GetSize() * scale)
 				end
 
-				for _, part in ipairs(part:GetChildren()) do
-					scale_parts(part, scale)
+				local children = part:GetChildren()
+				for i = 1, #children do
+					scale_parts(children[i], scale)
 				end
 			end
 
@@ -314,14 +316,18 @@ pace.AddTool(L"free children from part" ,function(part, suboption)
 			if grandparent == NULL then
 				grandparent = part:GetRootPart()
 			end
+
 			local parent = part
-			for _, child in ipairs(children) do
+			for i = 1, #children do
+				local child = children[i]
+
 				if child.BaseName ~= "base" and parent.BaseName ~= "base" then
 					child:SetAngles(child.Angles + parent.Angles)
 					child:SetPosition(child.Position + parent.Position)
 					child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
 					child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
 				end
+
 				child:SetParent(grandparent)
 			end
 		end, L"no", function() end)
@@ -341,7 +347,8 @@ pace.AddTool(L"square model scales...", function(part, suboption)
 						part:SetScale(part:GetScale() * part:GetScale())
 					end
 				end
-				if string.find(part:GetModel(),model) then
+
+				if string.find(part:GetModel(), model) then
 					square_scale(part)
 				end
 			end
@@ -364,7 +371,6 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 	event:SetRootOwner(true)
 
 	event:ParseArguments(class_name, suboption == 1)
-
 end, L"hide weapon", L"show weapon")
 
 pace.AddTool(L"import editor tool from file...", function()
@@ -423,67 +429,21 @@ pace.AddTool(L"round numbers", function(part)
 			end
 		end
 
-		for _, part in ipairs(part:GetChildren()) do
-			ify_parts(part)
+		local children = part:GetChildren()
+		for i = 1, #children do
+			ify_parts(children[i])
 		end
 	end
 
 	ify_parts(part)
 end)
 
-do
-
-	local function fix_name(str)
-		str = str:lower()
-		str = str:gsub("_", " ")
-		return str
+pace.AddTool(L"clear names", function(part, suboptions)
+	for k,v in pairs(pac.GetLocalParts()) do
+		v:SetName("")
 	end
-
-	local hue =
-	{
-		"red",
-		"orange",
-		"yellow",
-		"green",
-		"turquoise",
-		"blue",
-		"purple",
-		"magenta",
-	}
-
-	local sat =
-	{
-		"pale",
-		"",
-		"strong",
-	}
-
-	local val =
-	{
-		"dark",
-		"",
-		"bright"
-	}
-
-	local function HSVToNames(h,s,v)
-		return
-			hue[math.Round(1 + (h / 360) * #hue)] or hue[1],
-			sat[math.ceil(s * #sat)] or sat[1],
-			val[math.ceil(v * #val)] or val[1]
-	end
-
-	local function ColorToNames(c)
-		return HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
-	end
-
-	pace.AddTool(L"clear names", function(part, suboptions)
-		for k,v in pairs(pac.GetLocalParts()) do
-			v:SetName("")
-		end
-		pace.RefreshTree(true)
-	end)
-
-end
+	pace.RefreshTree(true)
+end)
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 
@@ -647,16 +607,19 @@ elseif (CoreStatus == "RunThisCode") {
 	local function part_to_holo(part)
 		local str_holo = str_ref
 
-		for CI, clip in ipairs(part:GetChildren()) do
+		local children = part:GetChildren()
+		for i = 1, #children do
+			local clip = children[i]
+
 			if not clip:IsHidden() then
 				if clip.ClassName == "clip" then
 					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 					local normal = ang:Forward()
-					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. i .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
 				elseif clip.ClassName == "clip2" then
 					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 					local normal = ang:Forward()
-					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos) .. "), vec(" .. tovec(normal) .. "))\n"
+					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. i .. ", vec(" .. tovec(pos) .. "), vec(" .. tovec(normal) .. "))\n"
 				end
 			end
 		end
@@ -669,7 +632,7 @@ elseif (CoreStatus == "RunThisCode") {
 
 		local holo = str_holo:gsub("[A-Z]+",{
 			ALPHA = math.Round(part:GetAlpha() * 255, 4),
-			COLOR = tovec((part.ProperColorRange and part:GetColor()*255) or part:GetColor()),
+			COLOR = tovec((part.ProperColorRange and part:GetColor() * 255) or part:GetColor()),
 			SCALE = "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")",
 			ANGLES = "ang(" .. toang(ang) .. ")",
 			POSITION = "vec(" .. tovec(pos) .. ")",
@@ -689,13 +652,18 @@ elseif (CoreStatus == "RunThisCode") {
 		local function recursiveConvert(parent)
 			if completed[parent] then return end
 			completed[parent] = true
-			for key, part in ipairs(parent:GetChildren()) do
-				if part.is_model_part and not part:IsHidden() then
-					out[#out + 1] = part_to_holo(part)
-					recursiveConvert(part)
+
+			local children = parent:GetChildren()
+			for i = 1, #children do
+				local child = children[i]
+
+				if child.is_model_part and not child:IsHidden() then
+					out[#out + 1] = part_to_holo(child)
+					recursiveConvert(child)
 				end
 			end
 		end
+
 		recursiveConvert(part)
 
 		out[#out + 1] = str_footer
@@ -718,7 +686,11 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 	origin:SetBone("none")
 	origin:SetModel("models/dav0r/hoverball.mdl")
 
-	for key, ent in pairs(ents.FindInSphere(pac.EyePos, 1000)) do
+	local ents_tbl = ents.FindInSphere(pac.EyePos, 1000)
+
+	for i = 1, #ents_tbl do
+		local ent = ents_tbl[i]
+
 		if
 			not ent:IsPlayer() and
 			not ent:IsNPC() and
@@ -795,8 +767,10 @@ pace.AddTool(L"proxy/event: Engrave targets", function(part)
 	local function reassign(part)
 		if part.ClassName == "proxy" then
 			if not IsValid(part.TargetPart) then
-				if part.AffectChildren and table.Count(part:GetChildren()) == 1 then
-					part:SetTargetPart(part:GetChildren()[1])
+				local children = part:GetChildren()
+
+				if part.AffectChildren and #children == 1 then
+					part:SetTargetPart(children[1])
 					part:SetAffectChildren(nil)
 				else
 					part:SetTargetPart(part:GetParent())
@@ -804,14 +778,17 @@ pace.AddTool(L"proxy/event: Engrave targets", function(part)
 			end
 		elseif part.ClassName == "event" then
 			if not IsValid(part.DestinationPart) then
-				if part.AffectChildrenOnly == true and table.Count(part:GetChildren()) == 1 then
-					part:SetDestinationPart(part:GetChildren()[1])
+				local children = part:GetChildren()
+
+				if part.AffectChildrenOnly == true and #children == 1 then
+					part:SetDestinationPart(children[1])
 				elseif part.AffectChildrenOnly == false then
 					part:SetDestinationPart(part:GetParent())
 				end
 			end
 		end
 	end
+
 	if part ~= part:GetRootPart() then
 		reassign(part)
 	else
@@ -823,16 +800,15 @@ end)
 
 --aka pace.UltraCleanup
 pace.AddTool(L"Destroy hidden parts, proxies and events", function(part)
-
 	if not part then part = pace.current_part end
 	root = part:GetRootPart()
 
 	pnl = Derma_Query("Only do this if you know what you're doing!\nMark parts as important in their notes to protect them.", "Warning",
-		"Destroy!", function() pace.UltraCleanup( root ) end,
+		"Destroy!", function() pace.UltraCleanup(root) end,
 		"cancel", nil
 	)
-	pnl:SetWidth(300)
 
+	pnl:SetWidth(300)
 end)
 
 pace.AddTool(L"stop all custom animations", function()

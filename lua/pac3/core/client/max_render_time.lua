@@ -60,10 +60,13 @@ end
 function pac.DrawRenderTimeExceeded(ent)
 	cam_Start2D()
 	cam_IgnoreZ(true)
-		local pos_3d = ent:NearestPoint(ent:EyePos() + ent:GetUp()) + Vector(0,0,5)
+
+		local pos_3d = ent:NearestPoint(ent:EyePos() + ent:GetUp()) + Vector(0, 0, 5)
 		local alpha = math_Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500) / 500
+
 		if alpha > 0 then
 			local pos_2d = pos_3d:ToScreen()
+
 			surface_SetFont("ChatFont")
 			local _, h = surface_GetTextSize("|")
 
@@ -83,8 +86,8 @@ function pac.DrawRenderTimeExceeded(ent)
 
 			local mx, my = input_GetCursorPos()
 			if not vgui_CursorVisible() then
-				mx = ScrW() / 2
-				my = ScrH() / 2
+				mx = ScrW() * 0.5
+				my = ScrH() * 0.5
 			end
 			local dist = 200
 			local hovering = mx > x - dist and mx < x + dist and my > y - dist and my < y + dist

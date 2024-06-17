@@ -736,7 +736,7 @@ function pace.FillBanPanel(pnl)
 		ban_list:AddColumn("SteamID")
 		ban_list:AddColumn("State")
 		ban_list:SetSortable(false)
-		for _,ply in pairs(player.GetAll()) do
+		for _, ply in player.Iterator() do
 			--print(ply, pace.IsBanned(ply))
 			ban_list:AddLine(ply:Name(),ply:SteamID(),player_ban_list[ply] or "Allowed")
 		end
@@ -808,7 +808,7 @@ function pace.FillCombatBanPanel(pnl)
 
 		local combat_bans_temp_merger = {}
 
-		for _,ply in pairs(player.GetAll()) do
+		for _, ply in player.Iterator() do
 			combat_bans_temp_merger[ply:SteamID()] = pac.global_combat_whitelist[ply:SteamID()]-- or {nick = ply:Nick(), steamid = ply:SteamID(), permission = "Default"}
 		end
 
@@ -861,7 +861,7 @@ function pace.FillCombatBanPanel(pnl)
 			ban_list:Clear()
 			local combat_bans_temp_merger = {}
 
-			for _,ply in pairs(player.GetAll()) do
+			for _, ply in player.Iterator() do
 				combat_bans_temp_merger[ply:SteamID()] = pac.global_combat_whitelist[ply:SteamID()]-- or {nick = ply:Nick(), steamid = ply:SteamID(), permission = "Default"}
 			end
 

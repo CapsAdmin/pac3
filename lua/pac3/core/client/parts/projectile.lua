@@ -1,6 +1,6 @@
 local physprop_enums = {}
 local physprop_indices = {}
-for i=0,200,1 do
+for i=0, 200, 1 do
 	local name = util.GetSurfacePropName(i)
 	if name ~= "" then
 		physprop_enums[name] = name
@@ -9,8 +9,6 @@ for i=0,200,1 do
 end
 
 language.Add("pac_projectile", "Projectile")
-
-
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
@@ -123,6 +121,7 @@ function PART:OnShow(from_rendering)
 		-- it should instead be using what pac considers to be the position
 		--self:GetRootPart():CallRecursive("Draw", "opaque")
 		local parents = self:GetParentList()
+
 		-- call draw from root to the current part only on direct parents to update the position hiearchy
 		for i = #parents, 1, -1 do
 			local part = parents[i]
@@ -130,11 +129,15 @@ function PART:OnShow(from_rendering)
 				part:Draw("opaque")
 			end
 		end
+
 		if self.NumberProjectiles <= 0 then self.NumberProjectiles = 0 end
+
 		if self.NumberProjectiles <= 50 then
-			local pos,ang = self:GetDrawPosition()
-			self:Shoot(pos,ang,self.NumberProjectiles)
-		else chat.AddText(Color(255,0,0),"[PAC3] Trying to spawn too many projectiles! The limit is " .. 50) end
+			local pos, ang = self:GetDrawPosition()
+			self:Shoot(pos, ang, self.NumberProjectiles)
+		else
+			chat.AddText(Color(255, 0, 0), "[PAC3] Trying to spawn too many projectiles! The limit is " .. 50)
+		end
 	end
 end
 
@@ -526,8 +529,8 @@ end]]
 do -- physical
 	local Entity = Entity
 	local projectiles = {}
-	pac.AddHook("Think", "pac_projectile", function()
 
+	pac.AddHook("Think", "pac_projectile", function()
 		for key, data in pairs(projectiles) do
 			if not data.ply:IsValid() then
 				projectiles[key] = nil
@@ -549,7 +552,7 @@ do -- physical
 	end)
 
 	net.Receive("pac_projectile_attach", function()
-		local ply = net.ReadEntity()
+		local ply = net.ReadPlayer()
 		local ent_id = net.ReadInt(16)
 		local partuid = net.ReadString()
 		local surfprop = net.ReadString()
@@ -564,6 +567,7 @@ do -- physical
 			if ent.pac_projectile_part then
 				local tbl = ent.pac_projectile_part:GetChildren()
 				local partchild = tbl[next(tbl)] --ent.pac_projectile_part is the root group, but outfit part is the first child
+
 				if IsValid(partchild) then
 					if partchild:IsHidden() then
 						if ent.pac_projectile.RemoveOnHide and not ent.markedforremove then
@@ -571,11 +575,9 @@ do -- physical
 							net.Start("pac_projectile_remove")
 							net.WriteInt(ent_id, 16)
 							net.SendToServer()
-
 						end
 					end
 				end
-
 			end
 		end
 	end)

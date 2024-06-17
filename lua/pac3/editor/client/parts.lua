@@ -62,18 +62,21 @@ end
 local function BulkSelectRefreshFadedNodes(part_trace)
 	if refresh_halo_hook then return end
 	if part_trace then
-		for _,v in ipairs(part_trace:GetRootPart():GetChildrenList()) do
-			if IsValid(v.pace_tree_node) then
-				v.pace_tree_node:SetAlpha( 255 )
-			end
+		local children = part_trace:GetRootPart():GetChildrenList()
+		for i = 1, #children do
+			local v = children[i]
 
+			if IsValid(v.pace_tree_node) then
+				v.pace_tree_node:SetAlpha(255)
+			end
 		end
 	end
 
-	for _,v in ipairs(pace.BulkSelectList) do
-		if not v:IsValid() then table.RemoveByValue(pace.BulkSelectList, v)
+	for _, v in ipairs(pace.BulkSelectList) do
+		if not v:IsValid() then
+			table.RemoveByValue(pace.BulkSelectList, v)
 		elseif IsValid(v.pace_tree_node) then
-			v.pace_tree_node:SetAlpha( 150 )
+			v.pace_tree_node:SetAlpha(150)
 		end
 	end
 end
@@ -85,35 +88,38 @@ local function RebuildBulkHighlight()
 	local ent = {}
 
 	--get potential entities and part-children from each parent in the bulk list
-	for _,v in pairs(pace.BulkSelectList) do --this will get parts
-
-		if (v == v:GetRootPart()) then --if this is the root part, send the entity
-			table.insert(ents_tbl,v:GetRootPart():GetOwner())
-			table.insert(parts_tbl,v)
+	for _, v in pairs(pace.BulkSelectList) do --this will get parts
+		if v == v:GetRootPart() then --if this is the root part, send the entity
+			table.insert(ents_tbl, v:GetRootPart():GetOwner())
+			table.insert(parts_tbl, v)
 		else
-			table.insert(parts_tbl,v)
+			table.insert(parts_tbl, v)
 		end
 
-		for _,child in ipairs(v:GetChildrenList()) do --now do its children
-			table.insert(parts_tbl,child)
+		local children = v:GetChildrenList()
+		for i = 1, #children do --now do its children
+			table.insert(parts_tbl, children[i])
 		end
 	end
 
 	--check what parts are candidates we can give to halo
-	for _,v in ipairs(parts_tbl) do
+	for i = 1, #parts_tbl do
+		local v = parts_tbl[i]
 		local can_add = false
-		if (v.ClassName == "model" or v.ClassName ==  "model2") then
+
+		if v.ClassName == "model" or v.ClassName ==  "model2" then
 			can_add = true
 		end
-		if (v.ClassName == "group") or (v.Hide == true) or (v.Size == 0) or (v.Alpha == 0) or (v:IsHidden()) then
+		if v.ClassName == "group" or v.Hide == true or v.Size == 0 or v.Alpha == 0 or v:IsHidden() then
 			can_add = false
 		end
+
 		if can_add then
 			table.insert(hover_tbl, v:GetOwner())
 		end
 	end
 
-	table.Add(hover_tbl,ents_tbl)
+	table.Add(hover_tbl, ents_tbl)
 	--TestPrintTable(hover_tbl, "hover_tbl")
 
 	last_bulk_select_tbl = hover_tbl
@@ -128,7 +134,7 @@ local function TestPrintTable(tbl, tbl_name)
 end
 
 local function DrawHaloHighlight(tbl)
-	if (type(tbl) ~= "table") then return end
+	if type(tbl) ~= "table" then return end
 	if not pace.Active then
 		pac.RemoveHook("PreDrawHalos", "BulkSelectHighlights")
 	end
@@ -138,32 +144,34 @@ local function DrawHaloHighlight(tbl)
 	local pulse_rate = math.min(math.abs(GetConVar("pac_hover_pulserate"):GetFloat()), 100)
 	local pulse = math.sin(SysTime() * pulse_rate) * 0.5 + 0.5
 	if pulse_rate == 0 then pulse = 1 end
-	local pulseamount
 
-	local halo_color = Color(255,255,255)
+	local pulseamount
+	local halo_color = Color(255, 255, 255)
 
 	if color_string == "rave" then
-		halo_color = Color(255*((0.33 + SysTime() * pulse_rate/20)%1), 255*((0.66 + SysTime() * pulse_rate/20)%1), 255*((SysTime() * pulse_rate/20)%1), 255)
+		halo_color = Color(255 * ((0.33 + SysTime() * pulse_rate / 20) % 1), 255 * ((0.66 + SysTime() * pulse_rate / 20) % 1), 255 * ((SysTime() * pulse_rate / 20) % 1), 255)
 		pulseamount = 8
 	elseif color_string == "funky" then
-		halo_color = Color(255*((0.33 + SysTime() * pulse_rate/10)%1), 255*((0.2 + SysTime() * pulse_rate/15)%1), 255*((SysTime() * pulse_rate/15)%1), 255)
+		halo_color = Color(255 * ((0.33 + SysTime() * pulse_rate/10) % 1), 255 * ((0.2 + SysTime() * pulse_rate / 15) % 1), 255 * ((SysTime() * pulse_rate / 15) % 1), 255)
 		pulseamount = 5
 	elseif color_string == "ocean" then
-		halo_color = Color(0, 80 + 30*(pulse), 200 + 50*(pulse) * 0.5 + 0.5, 255)
+		halo_color = Color(0, 80 + 30 * pulse, 200 + 50 * pulse * 0.5 + 0.5, 255)
 		pulseamount = 4
 	elseif color_string == "rainbow" then
 		--halo_color = Color(255*(0.5 + 0.5*math.sin(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*-math.cos(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*math.sin(1 + pac.RealTime * pulse_rate/20)), 255)
-		halo_color = HSVToColor(SysTime() * 360 * pulse_rate/20, 1, 1)
+		halo_color = HSVToColor(SysTime() * 360 * pulse_rate / 20, 1, 1)
 		pulseamount = 4
 	elseif #string.Split(color_string, " ") == 3 then
-		halo_color_tbl = string.Split( color_string, " " )
-		for i,v in ipairs(halo_color_tbl) do
-			if not isnumber(tonumber(halo_color_tbl[i])) then halo_color_tbl[i] = 0 end
+		halo_color_tbl = string.Split(color_string, " ")
+		for i = 1, #halo_color_tbl do
+			if not isnumber(tonumber(halo_color_tbl[i])) then
+				halo_color_tbl[i] = 0
+			end
 		end
-		halo_color = Color(pulse*halo_color_tbl[1],pulse*halo_color_tbl[2],pulse*halo_color_tbl[3],255)
+		halo_color = Color(pulse * halo_color_tbl[1], pulse * halo_color_tbl[2], pulse * halo_color_tbl[3], 255)
 		pulseamount = 4
 	else
-		halo_color = Color(255,255,255,255)
+		halo_color = Color(255, 255, 255)
 		pulseamount = 2
 	end
 	--print("using", halo_color, "blurs=" .. 2, "amount=" .. pulseamount)
@@ -182,7 +190,6 @@ end
 
 
 function pace.WearParts(temp_wear_filter)
-
 	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 	if allowed == false then
@@ -262,7 +269,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 	if parent.GetDrawPosition and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
 		local data = ply:GetEyeTrace()
 
-		if data.HitPos:Distance(ply:GetPos()) < 1000 then
+		if data.HitPos:DistToSqr(ply:GetPos()) < 1000000 then --1000hu
 			part:SetPosition(data.HitPos)
 		else
 			part:SetPosition(ply:GetPos())
@@ -1281,8 +1288,9 @@ do -- menu
 					newObj:SetParent(obj.Parent)
 					obj:SetParent(newObj)
 
-					for i,v in pairs(obj:GetChildren()) do
-						v:SetParent(newObj)
+					local children = obj:GetChildren()
+					for i = 1, #children do
+						children[i]:SetParent(newObj)
 					end
 
 					newObj:SetPosition(obj.Position)
@@ -1326,7 +1334,6 @@ do -- menu
 					pace.RefreshTree()
 				end
 
-
 				obj.ClassName = str
 
 				timer.Simple(0, function()
@@ -1335,7 +1342,6 @@ do -- menu
 						obj = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid)
 						obj:SetModel("models/pac/default.mdl")
 					end
-
 				end)
 			end)
 		end
@@ -1355,28 +1361,33 @@ do -- menu
 		obj = obj or pace.current_part
 		refresh_halo_hook = false
 		--print(obj.pace_tree_node, "color", obj.pace_tree_node:GetFGColor().r .. " " .. obj.pace_tree_node:GetFGColor().g .. " " .. obj.pace_tree_node:GetFGColor().b)
+
 		if obj.ClassName == "timeline_dummy_bone" then return end
 		local selected_part_added = false	--to decide the sound to play afterward
 
+		local obj_children = obj:GetChildrenList()
+
 		pace.BulkSelectList = pace.BulkSelectList or {}
-		if (table.HasValue(pace.BulkSelectList, obj)) then
+
+		if table.HasValue(pace.BulkSelectList, obj) then
 			pace.RemoveFromBulkSelect(obj)
 			selected_part_added = false
-		elseif (pace.BulkSelectList[obj] == nil) then
+		elseif pace.BulkSelectList[obj] == nil then
 			pace.AddToBulkSelect(obj)
 			selected_part_added = true
-			for _,v in ipairs(obj:GetChildrenList()) do
-				pace.RemoveFromBulkSelect(v)
+
+			for i = 1, #obj_children do
+				pace.RemoveFromBulkSelect(obj_children[i])
 			end
 		end
 
 		--check parents and children
-		for _,v in ipairs(pace.BulkSelectList) do
+		for _, v in ipairs(pace.BulkSelectList) do
 			if table.HasValue(v:GetChildrenList(), obj) then
 				--print("selected part is already child to a bulk-selected part!")
 				pace.RemoveFromBulkSelect(obj)
 				selected_part_added = false
-			elseif table.HasValue(obj:GetChildrenList(), v) then
+			elseif table.HasValue(obj_children, v) then
 				--print("selected part is already parent to a bulk-selected part!")
 				pace.RemoveFromBulkSelect(v)
 				selected_part_added = false
@@ -1384,11 +1395,13 @@ do -- menu
 		end
 
 		RebuildBulkHighlight()
+
 		if not silent then
 			if selected_part_added then
 				surface.PlaySound("buttons/button1.wav")
-
-			else surface.PlaySound("buttons/button16.wav") end
+			else
+				surface.PlaySound("buttons/button16.wav")
+			end
 		end
 
 		if table.IsEmpty(pace.BulkSelectList) then
@@ -1407,7 +1420,6 @@ do -- menu
 				end
 			end)
 		end
-
 	end
 
 	function pace.RemoveFromBulkSelect(obj)
@@ -1489,13 +1501,14 @@ do -- menu
 		for _,prop in pairs(basepart:GetProperties()) do
 
 			local shared = true
-			for _,part2 in pairs(pace.BulkSelectList) do
+			for _, part2 in pairs(pace.BulkSelectList) do
 				if basepart ~= part2 and basepart.ClassName ~= part2.ClassName then
 					if part2["Get" .. prop["key"]] == nil then
 						if policy == "harsh" then shared = false end
 					end
 				end
 			end
+
 			if shared and not prop.udata.editor_friendly and basepart["Get" .. prop["key"]] ~= nil then
 				shared_properties[#shared_properties + 1] = prop["key"]
 			elseif shared and prop.udata.editor_friendly and basepart["Get" .. prop["key"]] == nil then
@@ -1508,8 +1521,9 @@ do -- menu
 		if policy == "lenient" then
 			local initial_shared_properties = table.Copy(shared_properties)
 			local initial_shared_udata_properties = table.Copy(shared_udata_properties)
-			for _,part2 in pairs(pace.BulkSelectList) do
-				for _,prop in ipairs(part2:GetProperties()) do
+
+			for _, part2 in pairs(pace.BulkSelectList) do
+				for _, prop in ipairs(part2:GetProperties()) do
 					if not (table.HasValue(shared_properties, prop["key"]) or table.HasValue(shared_udata_properties, "event_udata_"..prop["key"])) then
 						if part2["Get" .. prop["key"]] ~= nil then
 							initial_shared_properties[#initial_shared_properties + 1] = prop["key"]
@@ -1521,26 +1535,30 @@ do -- menu
 					end
 				end
 			end
+
 			shared_properties = initial_shared_properties
 			shared_udata_properties = initial_shared_udata_properties
 		end
 
-		for i,v in ipairs(shared_properties) do
+		for i, v in ipairs(shared_properties) do
 			if excluded_vars[v] then table.remove(shared_properties,i) end
 		end
 
 		--populate panels for standard GetSet part properties
-		for i,v in pairs(shared_properties) do
+		for i, v in pairs(shared_properties) do
 			local VAR_PANEL = vgui.Create("DFrame")
-			VAR_PANEL:SetSize(500,30)
-			VAR_PANEL:SetPos(0,0)
-			VAR_PANEL:ShowCloseButton( false )
+			VAR_PANEL:SetSize(500, 30)
+			VAR_PANEL:SetPos(0, 0)
+			VAR_PANEL:ShowCloseButton(false)
+
 			local VAR_PANEL_BUTTON = VAR_PANEL:Add("DButton")
 			VAR_PANEL_BUTTON:SetSize(80,30)
 			VAR_PANEL_BUTTON:SetPos(400,0)
+
 			local VAR_PANEL_EDITZONE
 			local var_type
-			for _,testpart in ipairs(pace.BulkSelectList) do
+
+			for _, testpart in ipairs(pace.BulkSelectList) do
 				if
 				testpart["Get" .. v] ~= nil
 				then
@@ -1551,33 +1569,34 @@ do -- menu
 
 			if var_type == "number" then
 				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-				VAR_PANEL_EDITZONE:SetSize(200,30)
+				VAR_PANEL_EDITZONE:SetSize(200, 30)
 			elseif var_type == "boolean" then
 				VAR_PANEL_EDITZONE = vgui.Create("DCheckBox", VAR_PANEL)
-				VAR_PANEL_EDITZONE:SetSize(30,30)
+				VAR_PANEL_EDITZONE:SetSize(30, 30)
 			elseif var_type == "string" then
 				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-				VAR_PANEL_EDITZONE:SetSize(200,30)
+				VAR_PANEL_EDITZONE:SetSize(200, 30)
 			elseif var_type == "Vector" then
 				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-				VAR_PANEL_EDITZONE:SetSize(200,30)
+				VAR_PANEL_EDITZONE:SetSize(200, 30)
 			elseif var_type == "Angle" then
 				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-				VAR_PANEL_EDITZONE:SetSize(200,30)
+				VAR_PANEL_EDITZONE:SetSize(200, 30)
 			else
 				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-				VAR_PANEL_EDITZONE:SetSize(200,30)
+				VAR_PANEL_EDITZONE:SetSize(200, 30)
 			end
-			VAR_PANEL_EDITZONE:SetPos(200,0)
+			VAR_PANEL_EDITZONE:SetPos(200, 0)
 
 			VAR_PANEL_BUTTON:SetText("APPLY")
 
 			VAR_PANEL:SetTitle("[" .. i .. "]   "..v.."   "..var_type)
 
-			VAR_PANEL:Dock( TOP )
-			VAR_PANEL:DockMargin( 5, 0, 0, 5 )
+			VAR_PANEL:Dock(TOP)
+			VAR_PANEL:DockMargin(5, 0, 0, 5)
+
 			VAR_PANEL_BUTTON.DoClick = function()
-				for i,part in pairs(pace.BulkSelectList) do
+				for i, part in pairs(pace.BulkSelectList) do
 					local sent_var
 					if var_type == "number" then
 						sent_var = VAR_PANEL_EDITZONE:GetValue()
@@ -1600,23 +1619,30 @@ do -- menu
 						sent_var.x = tonumber(str[1]) or 1
 						sent_var.y = tonumber(str[2]) or 1
 						sent_var.z = tonumber(str[3]) or 1
-						if v == "Color" and not part.ProperColorRange then sent_var = sent_var*255 end
+						if v == "Color" and not part.ProperColorRange then sent_var = sent_var * 255 end
 					elseif var_type == "Angle" then
 						local str = string.Split(VAR_PANEL_EDITZONE:GetValue(), ",")
 						sent_var = Angle()
 						sent_var.p = tonumber(str[1]) or 1
 						sent_var.y = tonumber(str[2]) or 1
 						sent_var.r = tonumber(str[3]) or 1
-					else sent_var = VAR_PANEL_EDITZONE:GetValue() end
+					else
+						sent_var = VAR_PANEL_EDITZONE:GetValue()
+					end
 
-
-					if policy == "harsh" then part["Set" .. v](part, sent_var)
+					if policy == "harsh" then
+						part["Set" .. v](part, sent_var)
 					elseif policy == "lenient" then
 						if part["Get" .. v] ~= nil then part["Set" .. v](part, sent_var) end
 					end
+
 					if thoroughness_tickbox:GetChecked() then
-						for _,child in pairs(part:GetChildrenList()) do
-							if part["Get" .. v] ~= nil then child["Set" .. v](child, sent_var) end
+						local children = part:GetChildrenList()
+						for x = 1, #children do
+							if part["Get" .. v] ~= nil then
+								local child = children[x]
+								child["Set" .. v](child, sent_var)
+							end
 						end
 					end
 				end
@@ -1624,13 +1650,15 @@ do -- menu
 				pace.RefreshTree(true)
 				timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
 			end
-			scroll_panel:AddItem( VAR_PANEL )
+
+			scroll_panel:AddItem(VAR_PANEL)
 		end
 
 		--populate panels for event "userdata" packaged into arguments
 		if #shared_udata_properties > 0 then
 			local fallback_event_types = {}
 			local fallback_event
+
 			for i,v in ipairs(pace.BulkSelectList) do
 				if v.ClassName == "event" then
 					table.Add(fallback_event_types,v.Event)
@@ -1650,13 +1678,15 @@ do -- menu
 
 			local function GetEventArgType(part, str)
 				if not part.Events then return "string" end
-				for argn,arg in ipairs(part.Events[part.Event].__registeredArguments) do
+
+				for argn, arg in ipairs(part.Events[part.Event].__registeredArguments) do
 					if arg[1] == str then
 						return arg[2]
 					end
 				end
+
 				if fallback_event then
-					for i,e in ipairs(fallback_event_types) do
+					for i, e in ipairs(fallback_event_types) do
 						for argn,arg in ipairs(fallback_event.Events[e].__registeredArguments) do
 							if arg[1] == str then
 								return arg[2]
@@ -1664,6 +1694,7 @@ do -- menu
 						end
 					end
 				end
+
 				return "string"
 			end
 
@@ -1675,6 +1706,7 @@ do -- menu
 						return argn
 					end
 				end
+
 				return 1
 			end
 
@@ -1685,7 +1717,6 @@ do -- menu
 			end
 
 			for i,v in ipairs(shared_udata_properties) do
-
 				local udata_val_name = string.gsub(v, "event_udata_", "")
 
 				local var_type = GetEventArgType(obj, udata_val_name)
@@ -1693,43 +1724,44 @@ do -- menu
 
 				local VAR_PANEL = vgui.Create("DFrame")
 
-				VAR_PANEL:SetSize(500,30)
-				VAR_PANEL:SetPos(0,0)
-				VAR_PANEL:ShowCloseButton( false )
+				VAR_PANEL:SetSize(500, 30)
+				VAR_PANEL:SetPos(0, 0)
+				VAR_PANEL:ShowCloseButton(false)
+
 				local VAR_PANEL_BUTTON = VAR_PANEL:Add("DButton")
-				VAR_PANEL_BUTTON:SetSize(80,30)
-				VAR_PANEL_BUTTON:SetPos(400,0)
+				VAR_PANEL_BUTTON:SetSize(80, 30)
+				VAR_PANEL_BUTTON:SetPos(400, 0)
+
 				local VAR_PANEL_EDITZONE
 				if var_type == "number" then
 					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-					VAR_PANEL_EDITZONE:SetSize(200,30)
+					VAR_PANEL_EDITZONE:SetSize(200, 30)
 				elseif var_type == "boolean" then
 					VAR_PANEL_EDITZONE = vgui.Create("DCheckBox", VAR_PANEL)
-					VAR_PANEL_EDITZONE:SetSize(30,30)
+					VAR_PANEL_EDITZONE:SetSize(30, 30)
 				elseif var_type == "string" then
 					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-					VAR_PANEL_EDITZONE:SetSize(200,30)
+					VAR_PANEL_EDITZONE:SetSize(200, 30)
 				elseif var_type == "Vector" then
 					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-					VAR_PANEL_EDITZONE:SetSize(200,30)
+					VAR_PANEL_EDITZONE:SetSize(200, 30)
 				elseif var_type == "Angle" then
 					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-					VAR_PANEL_EDITZONE:SetSize(200,30)
+					VAR_PANEL_EDITZONE:SetSize(200, 30)
 				else
 					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
-					VAR_PANEL_EDITZONE:SetSize(200,30)
+					VAR_PANEL_EDITZONE:SetSize(200, 30)
 				end
 
-				VAR_PANEL_EDITZONE:SetPos(200,0)
+				VAR_PANEL_EDITZONE:SetPos(200, 0)
 				VAR_PANEL:SetTitle("[" .. i .. "]   "..udata_val_name.."   "..var_type)
 				VAR_PANEL_BUTTON:SetText("APPLY")
 
+				VAR_PANEL:Dock(TOP)
+				VAR_PANEL:DockMargin(5, 0, 0, 5)
 
-				VAR_PANEL:Dock( TOP )
-				VAR_PANEL:DockMargin( 5, 0, 0, 5 )
 				VAR_PANEL_BUTTON.DoClick = function()
-
-					for i,part in ipairs(pace.BulkSelectList) do
+					for i, part in ipairs(pace.BulkSelectList) do
 						--PrintTable(part.Events[part.Event].__registeredArguments)
 						local sent_var
 						if var_type == "number" then
@@ -1749,7 +1781,10 @@ do -- menu
 							if v == "Name" and sent_var ~= "" then
 								sent_var = sent_var..i
 							end
-						else sent_var = VAR_PANEL_EDITZONE:GetValue() end
+						else
+							sent_var = VAR_PANEL_EDITZONE:GetValue()
+						end
+
 						if part.ClassName == "event" and part.Event == basepart.Event then
 							part:SetArguments(ApplyArgToIndex(part:GetArguments(), sent_var, GetEventArgIndex(part,v)))
 						else
@@ -1757,7 +1792,10 @@ do -- menu
 						end
 
 						if thoroughness_tickbox:GetChecked() then
-							for _,child in pairs(part:GetChildrenList()) do
+							local children = part:GetChildrenList()
+							for x = 1, #children do
+								local child = children[x]
+
 								if child.ClassName == "event" and child.Event == basepart.Event then
 									local sent_var
 									if var_type == "number" then
@@ -1777,9 +1815,11 @@ do -- menu
 										if v == "Name" and sent_var ~= "" then
 											sent_var = sent_var..i
 										end
-									else sent_var = VAR_PANEL_EDITZONE:GetValue() end
+									else
+										sent_var = VAR_PANEL_EDITZONE:GetValue()
+									end
 
-									child:SetArguments(ApplyArgToIndex(child:GetArguments(), sent_var, GetEventArgIndex(child,v)))
+									child:SetArguments(ApplyArgToIndex(child:GetArguments(), sent_var, GetEventArgIndex(child, v)))
 								end
 							end
 						end
@@ -1788,17 +1828,20 @@ do -- menu
 					pace.RefreshTree(true)
 					timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
 				end
-				scroll_panel:AddItem( VAR_PANEL )
+
+				scroll_panel:AddItem(VAR_PANEL)
 			end
 		end
 	end
 
 	function pace.BulkCutPaste(obj)
 		pace.RecordUndoHistory()
-		for _,v in ipairs(pace.BulkSelectList) do
+
+		for _, v in ipairs(pace.BulkSelectList) do
 			--if a part is inserted onto itself, it should instead serve as a parent
 			if v ~= obj then v:SetParent(obj) end
 		end
+
 		pace.RecordUndoHistory()
 		pace.RefreshTree()
 	end
@@ -2673,7 +2716,7 @@ function pace.UltraCleanup(obj)
 			if IsSafe(part) or Important(part) then
 				return
 			elseif IsMildlyRisky(part) then
-				if table.Count(part:GetChildren()) == 0 then
+				if #part:GetChildren() == 0 then
 					part:Remove()
 				end
 			end
@@ -2690,11 +2733,15 @@ function pace.UltraCleanup(obj)
 	local function Move_contents_up(part) --this will be the powerhouse recursor
 		local parent = FindNearestSafeParent(part)
 		--print(part, "nearest parent is", parent)
-		for _,child in pairs(part:GetChildren()) do
+
+		local children = part:GetChildren()
+		for i = 1, #children do
+			local child = children[i]
+
 			if child:IsHidden() or child.Hide then 				--hidden = delete
 				marked_for_deletion[child] = child
 			else 												--visible = possible container = check
-				if table.Count(child:GetChildren()) == 0 then 	--dead end = immediate action
+				if #child:GetChildren() == 0 then 				--dead end = immediate action
 					if IsSafe(child) then 						--safe = keep but now extract it
 						child:SetParent(parent)
 						--print(child, "moved to", parent)
@@ -2709,27 +2756,30 @@ function pace.UltraCleanup(obj)
 					safe_parts[child] = child
 					Move_contents_up(child)						--recurse
 				end
-
 			end
-
 		end
 	end
 
 	--find parts to delete
 		--first pass: absolute unsafes: hidden parts
-	for i,v in pairs(root:GetChildrenList()) do
+	local root_children = root:GetChildrenList()
+	for i = 1, #root_children do
+		local v = root_children[i]
+
 		if v:IsHidden() or v.Hide then
 			if not FoundImportantMarkedParent(v) then
 				v:Remove()
 			end
-
 		end
 	end
 
-		--second pass:
-			--A: mark safe parts
-			--B: extract children in remaining unsafes (i.e. break the chain of an event)
-	for i,v in pairs(root:GetChildrenList()) do
+	--second pass:
+		--A: mark safe parts
+		--B: extract children in remaining unsafes (i.e. break the chain of an event)
+	root_children = root:GetChildrenList()
+	for i = 1, #root_children do
+		local v = root_children[i]
+
 		if IsSafe(v) then
 			safe_parts[v] = v
 			CheckPartWithLinkedParts(v)
@@ -2740,23 +2790,25 @@ function pace.UltraCleanup(obj)
 			Move_contents_up(v)
 			marked_for_deletion[v] = v
 		end
-
 	end
-		--after that, the remaining events etc are marked
-	for i,v in pairs(root:GetChildrenList()) do
+
+	--after that, the remaining events etc are marked
+	root_children = root:GetChildrenList()
+	for i = 1, #root_children do
+		local v = root_children[i]
+
 		if IsMildlyRisky(v) then
 			marked_for_deletion[v] = v
 		end
 	end
 
 	pace.RefreshTree()
-	--go through delete tables except when marked as important or those protected by these
-	for i,v in pairs(marked_for_deletion) do
 
+	--go through delete tables except when marked as important or those protected by these
+	for i, v in pairs(marked_for_deletion) do
 		local delete = false
 
 		if not safe_parts[v] then
-
 			if v:IsValid() then
 				delete = true
 			end
@@ -2768,8 +2820,11 @@ function pace.UltraCleanup(obj)
 		if delete then SafeRemove(v) end
 	end
 
-		--third pass: cleanup the last remaining unwanted parts
-	for i,v in pairs(root:GetChildrenList()) do
+	--third pass: cleanup the last remaining unwanted parts
+	root_children = root:GetChildrenList()
+	for i = 1, #root_children do
+		local v = root_children[i]
+
 		--remove remaining events after their children have been freed, and delete parts that don't have durable use, like sounds that aren't looping
 		if IsMildlyRisky(v) or IsHangingPart(v) then
 			if not Important(v) then
@@ -2778,20 +2833,26 @@ function pace.UltraCleanup(obj)
 		end
 	end
 
-		--fourth pass: delete bare containing nothing left
-	for i,v in pairs(root:GetChildrenList()) do
+	--fourth pass: delete bare containing nothing left
+	root_children = root:GetChildrenList()
+	for i = 1, #root_children do
+		local v = root_children[i]
+
 		if v.ClassName == "group" then
 			local bare = true
-			for i2,v2 in pairs(v:GetChildrenList()) do
-				if v2.ClassName ~= "group" then
+
+			local v_children = v:GetChildrenList()
+			for x = 1, #v_children do
+				if v_children[x].ClassName ~= "group" then
 					bare = false
 				end
 			end
+
 			if bare then v:Remove() end
 		end
 	end
-	pace.RefreshTree()
 
+	pace.RefreshTree()
 end
 
 do --hover highlight halo
@@ -2815,51 +2876,54 @@ do --hover highlight halo
 
 		local tbl = {}
 		local ent = self:GetOwner()
-		local is_root = ent == self:GetRootPart():GetOwner()
+		local root_ent = self:GetRootPart():GetOwner()
+		local is_root = ent == root_ent
 
 		--decide whether to skip
 		--it will skip the part-search loop if we already checked the part recently
 		if self.UniqueID == last_checked_partUID then
 			skip = true
-			if is_root and last_root_ent ~= self:GetRootPart():GetOwner() then
+
+			if is_root and last_root_ent ~= root_ent then
 				table.RemoveByValue(last_tbl, last_root_ent)
-				table.insert(last_tbl, self:GetRootPart():GetOwner())
+				table.insert(last_tbl, root_ent)
 			end
+
 			tbl = last_tbl
 		end
 
 		--operations : search the part and look for entity-candidates to halo
 		if not skip then
 			--start with entity, which could be part or entity
-			if (is_root and ent:IsValid()) then
+			if is_root and ent:IsValid() then
 				table.insert(tbl, ent)
-			else
-				if not ((self.ClassName == "group" or self.ClassName == "jiggle") or (self.Hide == true) or (self.Size == 0) or (self.Alpha == 0)) then
-					table.insert(tbl, ent)
-				end
+			elseif not (self.ClassName == "group" or self.ClassName == "jiggle" or self.Hide == true or self.Size == 0 or self.Alpha == 0) then
+				table.insert(tbl, ent)
 			end
 
 			--get the children if any
 			if self:HasChildren() then
-				for _,v in ipairs(self:GetChildrenList()) do
-					local can_add = false
-					local ent = v:GetOwner()
+				local children = self:GetChildrenList()
+				for i = 1, #children do
+					local v = children[i]
 
 					--we're not gonna add parts that don't have a specific reason to be haloed or that don't at least group up some haloable models
 					--because the table.insert function has a processing load on the memory, and so is halo-drawing
-					if (v.ClassName == "model" or v.ClassName ==  "model2" or v.ClassName == "jiggle") then
-						can_add = true
-					else can_add = false end
-					if (v.Hide == true) or (v.Size == 0) or (v.Alpha == 0) or (v:IsHidden()) then
+					local can_add = v.ClassName == "model" or v.ClassName ==  "model2" or v.ClassName == "jiggle"
+
+					if v.Hide == true or v.Size == 0 or v.Alpha == 0 or v:IsHidden() then
 						can_add = false
 					end
-					if can_add then table.insert(tbl, ent) end
+
+					if can_add then
+						table.insert(tbl, v:GetOwner())
+					end
 				end
 			end
 		end
 
 		last_tbl = tbl
-		last_root_ent = self:GetRootPart():GetOwner()
+		last_root_ent = root_ent
 		last_checked_partUID = self.UniqueID
 
 		DrawHaloHighlight(tbl)

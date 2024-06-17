@@ -404,8 +404,9 @@ function PART:SetModel(path)
 
 				pac.ResetBoneCache(ent)
 
-				for _, child in ipairs(self:GetChildrenList()) do
-					child:OnShow(true)
+				local children = self:GetChildrenList()
+				for i = 1, #children do
+					children[i]:OnShow(true)
 				end
 			end, function(err)
 				pac.Message(err)
@@ -417,7 +418,7 @@ function PART:SetModel(path)
 			local msg = reason2 or reason or "mdl is not allowed"
 			self.loading = msg
 			self:SetError(msg)
-			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
+			pac.Message(self:GetPlayerOwner(), " - mdl files are not allowed")
 		end
 	elseif self.Model ~= "" then
 

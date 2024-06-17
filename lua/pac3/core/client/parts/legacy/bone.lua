@@ -1,7 +1,7 @@
 local NULL = NULL
 local pairs = pairs
 
-for _, v in pairs(ents.GetAll()) do
+for _, v in ents.Iterator() do
 	v.pac_bone_setup_data = nil
 end
 
@@ -12,7 +12,7 @@ PART.ClassName = "bone"
 PART.Group = "legacy"
 PART.is_bone_part = true
 
-PART.Icon = 'icon16/connect.png'
+PART.Icon = "icon16/connect.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")

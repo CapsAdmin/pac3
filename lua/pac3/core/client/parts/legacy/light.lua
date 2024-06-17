@@ -4,7 +4,7 @@ PART.FriendlyName = "legacy light"
 PART.ClassName = "light"
 PART.Group = "legacy"
 
-PART.Icon = 'icon16/lightbulb.png'
+PART.Icon = "icon16/lightbulb.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Brightness", 1)

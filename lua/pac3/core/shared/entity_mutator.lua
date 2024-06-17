@@ -4,7 +4,7 @@ local CLIENT = CLIENT
 local SERVER = SERVER
 
 if pac.emut then
-	for _, ent in ipairs(ents.GetAll()) do
+	for _, ent in ents.Iterator() do
 		if ent.pac_mutations then
 			for _, mutator in pairs(ent.pac_mutations) do
 				xpcall(pac.emut.RestoreMutations, function() end, mutator.Owner, mutator.ClassName, mutator.Entity)
@@ -173,7 +173,7 @@ end
 function emut.Register(meta)
 
 	if Entity(1):IsValid() then
-		for _, ent in ipairs(ents.GetAll()) do
+		for _, ent in ents.Iterator() do
 			if ent.pac_mutations then
 				for class_name, mutator in pairs(ent.pac_mutations) do
 					if class_name == meta.ClassName then
@@ -338,6 +338,7 @@ if CLIENT then
 	net.Receive("pac_entity_mutator", function(len)
 		local ply = net.ReadEntity()
 		if not ply:IsValid() then return end
+
 		local class_name = net.ReadString()
 		local ent = net.ReadEntity()
 		if not ent:IsValid() then return end
@@ -359,8 +360,8 @@ end
 function emut.LoadMutators()
 	local files = file.Find("pac3/core/shared/entity_mutators/*.lua", "LUA")
 
-	for _, name in pairs(files) do
-		include("pac3/core/shared/entity_mutators/" .. name)
+	for i = 1, #files do
+		include("pac3/core/shared/entity_mutators/" .. files[i])
 	end
 end
 

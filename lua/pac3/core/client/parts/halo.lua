@@ -1,13 +1,14 @@
 local Color = Color
 local Vector = Vector
+local table_insert = table.insert
 
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "halo"
 
 PART.ThinkTime = 0
-PART.Group = {'effects', 'model'}
-PART.Icon = 'icon16/shading.png'
+PART.Group = {"effects", "model"}
+PART.Icon = "icon16/shading.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
@@ -27,7 +28,6 @@ BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local h = pac.ColorToNames(self:GetColor())
-
 	return h .. " halo"
 end
 
@@ -37,6 +37,16 @@ end
 
 function PART:SetPasses(n)
 	self.Passes = math.min(n, 50)
+end
+
+function PART:SetColor(v)
+	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
+
+	self.ColorC.r = v.r
+	self.ColorC.g = v.g
+	self.ColorC.b = v.b
+
+	self.Color = v
 end
 
 function PART:GetTarget()
@@ -50,7 +60,6 @@ function PART:GetTarget()
 end
 
 function PART:OnThink()
-
 	local tbl = {}
 
 	local ent = self:GetOwner()
@@ -60,25 +69,37 @@ function PART:OnThink()
 
 	local target = self:GetTarget()
 
+	local children
+
 	if self.AffectTargetChildren and target:IsValid() then
-		for _, part in ipairs(target:GetChildrenList()) do
+		children = target:GetChildrenList()
+		for i = 1, #children do
+			local part = children[i]
 			local ent = part:GetOwner()
+
 			if ent:IsValid() and not part:IsHiddenCached() then
-				table.insert(tbl, ent)
+				table_insert(tbl, ent)
 			end
 		end
 	end
 
 	if self.AffectChildren then
-		for _, part in ipairs(self:GetChildrenList()) do
+		children = self:GetChildrenList()
+		for i = 1, #children do
+			local part = children[i]
 			local ent = part:GetOwner()
+
 			if ent:IsValid() and not part:IsHiddenCached() then
-				table.insert(tbl, ent)
+				table_insert(tbl, ent)
 			end
 		end
 	end
 
-	pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
+	if not self.ColorC then
+		self.ColorC = Color(self.Color.r, self.Color.g, self.Color.b)
+	end
+
+	pac.haloex.Add(tbl, self.ColorC, self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
 end
 
 BUILDER:Register()

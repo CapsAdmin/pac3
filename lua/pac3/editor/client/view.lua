@@ -192,7 +192,10 @@ local function CalcDrag()
 	origin = owner:GetPos()
 	if owner == pac.WorldEntity then
 		if part:HasChildren() then
-			for key, child in ipairs(part:GetChildren()) do
+			local children = part:GetChildren()
+			for i = 1, #children do
+				local child = children[i]
+
 				if child.GetDrawPosition then
 					part = child
 					break
@@ -237,7 +240,6 @@ local function CalcDrag()
 		end
 	end
 
-
 	if pace.delaymovement < RealTime() then
 		if MovementBindDown("forward") then
 			pace.ViewPos = pace.ViewPos + pace.ViewAngles:Forward() * mult * ftime
@@ -261,7 +263,6 @@ local function CalcDrag()
 			end
 		end
 	end
-
 end
 
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)

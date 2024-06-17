@@ -134,18 +134,16 @@ function pac.LoadParts()
 	include("base_drawable.lua")
 
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
-	for _, name in pairs(files) do
-		include("pac3/core/client/parts/" .. name)
+	for i = 1, #files do
+		include("pac3/core/client/parts/" .. files[i])
 	end
 
-	local files = file.Find("pac3/core/client/parts/legacy/*.lua", "LUA")
-	for _, name in pairs(files) do
-		include("pac3/core/client/parts/legacy/" .. name)
+	files = file.Find("pac3/core/client/parts/legacy/*.lua", "LUA")
+	for i = 1, #files do
+		include("pac3/core/client/parts/legacy/" .. files[i])
 	end
 end
 
 function pac.GetRegisteredParts()
 	return pac.registered_parts
 end
-
-

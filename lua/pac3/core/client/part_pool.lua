@@ -741,8 +741,8 @@ do -- drawing
 	do
 		local draw_dist = 0
 		local sv_draw_dist = 0
-		local radius = 0
 		local dst = 0
+
 		local pac_sv_draw_distance
 
 		pac.AddHook("Think", "update_parts", function()
@@ -753,10 +753,10 @@ do -- drawing
 			pac.RealTime = RealTime()
 			pac.FrameNumber = pac.FrameNumber + 1
 
-			draw_dist = cvar_distance:GetInt()
 			pac_sv_draw_distance = pac_sv_draw_distance or GetConVar("pac_sv_draw_distance")
+
+			draw_dist = cvar_distance:GetInt()
 			sv_draw_dist = pac_sv_draw_distance:GetFloat()
-			radius = 0
 
 			if draw_dist <= 0 then
 				draw_dist = 32768
@@ -766,7 +766,9 @@ do -- drawing
 				sv_draw_dist = 32768
 			end
 
-			draw_dist = math.min(sv_draw_dist, draw_dist)
+			--square the dist vars to fit with dst which uses DistToSqr for efficiency
+			sv_draw_dist = sv_draw_dist * sv_draw_dist
+			draw_dist = math.min(sv_draw_dist, draw_dist * draw_dist)
 
 			for ent in next, pac.drawn_entities do
 				if not IsValid(ent) then
@@ -778,8 +780,7 @@ do -- drawing
 
 				pac.ResetRenderTime(ent)
 
-				dst = ent:EyePos():Distance(pac.EyePos)
-				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
+				dst = ent:EyePos():DistToSqr(pac.EyePos)
 
 				if ent:IsPlayer() or IsValid(ent.pac_ragdoll_owner) then
 					local ply = ent.pac_ragdoll_owner or ent
@@ -801,12 +802,6 @@ do -- drawing
 							ply:DrawModel()
 						end
 					end
-
-					if radius < 32 then
-						radius = 128
-					end
-				elseif not ent:IsNPC() then
-					radius = radius * 4
 				end
 
 				-- if it's a world entity always draw
@@ -830,14 +825,13 @@ do -- drawing
 				-- if the condition is not satisified, check draw distance
 				if not cond and ent ~= pac.LocalPlayer then
 					if ent.pac_draw_distance then
-						-- custom draw distance
-						cond = ent.pac_draw_distance <= 0 or dst <= ent.pac_draw_distance
+						-- custom draw distance - is it 0 for infinite range, or under the custom distance (squared to fit with DistToSqr)
+						cond = ent.pac_draw_distance <= 0 or dst <= (ent.pac_draw_distance * ent.pac_draw_distance)
 					else
 						-- otherwise check the cvar
 						cond = dst <= draw_dist
 					end
 				end
-
 
 				ent.pac_is_drawing = cond
 
@@ -892,7 +886,6 @@ do -- drawing
 
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
-
 					if isDraw3DSkybox and not ent:GetNW2Bool("pac_in_skybox") then
 						continue
 					end
@@ -911,7 +904,6 @@ do -- drawing
 
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then -- accessing table of NULL doesn't do anything
-
 					if isDraw3DSkybox and not ent:GetNW2Bool("pac_in_skybox") then
 						continue
 					end

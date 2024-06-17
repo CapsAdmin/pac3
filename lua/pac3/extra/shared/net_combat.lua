@@ -347,9 +347,16 @@ if SERVER then
 		return true
 	end
 
+	--counts all players (faster than player.GetCount)
+	local function PlayerCount()
+		local count = 0
+		for _, v in player.Iterator() do count = count + 1 end
+		return count
+	end
+
 	--stopping condition to stop force or damage operation if too many entities, because net impact is proportional to players
 	local function TooManyEnts(count)
-		local playercount = player.GetCount()
+		local playercount = PlayerCount()
 		local hard_limit = raw_ent_limit:GetInt()
 		local per_ply = per_ply_limit:GetInt()
 		--print(count .. " compared against hard limit " .. hard_limit .. " and " .. playercount .. " players*" .. per_ply .. " limit (" .. count*playercount .. " | " .. playercount*per_ply .. ")")
@@ -429,7 +436,7 @@ if SERVER then
 		end
 
 		if bool == nil then
-			for i,ply in pairs(player.GetAll()) do
+			for _, ply in player.Iterator() do
 				if ply.grabbed_ents[ent] then
 					ply.grabbed_ents[ent] = nil
 					print(ent , "no longer grabbed by", ply)
@@ -737,8 +744,10 @@ if SERVER then
 	end)
 
 	local function MergeTargetsByID(tbl1, tbl2)
-		for i,v in ipairs(tbl2) do
-			tbl1[v:EntIndex()] = v
+		--tbl2 is always a ents.Find* results table
+		for i = 1, #tbl2 do
+			local ent = tbl2[i]
+			tbl1[ent:EntIndex()] = ent
 		end
 	end
 
@@ -747,6 +756,7 @@ if SERVER then
 		local ent_count = 0
 		local ply_count = 0
 		local ply_prog_count = 0
+
 		for i,v in pairs(ents_hits) do
 			if not (v:IsPlayer() or Is_NPC(v)) and not tbl.PointEntities then ents_hits[i] = nil end
 			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
@@ -764,7 +774,7 @@ if SERVER then
 		end
 
 		--dangerous conditions: absurd amounts of entities, damaging a large percentage of the server's players beyond a certain point
-		if TooManyEnts(ent_count) or ((ply_count) > 12 and (ply_count > player_fraction:GetFloat() * player.GetCount())) then
+		if TooManyEnts(ent_count) or ((ply_count) > 12 and (ply_count > player_fraction:GetFloat() * PlayerCount())) then
 			print("early exit")
 			return false,false,nil,{},{}
 		end
@@ -1164,7 +1174,7 @@ if SERVER then
 	--second stage of force: apply
 	local function ProcessForcesList(ents_hits, tbl, pos, ang, ply)
 		local ent_count = 0
-		for i,v in pairs(ents_hits) do
+		for i, v in pairs(ents_hits) do
 			if v.CPPICanPickup and not v:CPPICanPickup(ply) then ents_hits[i] = nil end
 			if v.CPPICanPunt and not v:CPPICanPunt(ply) then ents_hits[i] = nil end
 			if v:IsConstraint() then ents_hits[i] = nil end
@@ -1177,9 +1187,8 @@ if SERVER then
 			local ent_getphysobj = ent:GetPhysicsObject()
 			local owner = Try_CPPIGetOwner(ent)
 			local is_player = ent:IsPlayer()
-			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
+			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(), "item_") or string.find(ent:GetClass(), "ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
 			local is_npc = Is_NPC(ent)
-
 
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
 					and (
@@ -1205,12 +1214,11 @@ if SERVER then
 				if IsValid(phys_ent) then
 					oldvel = phys_ent:GetVelocity()
 				else
-					oldvel = Vector(0,0,0)
+					oldvel = Vector(0, 0, 0)
 				end
 
-
-				local addvel = Vector(0,0,0)
-				local add_angvel = Vector(0,0,0)
+				local addvel = Vector(0, 0, 0)
+				local add_angvel = Vector(0, 0, 0)
 
 				local ent_center = ent:WorldSpaceCenter() or ent:GetPos()
 
@@ -1229,7 +1237,7 @@ if SERVER then
 				--clamp the delta to the ratio levitation height
 
 				if tbl.Levitation then
-					up_mult = math.Clamp(height_delta / (5 + math.abs(tbl.LevitationHeight)),-1,1)
+					up_mult = math.Clamp(height_delta / (5 + math.abs(tbl.LevitationHeight)), -1, 1)
 				end
 
 				if tbl.BaseForceAngleMode == "Radial" then --radial on self
@@ -1244,34 +1252,34 @@ if SERVER then
 					addvel = addvel + tbl.AddedVectorForce
 				elseif tbl.VectorForceAngleMode == "Local" then --local on self
 					addvel = addvel
-					+ang:Forward()*tbl.AddedVectorForce.x
-					+ang:Right()*tbl.AddedVectorForce.y
-					+ang:Up()*tbl.AddedVectorForce.z
+					+ ang:Forward() * tbl.AddedVectorForce.x
+					+ ang:Right() * tbl.AddedVectorForce.y
+					+ ang:Up() * tbl.AddedVectorForce.z
 
 				elseif tbl.VectorForceAngleMode == "Radial" then --relative to locus or self
 					ang2 = dir:Angle()
 					addvel = addvel
-					+ang2:Forward()*tbl.AddedVectorForce.x
-					+ang2:Right()*tbl.AddedVectorForce.y
-					+ang2:Up()*tbl.AddedVectorForce.z
+					+ ang2:Forward() * tbl.AddedVectorForce.x
+					+ ang2:Right() * tbl.AddedVectorForce.y
+					+ ang2:Up() * tbl.AddedVectorForce.z
 				elseif tbl.VectorForceAngleMode == "RadialNoPitch" then --relative to locus or self
 					dir.z = 0
 					ang2 = dir:Angle()
 					addvel = addvel
-					+ang2:Forward()*tbl.AddedVectorForce.x
-					+ang2:Right()*tbl.AddedVectorForce.y
-					+ang2:Up()*tbl.AddedVectorForce.z
+					+ ang2:Forward() * tbl.AddedVectorForce.x
+					+ ang2:Right() * tbl.AddedVectorForce.y
+					+ ang2:Up() * tbl.AddedVectorForce.z
 				end
 
 				if tbl.TorqueMode == "Global" then
 					add_angvel = tbl.Torque
 				elseif tbl.TorqueMode == "Local" then
-					add_angvel = ang:Forward()*tbl.Torque.x + ang:Right()*tbl.Torque.y + ang:Up()*tbl.Torque.z
+					add_angvel = ang:Forward() * tbl.Torque.x + ang:Right() * tbl.Torque.y + ang:Up() * tbl.Torque.z
 				elseif tbl.TorqueMode == "TargetLocal" then
 					add_angvel = tbl.Torque
 				elseif tbl.TorqueMode == "Radial" then
 					ang2 = dir:Angle()
-					addvel = ang2:Forward()*tbl.Torque.x + ang2:Right()*tbl.Torque.y + ang2:Up()*tbl.Torque.z
+					addvel = ang2:Forward() * tbl.Torque.x + ang2:Right() * tbl.Torque.y + ang2:Up() * tbl.Torque.z
 				end
 
 				local islocaltorque = tbl.TorqueMode == "TargetLocal"
@@ -1284,15 +1292,15 @@ if SERVER then
 				end
 				if is_phys and tbl.AccountMass then
 					if not is_npc then
-						addvel = addvel * (1 / math.max(mass,0.1))
+						addvel = addvel * (1 / math.max(mass, 0.1))
 					else
 						addvel = addvel
 					end
-					add_angvel = add_angvel * (1 / math.max(mass,0.1))
+					add_angvel = add_angvel * (1 / math.max(mass, 0.1))
 				end
 
 				if tbl.Falloff then
-					dist_multiplier = math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
+					dist_multiplier = math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length), 0, 1)
 				end
 				if tbl.ReverseFalloff then
 					dist_multiplier = 1 - math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
@@ -1405,41 +1413,45 @@ if SERVER then
 			local ents_hits = {}
 			if tbl.Length ~= 0 and tbl.Radius ~= 0 then
 				local counter = 0
-				MergeTargetsByID(ents_hits,ents.FindInSphere(pos, tbl.Radius))
-				for i=0,1,1/(math.abs(tbl.Length/tbl.Radius)) do
-					MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, tbl.Radius))
+				MergeTargetsByID(ents_hits, ents.FindInSphere(pos, tbl.Radius))
+				for i = 0, 1, 1 / math.abs(tbl.Length/tbl.Radius) do
+					MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * tbl.Length * i, tbl.Radius))
 					if counter == 200 then break end
 					counter = counter + 1
 				end
-				MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length, tbl.Radius))
+				MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * tbl.Length, tbl.Radius))
 				--render.DrawWireframeSphere( self:GetWorldPosition() + self:GetWorldAngles():Forward()*(self.Length - 0.5*self.Radius), 0.5*self.Radius, 10, 10, Color( 255, 255, 255 ) )
-			elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+			elseif tbl.Radius == 0 then
+				MergeTargetsByID(ents_hits, ents.FindAlongRay(pos, pos + ang:Forward() * tbl.Length))
+			end
 			ProcessForcesList(ents_hits, tbl, pos, ang, ply)
 		elseif tbl.HitboxMode == "Cone" then
 			local ents_hits = {}
 			local steps
-			steps = math.Clamp(4*math.ceil(tbl.Length / (tbl.Radius or 1)),1,50)
-			for i = 1,0,-1/steps do
-				MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
+			steps = math.Clamp(4 * math.ceil(tbl.Length / (tbl.Radius or 1)), 1, 50)
+			for i = 1, 0, -1 / steps do
+				MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * tbl.Length * i, i * tbl.Radius))
 			end
 
 			steps = math.Clamp(math.ceil(tbl.Length / (tbl.Radius or 1)),1,4)
 
-			if tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+			if tbl.Radius == 0 then MergeTargetsByID(ents_hits, ents.FindAlongRay(pos, pos + ang:Forward() * tbl.Length)) end
 			ProcessForcesList(ents_hits, tbl, pos, ang, ply)
-		elseif tbl.HitboxMode =="Ray" then
-			local startpos = pos + Vector(0,0,0)
-			local endpos = pos + ang:Forward()*tbl.Length
+		elseif tbl.HitboxMode == "Ray" then
+			local startpos = pos + vector_origin
+			local endpos = pos + ang:Forward() * tbl.Length
+
 			ents_hits = ents.FindAlongRay(startpos, endpos)
 			ProcessForcesList(ents_hits, tbl, pos, ang, ply)
 
 			if tbl.Bullet then
 				local bullet = {}
 				bullet.Src = pos + ang:Forward()
-				bullet.Dir = ang:Forward()*50000
+				bullet.Dir = ang:Forward() * 50000
 				bullet.Damage = -1
 				bullet.Force = 0
 				bullet.Entity = dmg_info:GetAttacker()
+
 				dmg_info:GetInflictor():FireBullets(bullet)
 			end
 		end
@@ -1464,7 +1476,7 @@ if SERVER then
 
 	--lock break order from client
 	net.Receive("pac_signal_stop_lock", function(len,ply)
-		if not pac.RatelimitPlayer( ply, "pac_signal_stop_lock", 3, 5, {"Player ", ply, " is spamming pac_signal_stop_lock!"} ) then
+		if not pac.RatelimitPlayer(ply, "pac_signal_stop_lock", 3, 5, {"Player ", ply, " is spamming pac_signal_stop_lock!"}) then
 			return
 		end
 		ApplyLockState(ply, false)
@@ -1481,9 +1493,9 @@ if SERVER then
 			net.Send(ply.grabbed_by)
 		end
 		--What if there's more? try to find it AMONG US SUS!
-		for _,ent in pairs(player.GetAll()) do
+		for _, ent in player.Iterator() do
 			if ent.grabbed_ents and ent ~= ply.grabbed_by then --a player! time to inspect! but skip the already found grabber
-				for _,grabbed in pairs(ent.grabbed_ents) do --check all her entities
+				for _, grabbed in pairs(ent.grabbed_ents) do --check all her entities
 					if ply == grabbed then --that's us!
 						net.Start("pac_request_lock_break")
 						net.WriteEntity(ply)
@@ -1782,47 +1794,47 @@ if SERVER then
 					end
 					steps = math.max(steps + math.abs(tbl.ExtraSteps),1)
 
-					for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the i multiplier
+					for ringnumber = 1, 0, -1 / steps do --concentric circles go smaller and smaller by lowering the i multiplier
 						phase = math.random()
-						local ray_thickness = math.Clamp(0.5*math.log(tbl.Radius) + 0.05*tbl.Radius,0,10)*(1 - 0.7*ringnumber)
-						for i=1,0,-1/sides do
+						local ray_thickness = math.Clamp(0.5 * math.log(tbl.Radius) + 0.05 * tbl.Radius, 0, 10) * (1 - 0.7 * ringnumber)
+						for i = 1, 0, -1 / sides do
 							if ringnumber == 0 then i = 0 end
-							x = ang:Right()*math.cos(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
-							y = ang:Up()   *math.sin(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
+							x = ang:Right() * math.cos(2 * math.pi * i + phase * tbl.PhaseRandomize) * tbl.Radius * ringnumber * (1 - math.random() * (ringnumber) * tbl.RadialRandomize)
+							y = ang:Up()    * math.sin(2 * math.pi * i + phase * tbl.PhaseRandomize) * tbl.Radius * ringnumber * (1 - math.random() * (ringnumber) * tbl.RadialRandomize)
 							local startpos = pos + x + y
-							local endpos = pos + ang:Forward()*tbl.Length + x + y
-							MergeTargetsByID(ents_hits, ents.FindAlongRay(startpos, endpos, maximized_ray_mins_maxs(startpos,endpos,ray_thickness)))
+							local endpos = pos + ang:Forward() * tbl.Length + x + y
+							MergeTargetsByID(ents_hits, ents.FindAlongRay(startpos, endpos, maximized_ray_mins_maxs(startpos, endpos, ray_thickness)))
 						end
 					end
 					if tbl.HitboxMode == "CylinderHybrid" and tbl.Length ~= 0 then
 						--fast sphere check on the wide end
 						if tbl.Length/tbl.Radius >= 2 then
-							MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius), tbl.Radius))
-							MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Radius, tbl.Radius))
+							MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius), tbl.Radius))
+							MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward()*tbl.Radius, tbl.Radius))
 							if tbl.Radius ~= 0 then
 								local counter = 0
-								for i=math.floor(tbl.Length / tbl.Radius) - 1,1,-1 do
-									MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Radius*i), tbl.Radius))
+								for i = math.floor(tbl.Length / tbl.Radius) - 1, 1, -1 do
+									MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * (tbl.Radius * i), tbl.Radius))
 									if counter == 100 then break end
 									counter = counter + 1
 								end
 							end
 						end
 					end
-				elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+				elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits, ents.FindAlongRay(pos, pos + ang:Forward() * tbl.Length)) end
 
 			elseif tbl.HitboxMode == "CylinderSpheres" then
 				ents_hits = {}
 				if tbl.Length ~= 0 and tbl.Radius ~= 0 then
 					local counter = 0
-					MergeTargetsByID(ents_hits,ents.FindInSphere(pos, tbl.Radius))
-					for i=0,1,1/(math.abs(tbl.Length/tbl.Radius)) do
-						MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, tbl.Radius))
+					MergeTargetsByID(ents_hits, ents.FindInSphere(pos, tbl.Radius))
+					for i = 0, 1, 1 / math.abs(tbl.Length / tbl.Radius) do
+						MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * tbl.Length * i, tbl.Radius))
 						if counter == 200 then break end
 						counter = counter + 1
 					end
-					MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length, tbl.Radius))
-				elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+					MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * tbl.Length, tbl.Radius))
+				elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits, ents.FindAlongRay(pos, pos + ang:Forward() * tbl.Length)) end
 
 			elseif tbl.HitboxMode == "Cone" or tbl.HitboxMode == "ConeHybrid" then
 				ents_hits = {}
@@ -1830,25 +1842,25 @@ if SERVER then
 					local sides = tbl.Detail
 					if tbl.Detail < 1 then sides = 1 end
 					local startpos = pos-- + Vector(0,       self.Radius,self.Radius)
-					local area_factor = tbl.Radius*tbl.Radius / (400 + 100*tbl.Length/math.max(tbl.Radius,0.1)) --bigger radius means more rays needed to cast to approximate the cylinder detection
-					local steps = 3 + math.ceil(4*(area_factor / ((4 + tbl.Length/4) / (20 / math.max(tbl.Detail,1)))))
+					local area_factor = tbl.Radius * tbl.Radius / (400 + 100 * tbl.Length / math.max(tbl.Radius, 0.1)) --bigger radius means more rays needed to cast to approximate the cylinder detection
+					local steps = 3 + math.ceil(4 * (area_factor / ((4 + tbl.Length / 4) / (20 / math.max(tbl.Detail, 1)))))
 					if tbl.HitboxMode == "ConeHybrid" and tbl.Length ~= 0 then
-						area_factor = 0.15*area_factor
-						steps = 1 + math.ceil(4*(area_factor / ((4 + tbl.Length/4) / (20 / math.max(tbl.Detail,1)))))
+						area_factor = 0.15 * area_factor
+						steps = 1 + math.ceil(4 * (area_factor / ((4 + tbl.Length / 4) / (20 / math.max(tbl.Detail, 1)))))
 					end
-					steps = math.max(steps + math.abs(tbl.ExtraSteps),1)
+					steps = math.max(steps + math.abs(tbl.ExtraSteps), 1)
 					local timestart = SysTime()
 					local casts = 0
-					for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the ringnumber multiplier
+					for ringnumber = 1, 0, -1 / steps do --concentric circles go smaller and smaller by lowering the ringnumber multiplier
 						phase = math.random()
 						local ray_thickness = 5 * (2 - ringnumber)
 
-						for i=1,0,-1/sides do
+						for i = 1, 0, -1 / sides do
 							if ringnumber == 0 then i = 0 end
-							x = ang:Right()*math.cos(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
-							y = ang:Up()   *math.sin(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
-							local endpos = pos + ang:Forward()*tbl.Length + x + y
-							MergeTargetsByID(ents_hits,ents.FindAlongRay(startpos, endpos, maximized_ray_mins_maxs(startpos,endpos,ray_thickness)))
+							x = ang:Right() * math.cos(2 * math.pi * i + phase * tbl.PhaseRandomize) * tbl.Radius * ringnumber * (1 - math.random() * (ringnumber) * tbl.RadialRandomize)
+							y = ang:Up()    * math.sin(2 * math.pi * i + phase * tbl.PhaseRandomize) * tbl.Radius * ringnumber * (1 - math.random() * (ringnumber) * tbl.RadialRandomize)
+							local endpos = pos + ang:Forward() * tbl.Length + x + y
+							MergeTargetsByID(ents_hits, ents.FindAlongRay(startpos, endpos, maximized_ray_mins_maxs(startpos, endpos, ray_thickness)))
 							casts = casts + 1
 						end
 					end
@@ -1856,39 +1868,40 @@ if SERVER then
 						--fast sphere check on the wide end
 						local radius_multiplier = math.atan(math.abs(ratio)) / (1.5 + 0.1*math.sqrt(ratio))
 						if ratio > 0.5 then
-							MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius * radius_multiplier), tbl.Radius * radius_multiplier))
+							MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * (tbl.Length - tbl.Radius * radius_multiplier), tbl.Radius * radius_multiplier))
 						end
 					end
-				elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+				elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits, ents.FindAlongRay(pos, pos + ang:Forward() * tbl.Length)) end
 
 			elseif tbl.HitboxMode == "ConeSpheres" then
 				ents_hits = {}
 				local steps
-				steps = math.Clamp(4*math.ceil(tbl.Length / (tbl.Radius or 1)),1,50)
+				steps = math.Clamp(4 * math.ceil(tbl.Length / (tbl.Radius or 1)), 1, 50)
 				for i = 1,0,-1/steps do
-					MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
+					MergeTargetsByID(ents_hits, ents.FindInSphere(pos + ang:Forward() * tbl.Length * i, i * tbl.Radius))
 				end
 
-				steps = math.Clamp(math.ceil(tbl.Length / (tbl.Radius or 1)),1,4)
+				steps = math.Clamp(math.ceil(tbl.Length / (tbl.Radius or 1)), 1, 4)
 
-				if tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+				if tbl.Radius == 0 then MergeTargetsByID(ents_hits, ents.FindAlongRay(pos, pos + ang:Forward() * tbl.Length)) end
 
 			elseif tbl.HitboxMode =="Ray" then
-				local startpos = pos + Vector(0,0,0)
-				local endpos = pos + ang:Forward()*tbl.Length
+				local startpos = pos + Vector(0, 0, 0)
+				local endpos = pos + ang:Forward() * tbl.Length
 				ents_hits = ents.FindAlongRay(startpos, endpos)
 
 				if tbl.Bullet then
 					local bullet = {}
 					bullet.Src = pos + ang:Forward()
-					bullet.Dir = ang:Forward()*50000
+					bullet.Dir = ang:Forward() * 50000
 					bullet.Damage = -1
 					bullet.Force = 0
 					bullet.Entity = dmg_info:GetAttacker()
+
 					dmg_info:GetInflictor():FireBullets(bullet)
 				end
 			end
-			hit,kill,highest_dmg,successful_hit_ents,successful_kill_ents = ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
+			hit,kill, highest_dmg, successful_hit_ents, successful_kill_ents = ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
 			highest_dmg = highest_dmg or 0
 			net.Start("pac_hit_results", true)
 			net.WriteBool(hit)
@@ -1962,7 +1975,6 @@ if SERVER then
 			local prop_protected, reason = IsPropProtected(targ_ent, ply)
 
 			local owner = Try_CPPIGetOwner(targ_ent)
-
 
 			local unconsenting_owner = owner ~= ply and (grab_consents[owner] == false or (targ_ent:IsPlayer() and grab_consents[targ_ent] == false))
 			local calcview_unconsenting = owner ~= ply and (calcview_consents[owner] == false or (targ_ent:IsPlayer() and calcview_consents[targ_ent] == false))
@@ -2078,7 +2090,7 @@ if SERVER then
 				if targ_ent.IsDrGEntity then
 					targ_ent.loco:SetVelocity(Vector(0,0,0)) --counter gravity speed buildup
 				end
-				if targ_ent:GetClass() == "prop_ragdoll" then targ_ent:GetPhysicsObject():SetPos(pos) end
+				if targ_ent:IsRagdoll() then targ_ent:GetPhysicsObject():SetPos(pos) end
 
 				--@@note lock assignation! IMPORTANT
 				if is_first_time then --successful, first
@@ -2101,7 +2113,6 @@ if SERVER then
 				net.WriteString(lockpart_UID)
 				net.WriteString(breakup_condition)
 				net.Send(auth_ent_owner)
-
 			else
 				if is_first_time and did_grab then
 					net.Start("pac_mark_grabbed_ent")

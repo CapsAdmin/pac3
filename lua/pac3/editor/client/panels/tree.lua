@@ -1,5 +1,6 @@
-CreateClientConVar("pac_editor_scale","1", true, false)
 local L = pace.LanguageString
+
+local pac_editor_scale = CreateClientConVar("pac_editor_scale", "1", true, false)
 
 local PANEL = {}
 
@@ -9,7 +10,7 @@ PANEL.Base = "pac_dtree"
 function PANEL:Init()
 	pace.pac_dtree.Init(self)
 
-	self:SetLineHeight(18 * GetConVar("pac_editor_scale"):GetFloat())
+	self:SetLineHeight(18 * pac_editor_scale:GetFloat())
 	self:SetIndentSize(10)
 
 	self.parts = {}
@@ -20,14 +21,14 @@ function PANEL:Init()
 end
 
 do
-
 	local function get_added_nodes(self)
 		local added_nodes = {}
-		for i,v in ipairs(self.added_nodes) do
+		for i, v in ipairs(self.added_nodes) do
 			if v.part and v:IsVisible() and v:IsExpanded() then
 				table.insert(added_nodes, v)
 			end
 		end
+
 		table.sort(added_nodes, function(a, b) return select(2, a:LocalToScreen()) < select(2, b:LocalToScreen()) end)
 		return added_nodes
 	end
@@ -160,8 +161,8 @@ do
 				if not node.Icon.event_icon then
 					local pnl = vgui.Create("DImage", node.Icon)
 					pnl:SetImage("icon16/clock_red.png")
-					pnl:SetSize(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
-					pnl:SetPos(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+					pnl:SetSize(8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)), 8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)))
+					pnl:SetPos(8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)), 8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)))
 					pnl:SetVisible(false)
 					node.Icon.event_icon = pnl
 				end
@@ -258,11 +259,7 @@ do
 	function pace.DoScrollControls(action)
 		DoScrollControl(pace.tree, action)
 	end
-
 end
-
-
-
 
 function PANEL:OnMouseReleased(mc)
 	if mc == MOUSE_RIGHT then
@@ -333,7 +330,6 @@ local function install_drag(node)
 	end
 
 	function node:DroppedOn(child)
-
 		if not child.part then
 			child = child:GetParent()
 		end
@@ -349,7 +345,6 @@ local function install_drag(node)
 				pace.RecordUndoHistory()
 			end
 		end
-
 	end
 end
 
@@ -423,7 +418,6 @@ end
 
 -- a hack, because creating a new node button will mess up the layout
 function PANEL:AddNode(...)
-
 	if self.RootNode then
 		install_drag(self.RootNode)
 	end
@@ -434,7 +428,7 @@ function PANEL:AddNode(...)
 
 	local add_button = node:Add("DImageButton")
 	add_button:SetImage(pace.MiscIcons.new)
-	add_button:SetSize(16*GetConVar("pac_editor_scale"):GetFloat(), 16*GetConVar("pac_editor_scale"):GetFloat())
+	add_button:SetSize(16 * pac_editor_scale:GetFloat(), 16 * pac_editor_scale:GetFloat())
 	add_button:SetVisible(false)
 	add_button.DoClick = function() add_parts_menu(node) pace.Call("PartSelected", node.part) end
 	add_button.DoRightClick = function() node:DoRightClick() end
@@ -483,8 +477,9 @@ function PANEL:PopulateParts(node, parts, children)
 		end
 	end
 
-	for key, part in pairs(tbl) do
-		key = part.Id
+	for i = 1, #tbl do
+		local part = tbl[i]
+		local key = part.Id
 
 		if not part:GetShowInEditor() then goto CONTINUE end
 
@@ -536,7 +531,7 @@ function PANEL:PopulateParts(node, parts, children)
 			elseif isstring(part.Icon) then
 				part_node.Icon:SetImage(part.Icon)
 			end
-			part_node.Icon:SetSize(16 * GetConVar("pac_editor_scale"):GetFloat(),16 * GetConVar("pac_editor_scale"):GetFloat())
+			part_node.Icon:SetSize(16 * pac_editor_scale:GetFloat(), 16 * pac_editor_scale:GetFloat())
 
 			self:PopulateParts(part_node, part:GetChildren(), true)
 
@@ -581,8 +576,7 @@ function PANEL:SelectPart(part)
 end
 
 function PANEL:Populate(reset)
-
-	self:SetLineHeight(18 * (1 + (GetConVar("pac_editor_scale"):GetFloat()-1)))
+	self:SetLineHeight(18 * (1 + (pac_editor_scale:GetFloat() - 1)))
 	self:SetIndentSize(10)
 
 	for key, node in pairs(self.parts) do
@@ -613,7 +607,6 @@ local function remove_node(part)
 		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
 		part.pace_tree_node:Remove()
 		pace.RefreshTree()
-
 	end
 end
 
@@ -623,7 +616,6 @@ local last_refresh = 0
 local function refresh(part)
 	if last_refresh > SysTime() then return end
 	if not part:GetShowInEditor() then return end
-
 
 	last_refresh = SysTime() + 0.1
 	timer.Simple(0, function()
@@ -649,36 +641,43 @@ end)
 
 pace.allowed_event_refresh = 0
 
-
 function pace.RefreshEvents()
 	--spam preventer, (load parts' initializes gets called)
-	if pace.allowed_event_refresh > CurTime() then return else pace.allowed_event_refresh = CurTime() + 0.1 end
+	if pace.allowed_event_refresh > CurTime() then
+		return
+	else
+		pace.allowed_event_refresh = CurTime() + 0.1
+	end
+
+	local parts = pac.GetLocalParts()
 
 	local events = {}
-	for _, part in pairs(pac.GetLocalParts()) do
+	for _, part in pairs(parts) do
 		if part.ClassName == "event" then
 			events[part] = part
 		end
 	end
+
 	local no_events = table.Count(events) == 0
 
-	for _, child in pairs(pac.GetLocalParts()) do
+	for _, child in pairs(parts) do
 		child.active_events = {}
 		child.active_events_ref_count = 0
+
 		if not no_events then
-			for _,event in pairs(events) do
+			for _, event in pairs(events) do
 				event:OnThink()
 			end
 		end
+
 		child:CallRecursive("CalcShowHide", false)
 	end
-
 end
 
 function pace.RefreshTree(reset)
 	--print("pace.RefreshTree("..tostring(reset)..")")
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0.01, 1, function()
+		timer.Create("pace_refresh_tree", 0.01, 1, function()
 			if pace.tree:IsValid() then
 				pace.tree:Populate(reset)
 				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?
