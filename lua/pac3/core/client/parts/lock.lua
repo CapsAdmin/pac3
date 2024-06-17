@@ -299,14 +299,18 @@ end
 
 function PART:OnShow()
 	if util.NetworkStringToID("pac_request_position_override_on_entity_grab") == 0 then self:SetError("This part is deactivated on the server") return end
+
 	local origin_part
+
 	self.is_first_time = true
+
 	if self.resetting_condition or self.forcebreak then
 		if self.next_allowed_grab < CurTime() then
 			self.forcebreak = false
 			self.resetting_condition = false
 		end
 	end
+
 	pac.AddHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview" .. self.UniqueID, function()
 		if self.TargetPart:IsValid() then
 			origin_part = self.TargetPart
@@ -327,35 +331,43 @@ function PART:OnShow()
 			render.DrawWireframeSphere(origin_part:GetWorldPosition() + Vector(0, 0, -self.OffsetDownAmount), sv_dist, 30, 30, Color(0, 255,255), true)
 			render.DrawWireframeSphere(origin_part:GetWorldPosition() + Vector(0, 0, -self.OffsetDownAmount), self.Radius, 30, 30, Color(100, 100, 100), true)
 		end
-
 	end)
+
 	if self.Mode == "Teleport" then
 		if not convar_lock_teleport:GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
 		if pace.still_loading_wearing then return end
+
 		self.target_ent = nil
 
 		local ang_yaw_only = self:GetWorldAngles()
 		ang_yaw_only.p = 0
 		ang_yaw_only.r = 0
-		if pac.LocalPlayer == self:GetPlayerOwner() then
 
+		if pac.LocalPlayer == self:GetPlayerOwner() then
 			local teleport_pos_final = self:GetWorldPosition()
 
 			if self.ClampDistance then
 				local ply_pos = self:GetPlayerOwner():GetPos()
 				local pos = self:GetWorldPosition()
 
-				if pos:Distance(ply_pos) > self.Radius then
-					local clamped_pos = ply_pos + (pos - ply_pos):GetNormalized()*self.Radius
+				if pos:DistToSqr(ply_pos) > (self.Radius * self.Radius) then
+					local clamped_pos = ply_pos + (pos - ply_pos):GetNormalized() * self.Radius
 					teleport_pos_final = clamped_pos
 				end
 			end
-			if self.SlopeSafety then teleport_pos_final = teleport_pos_final + Vector(0,0,30) end
-			if not convar_combat_enforce_netrate:GetBool() then
-				if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
+
+			if self.SlopeSafety then
+				teleport_pos_final = teleport_pos_final + Vector(0, 0, 30)
 			end
+
+			if not convar_combat_enforce_netrate:GetBool() and not pac.CountNetMessage() then
+				self:SetInfo("Went beyond the allowance")
+				return
+			end
+
 			timer.Simple(0, function()
 				if self:IsHidden() or self:IsDrawHidden() then return end
+
 				net.Start("pac_request_position_override_on_entity_teleport")
 				net.WriteString(self.UniqueID)
 				net.WriteVector(teleport_pos_final)
@@ -363,8 +375,8 @@ function PART:OnShow()
 				net.WriteBool(self.OverrideAngles)
 				net.SendToServer()
 			end)
-
 		end
+
 		self.grabbing = false
 	elseif self.Mode == "Grab" then
 		self:DecideTarget()
@@ -373,76 +385,93 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	pac.RemoveHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
+	pac.RemoveHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview" .. self.UniqueID)
+
 	self.teleported = false
 	self.grabbing = false
-	if self.target_ent == nil then return
-	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedID = nil end
-	if util.NetworkStringToID("pac_request_position_override_on_entity_grab") == 0 then self:SetError("This part is deactivated on the server") return end
+
+	if self.target_ent == nil then
+		return
+	else
+		self.target_ent.IsGrabbed = false
+		self.target_ent.IsGrabbedID = nil
+	end
+
+	if util.NetworkStringToID("pac_request_position_override_on_entity_grab") == 0 then
+		self:SetError("This part is deactivated on the server")
+		return
+	end
+
 	self:reset_ent_ang()
 end
 
 function PART:reset_ent_ang()
-	if self.target_ent == nil then return end
-	local reset_ent = self.target_ent
+	if not IsValid(self.target_ent) then return end
 
-	if reset_ent:IsValid() then
-		timer.Simple(math.min(self.RestoreDelay, 5), function()
-			if pac.LocalPlayer == self:GetPlayerOwner() then
-				if not convar_combat_enforce_netrate:GetBool() then
-					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
-				end
-				net.Start("pac_request_angle_reset_on_entity")
-				net.WriteAngle(Angle(0,0,0))
-				net.WriteFloat(self.RestoreDelay)
-				net.WriteEntity(reset_ent)
-				net.WriteEntity(self:GetPlayerOwner())
-				net.SendToServer()
+	timer.Simple(math.min(self.RestoreDelay, 5), function()
+		if pac.LocalPlayer == self:GetPlayerOwner() then
+			if not convar_combat_enforce_netrate:GetBool() and not pac.CountNetMessage() then
+				self:SetInfo("Went beyond the allowance")
+				return
 			end
-			if self.Players and reset_ent:IsPlayer() then
-				reset_ent:DisableMatrix("RenderMultiply")
-			end
-		end)
-	end
+
+			net.Start("pac_request_angle_reset_on_entity")
+			net.WriteAngle(angle_zero)
+			net.WriteFloat(self.RestoreDelay)
+			net.WriteEntity(self.target_ent)
+			net.WriteEntity(self:GetPlayerOwner())
+			net.SendToServer()
+		end
+		if self.Players and self.target_ent:IsPlayer() then
+			self.target_ent:DisableMatrix("RenderMultiply")
+		end
+	end)
 end
 
 function PART:OnRemove()
 end
 
 function PART:DecideTarget()
-	local RADIUS = math.Clamp(self.Radius, 0, convar_lock_max_grab_radius:GetInt())
+	local radius_sqr = math.Clamp(self.Radius, 0, convar_lock_max_grab_radius:GetInt())
+	radius_sqr = radius_sqr * radius_sqr
+
 	local ents_candidates = {}
 	local chosen_ent = nil
 	local target_part = self.TargetPart
 	local origin
 
-	if self.TargetPart and (self.TargetPart):IsValid() then
-		origin = (self.TargetPart):GetWorldPosition()
+	if target_part and target_part:IsValid() then
+		origin = target_part:GetWorldPosition()
 	else
 		origin = self:GetWorldPosition()
 	end
+
 	origin:Add(Vector(0, 0, -self.OffsetDownAmount))
 
-	for i, ent_candidate in ents.Iterator() do
+	local root_owner = self:GetRootPart():GetOwner()
+	local player_owner = self:GetPlayerOwner()
 
+	for i, ent_candidate in ents.Iterator() do
 		if IsValid(ent_candidate) then
 			local check_further = true
 			if ent_candidate.pac_recently_broken_free_from_lock then
 				if ent_candidate.pac_recently_broken_free_from_lock + 10 > CurTime() then
 					check_further = false
 				end
-			else check_further = true end
+			else
+				check_further = true
+			end
 
 			if check_further then
-				if ent_candidate:GetPos():Distance( origin ) < RADIUS then
+				if ent_candidate:GetPos():DistToSqr(origin) < radius_sqr then
 					if self.Players and ent_candidate:IsPlayer() then
 						--we don't want to grab ourselves
-						if (ent_candidate ~= self:GetRootPart():GetOwner()) or (self.AffectPlayerOwner and ent_candidate == self:GetPlayerOwner()) then
-							if not (not self.AffectPlayerOwner and ent_candidate == self:GetPlayerOwner()) then
+						if ent_candidate ~= root_owner or (self.AffectPlayerOwner and ent_candidate == player_owner) then
+							if not (not self.AffectPlayerOwner and ent_candidate == player_owner) then
 								chosen_ent = ent_candidate
 								table.insert(ents_candidates, ent_candidate)
 							end
-						elseif (self:GetPlayerOwner() ~= ent_candidate) then --if it's another player, good
+						elseif ent_candidate ~= player_owner then --if it's another player, good
 							chosen_ent = ent_candidate
 							table.insert(ents_candidates, ent_candidate)
 						end
@@ -457,12 +486,16 @@ function PART:DecideTarget()
 			end
 		end
 	end
-	local closest_distance = math.huge
+
+	local worldpos = self:GetWorldPosition()
 
 	--sort for the closest
-	for i,ent_candidate in ipairs(ents_candidates) do
-		local test_distance = (ent_candidate:GetPos()):Distance(self:GetWorldPosition())
-		if (test_distance < closest_distance) then
+	local closest_distance = math.huge
+
+	for i, ent_candidate in ipairs(ents_candidates) do
+		local test_distance = ent_candidate:GetPos():DistToSqr(worldpos)
+
+		if test_distance < closest_distance then
 			closest_distance = test_distance
 			chosen_ent = ent_candidate
 		end
@@ -470,20 +503,18 @@ function PART:DecideTarget()
 
 	if chosen_ent ~= nil then
 		self.target_ent = chosen_ent
-		if pac.LocalPlayer == self:GetPlayerOwner() then
-			print("selected ", chosen_ent, "dist ", (chosen_ent:GetPos()):Distance(self:GetWorldPosition()))
-		end
 		self.valid_ent = true
+
+		if pac.LocalPlayer == player_owner then
+			print("selected ", chosen_ent)
+		end
 	else
 		self.target_ent = nil
 		self.valid_ent = false
 	end
 end
 
-
-
 function PART:CheckEntValidity()
-
 	if self.target_ent == nil then
 		self.valid_ent = false
 	elseif self.target_ent:EntIndex() == 0 then
@@ -491,15 +522,21 @@ function PART:CheckEntValidity()
 	elseif IsValid(self.target_ent) then
 		self.valid_ent = true
 	end
-	if self.target_ent ~= nil then
-		if self.target_ent.IsGrabbedID and self.target_ent.IsGrabbedID ~= self.UniqueID then self.valid_ent = false end
+
+	if self.target_ent ~= nil and self.target_ent.IsGrabbedID and self.target_ent.IsGrabbedID ~= self.UniqueID then
+		self.valid_ent = false
 	end
+
 	if not self.valid_ent then self.target_ent = nil end
 	--print("ent check:",self.valid_ent)
 end
 
 function PART:CalculateRelativeOffset()
-	if self.target_ent == nil or not IsValid(self.target_ent) then self.relative_transform_matrix = Matrix() return end
+	if not IsValid(self.target_ent) then
+		self.relative_transform_matrix = Matrix()
+		return
+	end
+
 	self.relative_transform_matrix = Matrix()
 	self.relative_transform_matrix:Rotate(self.target_ent:GetAngles() - self:GetWorldAngles())
 	self.relative_transform_matrix:Translate(self.target_ent:GetPos() - self:GetWorldPosition())
@@ -507,7 +544,8 @@ function PART:CalculateRelativeOffset()
 end
 
 function PART:Initialize()
-	self.default_ang = Angle(0,0,0)
+	self.default_ang = Angle(0, 0, 0)
+
 	if not convar_lock_grab:GetBool() then
 		if not convar_lock_teleport:GetBool() then
 			self:SetWarning("lock part grabs and teleports are disabled on this server!")
@@ -515,6 +553,7 @@ function PART:Initialize()
 			self:SetWarning("lock part grabs are disabled on this server!")
 		end
 	end
+
 	if not convar_lock_teleport:GetBool() then
 		if not convar_lock_grab:GetBool() then
 			self:SetWarning("lock part grabs and teleports are disabled on this server!")
@@ -522,8 +561,10 @@ function PART:Initialize()
 			self:SetWarning("lock part teleports are disabled on this server!")
 		end
 	end
-	if not convar_lock:GetBool() then self:SetError("lock parts are disabled on this server!") end
-end
 
+	if not convar_lock:GetBool() then
+		self:SetError("lock parts are disabled on this server!")
+	end
+end
 
 BUILDER:Register()
