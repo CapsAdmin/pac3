@@ -596,15 +596,21 @@ do -- scene graph
 
 	function PART:SetSmallIcon(str)
 		if str == "event" then str = "icon16/clock_red.png" end
+
 		if self.pace_tree_node then
 			if self.pace_tree_node.Icon then
 				if not self.pace_tree_node.Icon.event_icon then
+					pac_editor_scale = pac_editor_scale or GetConVar("pac_editor_scale")
+
 					local pnl = vgui.Create("DImage", self.pace_tree_node.Icon)
+
 					self.pace_tree_node.Icon.event_icon_alt = true
 					self.pace_tree_node.Icon.event_icon = pnl
+
 					pnl:SetSize(8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)), 8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)))
 					pnl:SetPos(8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)), 8 * (1 + 0.5 * (pac_editor_scale:GetFloat() - 1)))
 				end
+
 				self.pace_tree_node.Icon.event_icon_alt = true
 				self.pace_tree_node.Icon.event_icon:SetImage(str)
 				self.pace_tree_node.Icon.event_icon:SetVisible(true)
@@ -1266,7 +1272,10 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	elseif tbl.from_legacy then
 		legacy_help_popup_hack = true
 	end
+
 	if not IsValid(self) then return end
+
+	pac_popups_preferred_location = pac_popups_preferred_location or GetConVar("pac_popups_preferred_location")
 
 	local popup_config_table = tbl or {
 		pac_part = self,
