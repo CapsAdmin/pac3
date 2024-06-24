@@ -1,17 +1,19 @@
-local string_format = string.format
-local tostring = tostring
-local pace = pace
-local assert = assert
-local debug_traceback = debug.traceback
-local math_random = math.random
-local xpcall = xpcall
 local pac = pac
+local pace = pace
+
+local debug_traceback = debug.traceback
+local string_format = string.format
+local math_random = math.random
+local table_insert = table.insert
+local table_copy = table.Copy
+local tostring = tostring
+local assert = assert
+local xpcall = xpcall
 local pairs = pairs
 local ipairs = ipairs
 local table = table
 local Color = Color
 local NULL = NULL
-local table_insert = table.insert
 
 local pac_editor_scale = GetConVar("pac_editor_scale")
 local pac_popups_preferred_location = GetConVar("pac_popups_preferred_location")
@@ -485,14 +487,15 @@ do -- scene graph
 	function PART:CallRecursive(func, a, b, c)
 		assert(c == nil, "EXTEND ME")
 		if self[func] then
-			self[func](self, a,b,c)
+			self[func](self, a, b, c)
 		end
 
 		local children = self:GetChildrenList()
 		for i = 1, #children do
 			local child = children[i]
+
 			if child[func] then
-				child[func](child, a,b,c)
+				child[func](child, a, b, c)
 			end
 		end
 	end
@@ -506,6 +509,7 @@ do -- scene graph
 		local children = self:GetChildrenList()
 		for i = 1, #children do
 			local child = children[i]
+
 			if child[func] and self.ClassName == class_name then
 				child[func](child, a,b,c)
 			end
@@ -1064,7 +1068,7 @@ do -- serializing
 
 			if copy_id then
 				local pepper, uid_list
-				tbl, pepper, uid_list = make_copy(table.Copy(tbl), copy_id)
+				tbl, pepper, uid_list = make_copy(table_copy(tbl), copy_id)
 				update_uids(uid_list, pepper)
 			end
 
@@ -1246,8 +1250,9 @@ do
 		end
 
 		if self.delayed_variables then
+			for i = 1, #self.delayed_variables do
+				local data = self.delayed_variables[i]
 
-			for _, data in ipairs(self.delayed_variables) do
 				self["Set" .. data.key](self, data.val)
 			end
 

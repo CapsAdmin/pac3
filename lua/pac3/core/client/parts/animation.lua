@@ -8,7 +8,7 @@ AnimStack = {
 		push = function(self, part)
 			local stack = self.stack
 
-			if #stack == 0 then
+			if not stack[1] then
 				-- Empty stack
 				table.insert(stack, part)
 			else
@@ -65,8 +65,8 @@ setmetatable(AnimStack, AnimStack)
 
 PART.ClassName = "animation"
 PART.ThinkTime = 0
-PART.Groups = {'entity', 'model', 'modifiers'}
-PART.Icon = 'icon16/eye.png'
+PART.Groups = {"entity", "model", "modifiers"}
+PART.Icon = "icon16/eye.png"
 
 PART.frame = 0
 
@@ -74,7 +74,7 @@ BUILDER
 :StartStorableVars()
 	:GetSet("Loop", true)
 	:GetSet("PingPongLoop", false)
-	:GetSet("SequenceName", "", {enums = function(part) local tbl = {} for k,v in pairs(part:GetSequenceList()) do tbl[v] = v end return tbl end})
+	:GetSet("SequenceName", "", {enums = function(part) local tbl = {} local list = part:GetSequenceList() for i = 1, #list do tbl[v] = v end return tbl end})
 	:GetSet("Rate", 1, {editor_sensitivity = 0.1})
 	:GetSet("Offset", 0)
 	:GetSet("Min", 0)
@@ -177,7 +177,9 @@ PART.random_seqname = ""
 
 function PART:SetSequenceName(name)
 	self.SequenceName = name
-	self.random_seqname = table.Random(name:Split(";"))
+
+	local split = name:Split(";")
+	self.random_seqname = split[math.random(#split)]
 
 	if not self:IsHidden() then
 		self:OnShow()
@@ -191,7 +193,9 @@ function PART:OnStackStart()
 
 	if ent:IsValid() then
 		self.prevSequence = ent:GetSequence()
-		self.random_seqname = table.Random(self.SequenceName:Split(";"))
+
+		local split = self.SequenceName:Split(";")
+		self.random_seqname = split[math.random(#split)]
 
 		if self.random_seqname ~= "" then
 			local seq = ent:LookupSequence(self.random_seqname) or 0

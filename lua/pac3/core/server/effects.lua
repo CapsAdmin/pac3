@@ -47,18 +47,18 @@ net.Receive("pac_request_precache", function(len, pl)
 	local plqueue = queue[pl]
 	if plqueue then
 		if #plqueue < 50 then
-			plqueue[#plqueue+1] = name
+			plqueue[#plqueue + 1] = name
 		end
 	else
 		plqueue = {name}
 		queue[pl] = plqueue
 
 		local function processQueue()
-			if #plqueue == 0 then
-				queue[pl] = nil
-			else
+			if plqueue[1] then
 				timer.Simple(0.5, processQueue)
 				pac.PrecacheEffect(table.remove(plqueue, 1))
+			else
+				queue[pl] = nil
 			end
 		end
 

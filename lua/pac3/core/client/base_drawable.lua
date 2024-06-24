@@ -1,11 +1,12 @@
+local pac = pac
+
+local table_insert = table.insert
+local table_remove = table.remove
 local render_OverrideAlphaWriteEnable = render.OverrideAlphaWriteEnable
 local render_OverrideColorWriteEnable = render.OverrideColorWriteEnable
 local render_OverrideBlendFunc = render.OverrideBlendFunc
 local ProtectedCall = ProtectedCall
 local cam_IgnoreZ = cam.IgnoreZ
-local pac = pac
-local ipairs = ipairs
-local table = table
 local TEXFILTER_POINT = TEXFILTER.POINT
 local render_PopFilterMag = render.PopFilterMag
 local render_PopFilterMin = render.PopFilterMin
@@ -111,13 +112,13 @@ do -- modifiers
 
 	function PART:AddModifier(part)
 		self:RemoveModifier(part)
-		table.insert(self.modifiers, part)
+		table_insert(self.modifiers, part)
 	end
 
 	function PART:RemoveModifier(part)
-		for i, v in ipairs(self.modifiers) do
-			if v == part then
-				table.remove(self.modifiers, i)
+		for i = 1, #self.modifiers do
+			if self.modifiers[i] == part then
+				table_remove(self.modifiers, i)
 				break
 			end
 		end
@@ -126,9 +127,10 @@ do -- modifiers
 	function PART:ModifiersPreEvent(event)
 		if not self.modifiers[1] then return end
 
-		for _, part in ipairs(self.modifiers) do
-			if not part:IsHidden() then
+		for i = 1, #self.modifiers do
+			local part = self.modifiers[i]
 
+			if not part:IsHidden() then
 				if not part.pre_draw_events then part.pre_draw_events = {} end
 				if not part.pre_draw_events[event] then part.pre_draw_events[event] = "Pre" .. event end
 
@@ -142,9 +144,10 @@ do -- modifiers
 	function PART:ModifiersPostEvent(event)
 		if not self.modifiers[1] then return end
 
-		for _, part in ipairs(self.modifiers) do
-			if not part:IsHidden() then
+		for i = 1, #self.modifiers do
+			local part = self.modifiers[i]
 
+			if not part:IsHidden() then
 				if not part.post_draw_events then part.post_draw_events = {} end
 				if not part.post_draw_events[event] then part.post_draw_events[event] = "Post" .. event end
 
@@ -167,15 +170,19 @@ local function call_draw()
 	_self:OnDraw()
 end
 
+local type_opaque = "opaque"
+local type_translucent = "translucent"
+local type_viewmodel = "viewmodel"
+local type_hands = "hands"
+
 function PART:Draw(draw_type)
 	if not self.OnDraw or not self.Enabled or self:IsHiddenCached() then return end
 
-	if
-		draw_type == "viewmodel" or draw_type == "hands" or
-		((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
-		((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
+	if ((self.Translucent == false or self.force_translucent == false) and draw_type == type_opaque)
+		or ((self.Translucent == true or self.force_translucent == true) and draw_type == type_translucent)
+		or draw_type == type_viewmodel or draw_type == type_hands
 	then
-		if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
+		if not self.HandleModifiersManually then self:ModifiersPreEvent("OnDraw", draw_type) end
 
 		if self.IgnoreZ then cam_IgnoreZ(true) end
 
@@ -199,7 +206,7 @@ function PART:Draw(draw_type)
 
 		if self.IgnoreZ then cam_IgnoreZ(false) end
 
-		if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
+		if not self.HandleModifiersManually then self:ModifiersPostEvent("OnDraw", draw_type) end
 	end
 end
 

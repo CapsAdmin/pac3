@@ -53,7 +53,7 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 		override_part = nil
 	end
 
-	if #data == 0 then
+	if not data[1] then
 		for key, part in pairs(pac.GetLocalParts()) do
 			if not part:HasParent() and part:GetShowInEditor() then
 				table_insert(data, part:ToSaveTable())
@@ -63,7 +63,7 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 
 	data = pac.CallHook("pace.SaveParts", data) or data
 
-	if not override_part and #file_Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
+	if not override_part and file_Find("pac3/sessions/*", "DATA")[1] and not name:find("/") then
 		pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 	else
 		if file_Exists("pac3/" .. name .. ".txt", "DATA") then
@@ -118,7 +118,7 @@ function pace.Backup(data, name)
 		end
 	end
 
-	if #data > 0 then
+	if data[1] then
 		local files, folders = file_Find("pac3/__backup/*", "DATA")
 
 		if #files > maxBackups:GetInt() then
