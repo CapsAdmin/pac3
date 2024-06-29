@@ -182,7 +182,7 @@ do -- from server
 			end
 
 			if owner == pac.LocalPlayer then
-				pace.CallHook("OnWoreOutfit", part)
+				pac.CallHook("OnWoreOutfit", part)
 			end
 
 			part:CallRecursive("OnWorn")
