@@ -23,10 +23,12 @@ jobs:
             **.lua
 
       - name: Download GluaFixer
+        if: steps.changed-files.outputs.any_changed
         run: |
           curl -o glualint.zip -L https://github.com/FPtje/GLuaFixer/releases/download/1.28.0/glualint-1.28.0-x86_64-linux.zip
           unzip glualint.zip
 
       - name: Lint Code
+        if: steps.changed-files.outputs.any_changed
         run: |
           ./glualint ${{ steps.changed-files.outputs.all_changed_files }}
