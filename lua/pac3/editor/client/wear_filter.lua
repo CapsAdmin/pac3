@@ -29,6 +29,12 @@ pac.AddHook("PrePACEditorOpen", "wear_filter_config_migration", function()
 	end
 end)
 
+local cache = setmetatable({}, {__index = function(self, key)
+	local val = util.JSONToTable(file.Read(path .. key .. ".json", "DATA") or "{}") or {}
+	self[key] = val
+	return self
+end})
+
 local function store_config(id, tbl)
 	if not file.IsDir(path, "DATA") then
 		file.CreateDir(path)
@@ -37,14 +43,8 @@ local function store_config(id, tbl)
 	cache[id] = tbl
 end
 
-local function read_config(id)
-	local tbl = util.JSONToTable(file.Read(path .. id .. ".json", "DATA") or "{}") or {}
-	cache[id] = tbl
-	return tbl
-end
-
 local function get_config_value(id, key)
-	return cache[id] and cache[id][key] or read_config(id)[key]
+	return cache[id] and cache[id][key]
 end
 
 local function jsonid(ply)
@@ -246,7 +246,7 @@ local function player_list_form(name, id, help)
 
 		name_left = "players",
 		populate_left = function()
-			local blacklist = read_config(id)
+			local blacklist = cache[id]
 
 			local tbl = {}
 			for _, ply in ipairs(player.GetHumans()) do
@@ -261,7 +261,7 @@ local function player_list_form(name, id, help)
 			return tbl
 		end,
 		store_left = function(kv)
-			local tbl = read_config(id)
+			local tbl = cache[id]
 			tbl[jsonid(kv.value)] = kv.name
 			store_config(id, tbl)
 
@@ -273,7 +273,7 @@ local function player_list_form(name, id, help)
 		name_right = name,
 		populate_right = function()
 			local tbl = {}
-			for id, nick in pairs(read_config(id)) do
+			for id, nick in pairs(cache[id]) do
 				local ply = pac.ReverseHash(id:sub(2), "Player")
 				if ply == pac.LocalPlayer then continue end
 
@@ -292,7 +292,7 @@ local function player_list_form(name, id, help)
 			return tbl
 		end,
 		store_right = function(kv)
-			local tbl = read_config(id)
+			local tbl = cache[id]
 			tbl[kv.value] = nil
 			store_config(id, tbl)
 
