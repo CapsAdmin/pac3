@@ -250,8 +250,6 @@ net.Receive("pac_submit", function()
 			return
 		end
 
-		if pac.IsEntityIgnored(data.owner) then return end
-
 		if pac.IsPacOnUseOnly() and data.owner ~= pac.LocalPlayer then
 			pace.HandleOnUseReceivedData(data)
 		else
