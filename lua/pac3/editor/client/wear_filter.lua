@@ -3,8 +3,9 @@ local L = pace.LanguageString
 
 local path = "pac3_config/"
 
-do -- old path migration
-	if file.IsDir("pac/config", "DATA") and cookie.GetString("pac3_config_migration_dismissed", "0") ~= "0" then
+-- old path migration
+pac.AddHook("PrePACEditorOpen", "wear_filter_config_migration", function()
+	if file.IsDir("pac/config", "DATA") and cookie.GetString("pac3_config_migration_dismissed", "0") == "0" then
 		Derma_Query(
 			L "Do you want to migrate the old pac/config folder to pac3_config?",
 			L "Old Config Folder Detected",
@@ -26,9 +27,7 @@ do -- old path migration
 			end
 		)
 	end
-end
-
-local cache = {}
+end)
 
 local function store_config(id, tbl)
 	if not file.IsDir(path, "DATA") then
