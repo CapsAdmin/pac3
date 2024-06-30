@@ -112,7 +112,7 @@ do -- to server
 		end
 
 		net.SendToServer()
-		pac.Message(('Transmitting outfit %q to server (%s)'):format(part.Name or part.ClassName or '<unknown>', string.NiceSize(bytes)))
+		pac.Message(("Transmitting outfit %q to server (%s)"):format(part.Name or part.ClassName or "<unknown>", string.NiceSize(bytes)))
 
 		pace.ExtendWearTracker(8)
 
@@ -127,9 +127,9 @@ do -- to server
 		end
 
 		net.Start("pac_submit")
-			local ret,err = net_write_table(data)
+			local ret, err = net_write_table(data)
 			if ret == nil then
-				pace.Notify(false, "unable to transfer data to server: "..tostring(err or "too big"), name)
+				pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), name)
 				return false
 			end
 		net.SendToServer()
@@ -182,11 +182,11 @@ do -- from server
 			end
 
 			if owner == pac.LocalPlayer then
-				pace.CallHook("OnWoreOutfit", part)
+				pac.CallHook("OnWoreOutfit", part)
 			end
 
-			part:CallRecursive('OnWorn')
-			part:CallRecursive('PostApplyFixes')
+			part:CallRecursive("OnWorn")
+			part:CallRecursive("PostApplyFixes")
 
 			if part.UpdateOwnerName then
 				part:UpdateOwnerName(true)
@@ -229,7 +229,7 @@ function pace.HandleReceiveData(data, doitnow)
 	elseif T ==  "string" then
 		return pace.RemovePartFromServer(data.owner, data.part, data)
 	else
-		ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
+		ErrorNoHalt("PAC: Unhandled " .. T .. "!?\n")
 	end
 end
 
@@ -246,7 +246,7 @@ net.Receive("pac_submit", function()
 		local data = buffer:readTable()
 
 		if type(data.owner) ~= "Player" or not data.owner:IsValid() then
-			pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. ' || ', data.owner)
+			pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. " || ", data.owner)
 			return
 		end
 
@@ -262,9 +262,9 @@ function pace.Notify(allowed, reason, name)
 	name = name or "???"
 
 	if allowed == true then
-		pac.Message(string.format('Your part %q has been applied', name))
+		pac.Message(string.format("Your part %q has been applied", name))
 	else
-		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), string.format('The server rejected applying your part (%q) - %s', name, reason))
+		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), string.format("The server rejected applying your part (%q) - %s", name, reason))
 	end
 end
 
@@ -297,6 +297,7 @@ do
 		else
 			--prompt
 			local backup_files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
+			local latest_outfit = cookie.GetString( "pac_last_loaded_outfit", "" )
 			if not backup_files then
 				local pnl = Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 					"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
@@ -320,7 +321,6 @@ do
 			else
 				if backup_files[1] then
 					local latest_autosave = "pac3/__backup/" .. backup_files[1]
-					local latest_outfit = cookie.GetString( "pac_last_loaded_outfit", "" )
 					local pnl = Derma_Query("Do you want to load an outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 							pac.Message("Wearing autoload...")
@@ -400,11 +400,9 @@ do
 
 		frames = frames + 1
 
-		if frames > 400 then
-			if not xpcall(Initialize, ErrorNoHalt) then
-				pac.RemoveHook("Think", "request_outfits")
-				pace.NeverLoaded = true
-			end
+		if frames > 400 and not xpcall(Initialize, ErrorNoHalt) then
+			pac.RemoveHook("Think", "request_outfits")
+			pace.NeverLoaded = true
 		end
 	end)
 

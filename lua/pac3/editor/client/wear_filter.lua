@@ -1,18 +1,46 @@
 local list_form = include("panels/list.lua")
 local L = pace.LanguageString
 
-local cache = {}
+local path = "pac3_config/"
+
+-- old path migration
+pac.AddHook("PrePACEditorOpen", "wear_filter_config_migration", function()
+	if file.IsDir("pac/config", "DATA") and cookie.GetString("pac3_config_migration_dismissed", "0") == "0" then
+		Derma_Query(
+			L "Do you want to migrate the old pac/config folder to pac3_config?",
+			L "Old Config Folder Detected",
+			L "Yes",
+			function()
+				local files, _ = file.Find("pac/config/*.json", "DATA")
+				for i = 1, #files do
+					local f = files[i]
+					local content = file.Read("pac/config/" .. f, "DATA")
+					file.Write(path .. f, content)
+					file.Delete("pac/config/" .. f, "DATA")
+				end
+				file.Delete("pac/config", "DATA")
+				file.Delete("pac", "DATA")
+			end,
+			L "No",
+			function()
+				cookie.Set("pac3_config_migration_dismissed", "1")
+			end
+		)
+	end
+end)
+
+local cache = setmetatable({}, {__index = function(self, key)
+	local val = util.JSONToTable(file.Read(path .. key .. ".json", "DATA") or "{}") or {}
+	self[key] = val
+	return self
+end})
 
 local function store_config(id, tbl)
-	file.CreateDir("pac/config")
-	file.Write("pac/config/"..id..".json", util.TableToJSON(tbl))
+	if not file.IsDir(path, "DATA") then
+		file.CreateDir(path)
+	end
+	file.Write(path .. id .. ".json", util.TableToJSON(tbl))
 	cache[id] = tbl
-end
-
-local function read_config(id)
-	local tbl = util.JSONToTable(file.Read("pac/config/"..id..".json", "DATA") or "{}") or {}
-	cache[id] = tbl
-	return tbl
 end
 
 local function get_config_value(id, key)
@@ -83,7 +111,7 @@ do
 			end
 		end
 
-		table.insert(ent.pac_ignored_callbacks, {callback = callback, index = index})
+		table.insert(ent.pac_ignored_callbacks, { callback = callback, index = index })
 	end
 
 	function pac.CleanupEntityIgnoreBound(ent)
@@ -194,7 +222,7 @@ local function generic_form(help)
 	local pnl = vgui.Create("DListLayout")
 
 	local label = pnl:Add("DLabel")
-	label:DockMargin(0,5,0,5)
+	label:DockMargin(0, 5, 0, 5)
 	label:SetWrap(true)
 	label:SetDark(true)
 	label:SetAutoStretchVertical(true)
@@ -207,18 +235,18 @@ local function player_list_form(name, id, help)
 	local pnl = vgui.Create("DListLayout")
 
 	local label = pnl:Add("DLabel")
-	label:DockMargin(0,5,0,5)
+	label:DockMargin(0, 5, 0, 5)
 	label:SetWrap(true)
 	label:SetDark(true)
 	label:SetAutoStretchVertical(true)
 	label:SetText(help)
 
 	list_form(pnl, name, {
-		empty_message = L"No players online.",
+		empty_message = L "No players online.",
 
 		name_left = "players",
 		populate_left = function()
-			local blacklist = read_config(id)
+			local blacklist = cache[id]
 
 			local tbl = {}
 			for _, ply in ipairs(player.GetHumans()) do
@@ -233,7 +261,7 @@ local function player_list_form(name, id, help)
 			return tbl
 		end,
 		store_left = function(kv)
-			local tbl = read_config(id)
+			local tbl = cache[id]
 			tbl[jsonid(kv.value)] = kv.name
 			store_config(id, tbl)
 
@@ -245,7 +273,7 @@ local function player_list_form(name, id, help)
 		name_right = name,
 		populate_right = function()
 			local tbl = {}
-			for id, nick in pairs(read_config(id)) do
+			for id, nick in pairs(cache[id]) do
 				local ply = pac.ReverseHash(id:sub(2), "Player")
 				if ply == pac.LocalPlayer then continue end
 
@@ -264,7 +292,7 @@ local function player_list_form(name, id, help)
 			return tbl
 		end,
 		store_right = function(kv)
-			local tbl = read_config(id)
+			local tbl = cache[id]
 			tbl[kv.value] = nil
 			store_config(id, tbl)
 
@@ -294,7 +322,7 @@ do
 		for _, ply in ipairs(player.GetHumans()) do
 			if ply == pac.LocalPlayer then continue end
 
-			local icon = menu:AddOption(L"wear only for " .. ply:Nick(), function()
+			local icon = menu:AddOption(L "wear only for " .. ply:Nick(), function()
 				pace.WearParts(ply)
 			end)
 			icon:SetImage(pace.MiscIcons.wear)
@@ -307,11 +335,11 @@ function pace.FillWearSettings(pnl)
 	list:Dock(FILL)
 
 	do
-		local cat = list:Add(L"wear filter")
-		cat.Header:SetSize(40,40)
+		local cat = list:Add(L "wear filter")
+		cat.Header:SetSize(40, 40)
 		cat.Header:SetFont("DermaLarge")
 		local list = vgui.Create("DListLayout")
-		list:DockPadding(20,20,20,20)
+		list:DockPadding(20, 20, 20, 20)
 		cat:SetContents(list)
 
 		local mode = vgui.Create("DComboBox", list)
@@ -327,13 +355,15 @@ function pace.FillWearSettings(pnl)
 			end
 
 			if value == "steam friends" then
-				mode.form = generic_form(L"Only your steam friends can see your worn outfit.")
+				mode.form = generic_form(L "Only your steam friends can see your worn outfit.")
 			elseif value == "whitelist" then
-				mode.form = player_list_form(L"whitelist", "wear_whitelist", L"Only the players in the whitelist can see your worn outfit.")
+				mode.form = player_list_form(L "whitelist", "wear_whitelist",
+					L "Only the players in the whitelist can see your worn outfit.")
 			elseif value == "blacklist" then
-				mode.form = player_list_form( L"blacklist", "wear_blacklist", L"The players in the blacklist cannot see your worn outfit.")
+				mode.form = player_list_form(L "blacklist", "wear_blacklist",
+					L "The players in the blacklist cannot see your worn outfit.")
 			elseif value == "disabled" then
-				mode.form = generic_form(L"Everyone can see your worn outfit.")
+				mode.form = generic_form(L "Everyone can see your worn outfit.")
 			end
 
 			GetConVar("pace_wear_filter_mode"):SetString(value:gsub(" ", "_"))
@@ -347,11 +377,11 @@ function pace.FillWearSettings(pnl)
 	end
 
 	do
-		local cat = list:Add(L"outfit filter")
-		cat.Header:SetSize(40,40)
+		local cat = list:Add(L "outfit filter")
+		cat.Header:SetSize(40, 40)
 		cat.Header:SetFont("DermaLarge")
 		local list = vgui.Create("DListLayout")
-		list:DockPadding(20,20,20,20)
+		list:DockPadding(20, 20, 20, 20)
 		cat:SetContents(list)
 
 		local mode = vgui.Create("DComboBox", list)
@@ -367,13 +397,15 @@ function pace.FillWearSettings(pnl)
 			end
 
 			if value == "steam friends" then
-				mode.form = generic_form(L"You will only see outfits from your steam friends.")
+				mode.form = generic_form(L "You will only see outfits from your steam friends.")
 			elseif value == "whitelist" then
-				mode.form = player_list_form(L"whitelist", "outfit_whitelist", L"You will only see outfits from the players in the whitelist.")
+				mode.form = player_list_form(L "whitelist", "outfit_whitelist",
+					L "You will only see outfits from the players in the whitelist.")
 			elseif value == "blacklist" then
-				mode.form = player_list_form(L"blacklist", "outfit_blacklist", L"You will see outfits from everyone except the players in the blacklist.")
+				mode.form = player_list_form(L "blacklist", "outfit_blacklist",
+					L "You will see outfits from everyone except the players in the blacklist.")
 			elseif value == "disabled" then
-				mode.form = generic_form(L"You will see everyone's outfits.")
+				mode.form = generic_form(L "You will see everyone's outfits.")
 			end
 
 			GetConVar("pace_outfit_filter_mode"):SetString(value:gsub(" ", "_"))
