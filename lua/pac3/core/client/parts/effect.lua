@@ -64,12 +64,16 @@ PART.last_spew = 0
 if not pac_loaded_particle_effects then
 	pac_loaded_particle_effects = {}
 
-	for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
-			game.AddParticles("particles/" .. file_name)
+	local files = file.Find("particles/*.pcf", "GAME")
+
+	for i = 1, #files do
+		local path = files[i]
+
+		if not pac_loaded_particle_effects[path] and not pac.BlacklistedParticleSystems[path:lower()] then
+			game.AddParticles("particles/" .. path)
 		end
 
-		pac_loaded_particle_effects[file_name] = true
+		pac_loaded_particle_effects[path] = true
 	end
 end
 
@@ -78,7 +82,9 @@ local alreadyServer = {}
 local function pac_request_precache(name)
 	if already[name] then return end
 	already[name] = true
+
 	PrecacheParticleSystem(name)
+
 	net.Start("pac_request_precache")
 	net.WriteString(name)
 	net.SendToServer()
@@ -99,7 +105,9 @@ end
 pac.AddHook("pac_EffectPrecached", "pac_Effects", function(name)
 	if alreadyServer[name] then return end
 	alreadyServer[name] = true
+
 	pac.dprint("effect %q precached!", name)
+
 	pac.CallRecursiveOnAllParts("OnEffectPrecached", name)
 end)
 

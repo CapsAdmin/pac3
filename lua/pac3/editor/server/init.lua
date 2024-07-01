@@ -22,7 +22,7 @@ do
 	end
 end
 
-CreateConVar("pac_sv_prop_outfits", "0", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow applying parts on other entities serverside\n0=don't\n1=allow on props but not players\n2=allow on other players")
+local pac_sv_prop_outfits = CreateConVar("pac_sv_prop_outfits", "0", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow applying parts on other entities serverside\n0=don't\n1=allow on props but not players\n2=allow on other players")
 
 function pace.CanPlayerModify(ply, ent)
 	if not IsValid(ply) or not IsValid(ent) then
@@ -45,10 +45,10 @@ function pace.CanPlayerModify(ply, ent)
 		return true
 	end
 
-	if GetConVar("pac_sv_prop_outfits"):GetInt() ~= 0 then
-		if GetConVar("pac_sv_prop_outfits"):GetInt() == 1 then
+	if pac_sv_prop_outfits:GetInt() ~= 0 then
+		if pac_sv_prop_outfits:GetInt() == 1 then
 			return not (ply ~= ent and ent:IsPlayer())
-		elseif GetConVar("pac_sv_prop_outfits"):GetInt() == 2 then
+		elseif pac_sv_prop_outfits:GetInt() == 2 then
 			return true
 		end
 
@@ -60,8 +60,6 @@ function pace.CanPlayerModify(ply, ent)
 			return true
 		end
 	end
-
-
 
 	return false
 end
@@ -87,6 +85,7 @@ do
 		if not ply.pac_last_editor_message then
 			ply.pac_last_editor_message = 0
 		end
+
 		if ply.pac_last_editor_message > CurTime() then return end
 		ply.pac_last_editor_message = CurTime() + 0.2
 
@@ -95,14 +94,13 @@ do
 		local part_pos = net.ReadVector()
 
 		net.Start("pac_in_editor_posang", true)
-			net.WriteEntity(ply)
+			net.WritePlayer(ply)
 			net.WriteVector(pos)
 			net.WriteAngle(ang)
 			net.WriteVector(part_pos)
 		net.SendPVS(ply:GetPos())
 	end)
 end
-
 
 CreateConVar("has_pac3_editor", "1", {FCVAR_NOTIFY})
 

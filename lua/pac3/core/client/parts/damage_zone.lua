@@ -411,29 +411,38 @@ function PART:AssignFloatingPartToEntity(part, owner, ent, parent_ent, template_
 
 end
 
+local damage_zone_class = PART.ClassName
+
 local function RecursedHitmarker(part)
 	if part.HitMarkerPart == part or part.KillMarkerPart == part then
 		return true
 	end
+
+	local children
+
 	if IsValid(part.HitMarkerPart) then
-		for i,child in pairs(part.HitMarkerPart:GetChildrenList()) do
-			if child.ClassName == "damage_zone" then
-				if child.HitMarkerPart == part or child.KillMarkerPart == part then
-					return true
-				end
-			end
-		end
-	end
-	if IsValid(part.KillMarkerPart) then
-		for i,child in pairs(part.KillMarkerPart:GetChildrenList()) do
-			if child.ClassName == "damage_zone" then
-				if child.HitMarkerPart == part or child.KillMarkerPart == part then
-					return true
-				end
+		children = part.HitMarkerPart:GetChildrenList()
+
+		for i = 1, #children do
+			local child = children[i]
+
+			if child.ClassName == damage_zone_class and (child.HitMarkerPart == part or child.KillMarkerPart == part) then
+				return true
 			end
 		end
 	end
 
+	if IsValid(part.KillMarkerPart) then
+		children = part.KillMarkerPart:GetChildrenList()
+
+		for i = 1, #children do
+			local child = children[i]
+
+			if child.ClassName == damage_zone_class and (child.HitMarkerPart == part or child.KillMarkerPart == part) then
+				return true
+			end
+		end
+	end
 end
 
 

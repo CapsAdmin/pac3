@@ -121,7 +121,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 			return ent
 		end
 
-		for _, val in pairs(ents.GetAll()) do
+		for _, val in ents.Iterator()do
 			if val:IsValid() and (not check_func or check_func(val)) and check_owner(val, owner) and find_ent(val, name) then
 				return val
 			end
@@ -130,7 +130,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 
 	if name:find("persist ", nil, true) then
 		local crc = name:match("persist (.+)")
-		for _, val in pairs(ents.GetAll()) do
+		for _, val in ents.Iterator() do
 			if val.GetPersistent and val:GetModel() and val:GetPersistent() and crc == calc_entity_crc(val) then
 				return val
 			end

@@ -11,8 +11,8 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "fog"
 
-PART.Group = 'modifiers'
-PART.Icon = 'icon16/weather_clouds.png'
+PART.Group = "modifiers"
+PART.Icon = "icon16/weather_clouds.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})

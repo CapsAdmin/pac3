@@ -36,9 +36,12 @@ function pacx.PartToContraptionData(part, tbl)
 		table.insert(tbl, data)
 	end
 
-	for key, part in ipairs(part:GetChildren()) do
-		if part.is_model_part then
-			pacx.PartToContraptionData(part, tbl)
+	local children = part:GetChildren()
+	for i = 1, #children do
+		local child = children[i]
+
+		if child.is_model_part then
+			pacx.PartToContraptionData(child, tbl)
 		end
 	end
 

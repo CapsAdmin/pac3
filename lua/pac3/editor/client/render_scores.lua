@@ -27,7 +27,9 @@ end
 timer.Create("pac_render_times", 0.1, 0, function()
 	if not pac.IsEnabled() then return end
 
-	for key, ply in pairs(player.GetHumans()) do
+	for _, ply in player.Iterator() do
+		if ply:IsBot() then continue end
+
 		local data = pace.GetProfilingData(ply)
 
 		if data then
@@ -44,19 +46,21 @@ timer.Create("pac_render_times", 0.1, 0, function()
 	end
 end)
 
+local maxDist = 100
+maxDist = maxDist * maxDist
+
 pac.AddHook("HUDPaint", "pac_show_render_times", function()
 	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() then return end
 
-	for key, ply in pairs(player.GetHumans()) do
-		if ply == pac.LocalPlayer then goto CONTINUE end
+	for _, ply in player.Iterator() do
+		if ply == pac.LocalPlayer or ply:IsBot() then goto CONTINUE end
 
 		local pos = ply:EyePos()
 
-		if pos:Distance(pac.EyePos) < 100 then
+		if pos:DistToSqr(pac.EyePos) < maxDist then
 			local pos = pos:ToScreen()
 
 			if pos.visible then
-
 				surface.SetFont(font)
 				surface.SetTextColor(255, 255, 255, 255)
 

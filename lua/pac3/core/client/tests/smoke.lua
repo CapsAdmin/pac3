@@ -1,7 +1,7 @@
 
 function test.Run(done)
 	local function find_part_in_entities(part)
-		for k,v in pairs(ents.GetAll()) do
+		for _, v in ents.Iterator() do
 			if v.PACPart == part then
 				return v.PACPart
 			end

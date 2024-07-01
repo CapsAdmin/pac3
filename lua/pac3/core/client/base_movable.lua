@@ -195,7 +195,10 @@ function PART:CalcAngles(ang, wpos)
 		local nearest_dist = math.huge
 		local owner_ent = part:GetRootPart():GetOwner()
 
-		for _,ent in pairs(ents.FindInSphere(wpos, 5000)) do
+		local ents_in_sphere = ents.FindInSphere(wpos, 5000)
+
+		for i = 1, #ents_in_sphere do
+			local ent = ents_in_sphere[i]
 			if (ent:IsNPC() or ent:IsPlayer()) and ent ~= owner_ent then
 				local dist = (wpos - ent:GetPos()):LengthSqr()
 				if dist < nearest_dist then

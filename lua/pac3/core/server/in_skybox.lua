@@ -1,5 +1,6 @@
 pac.AddHook("InitPostEntity", "get_sky_camera", function()
 	local sky_camera = ents.FindByClass("sky_camera")[1]
+
 	if sky_camera then
 		local nwVarName = "pac_in_skybox"
 		local in_skybox = {}
@@ -8,15 +9,23 @@ pac.AddHook("InitPostEntity", "get_sky_camera", function()
 			if not IsValid(sky_camera) then
 				sky_camera = ents.FindByClass("sky_camera")[1]
 			end
+
 			local new_in_skybox = {}
-			for _, ent in ipairs(ents.FindInPVS(sky_camera:GetPos())) do
+
+			local ents_pvs = ents.FindInPVS(sky_camera:GetPos())
+
+			for i = 1, #ents_pvs do
+				local ent = ents_pvs[i]
+
 				if not in_skybox[ent] then
 					ent:SetNW2Bool(nwVarName, true)
 				end
 				new_in_skybox[ent] = true
 			end
 
-			for ent in pairs(in_skybox) do
+			for i = 1, #in_skybox do
+				local ent = in_skybox[i]
+
 				if not new_in_skybox[ent] and ent:IsValid() then
 					ent:SetNW2Bool(nwVarName, false)
 				end

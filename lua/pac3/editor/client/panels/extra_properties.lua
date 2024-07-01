@@ -8,8 +8,9 @@ local function populate_part_menu(menu, part, func)
 
 		pnl:SetImage(part.Icon)
 
-		for key, part in ipairs(part:GetChildren()) do
-			populate_part_menu(menu, part, func)
+		local children = part:GetChildren()
+		for i = 1, #children do
+			populate_part_menu(menu, children[i], func)
 		end
 	else
 		menu:AddOption(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName(), function()
@@ -17,7 +18,6 @@ local function populate_part_menu(menu, part, func)
 		end):SetImage(part.Icon)
 	end
 end
-
 
 local function get_friendly_name(ent)
 	if not IsValid(ent) then return "NULL" end
@@ -27,7 +27,6 @@ local function get_friendly_name(ent)
 	end
 
 	if ent:EntIndex() == -1 then
-
 		if name == "10C_BaseFlex" then
 			return "csentity - " .. ent:GetModel()
 		end
@@ -66,7 +65,7 @@ do -- bone
 		menu:MakePopup()
 
 		local list = {}
-		for k,v in pairs(bones) do
+		for k, v in pairs(bones) do
 			table.insert(list, v.friendly)
 		end
 
@@ -109,7 +108,6 @@ do -- part
 	end
 
 	function PANEL:DecodeEdit(name)
-
 		if name:Trim() ~= "" then
 			local part = pac.FindPartByName(pac.Hash(pac.LocalPlayer), name, pace.current_part)
 			if part:IsValid() then
@@ -125,7 +123,6 @@ do -- part
 		local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), val)
 
 		if IsValid(self.Icon) then self.Icon:Remove() end
-
 
 		if not part:IsValid() then
 			if self.CurrentKey == "TargetEntityUID" then
@@ -311,7 +308,7 @@ do -- owner
 
 		local entities = menu:AddSubMenu(L"entities", function() end)
 		entities.GetDeleteSelf = function() return false end
-		for _, ent in pairs(ents.GetAll()) do
+		for _, ent in ents.Iterator() do
 			if ent:EntIndex() > 0 then
 				entities:AddOption(get_friendly_name(ent), function()
 					pace.current_part:SetOwnerName(ent:EntIndex())
@@ -827,8 +824,8 @@ do -- event is_touching
 			elseif part:GetEvent() == "is_touching_life" then
 				local found = false
 				local ents_hits = ents.FindInBox(startpos + mins, startpos + maxs)
-				for _,ent2 in pairs(ents_hits) do
-
+				for i = 1, #ents_hits do
+					local ent2 = ents_hits[i]
 					if IsValid(ent2) and (ent2 ~= ent and ent2 ~= part:GetRootPart():GetOwner()) and
 					(ent2:IsNPC() or ent2:IsPlayer())
 					then
@@ -843,16 +840,17 @@ do -- event is_touching
 				end
 			elseif part:GetEvent() == "is_touching_filter" then
 				local ents_hits = ents.FindInBox(startpos + mins, startpos + maxs)
-				for _,ent2 in pairs(ents_hits) do
+				for i = 1, #ents_hits do
+					local ent2 = ents_hits[i]
 					if (ent2 ~= ent and ent2 ~= part:GetRootPart():GetOwner()) and
 						(ent2:IsNPC() or ent2:IsPlayer()) and
-						not ( (no_npc and ent2:IsNPC()) or (no_players and ent2:IsPlayer()) )
+						not ((no_npc and ent2:IsNPC()) or (no_players and ent2:IsPlayer()))
 					then b = true end
 				end
 			end
 
 			if self.udata then
-				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, b and Color(255,0,0) or Color(255,255,255), true )
+				render.DrawWireframeBox(startpos, angle_zero, mins, maxs, b and Color(255,0,0) or color_white, true)
 			end
 		end)
 	end
@@ -891,17 +889,19 @@ do -- event seen_by_player
 
 			if not IsValid(ent) then stop() return end
 
-			local mins = Vector(-extra_radius,-extra_radius,-extra_radius)
-			local maxs = Vector(extra_radius,extra_radius,extra_radius)
+			local local_center
+			local min_radius, max_radius = Vector(-extra_radius, -extra_radius, -extra_radius), Vector(extra_radius, extra_radius, extra_radius)
 
 			local b = false
 			local players_see = {}
-			for _,v in ipairs(player.GetAll()) do
+			for _, v in player.Iterator() do
 				if v == ent then continue end
 				local eyetrace = v:GetEyeTrace()
 
+				local_center = local_center or pac.LocalPlayer:GetPos() + pac.LocalPlayer:OBBCenter()
+
 				local this_player_sees = false
-				if util.IntersectRayWithOBB(eyetrace.StartPos, eyetrace.HitPos - eyetrace.StartPos, LocalPlayer():GetPos() + LocalPlayer():OBBCenter(), Angle(0,0,0), Vector(-extra_radius,-extra_radius,-extra_radius), Vector(extra_radius,extra_radius,extra_radius)) then
+				if util.IntersectRayWithOBB(eyetrace.StartPos, eyetrace.HitPos - eyetrace.StartPos, local_center, angle_zero, min_radius, max_radius) then
 					b = true
 					this_player_sees = true
 				end
@@ -909,11 +909,11 @@ do -- event seen_by_player
 					b = true
 					this_player_sees = true
 				end
-				render.DrawLine(eyetrace.StartPos, eyetrace.HitPos, this_player_sees and Color(255, 0,0) or Color(255,255,255), true)
+				render.DrawLine(eyetrace.StartPos, eyetrace.HitPos, this_player_sees and Color(255, 0,0) or color_white, true)
 			end
 			::CHECKOUT::
 			if self.udata then
-				render.DrawWireframeBox( ent:GetPos() + ent:OBBCenter(), Angle( 0, 0, 0 ), mins, maxs, b and Color(255,0,0) or Color(255,255,255), true )
+				render.DrawWireframeBox(ent:GetPos() + ent:OBBCenter(), angle_zero, min_radius, max_radius, b and Color(255,0,0) or color_white, true)
 			end
 		end)
 	end
@@ -942,13 +942,13 @@ do --projectile radius
 			if pace.current_part.ClassName ~= "projectile" then stop() return end
 			if self.udata then
 				if last_part.Sphere then
-					render.DrawWireframeSphere( last_part:GetWorldPosition(), last_part.Radius, 10, 10, Color(255,255,255), true )
-					render.DrawWireframeSphere( last_part:GetWorldPosition(), last_part.DamageRadius, 10, 10, Color(255,0,0), true )
+					render.DrawWireframeSphere(last_part:GetWorldPosition(), last_part.Radius, 10, 10, color_white, true)
+					render.DrawWireframeSphere(last_part:GetWorldPosition(), last_part.DamageRadius, 10, 10, Color(255,0,0), true)
 				else
 					local mins_ph = Vector(last_part.Radius,last_part.Radius,last_part.Radius)
 					local mins_dm = Vector(last_part.DamageRadius,last_part.DamageRadius,last_part.DamageRadius)
-					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_ph, mins_ph, Color(255,255,255), true )
-					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_dm, mins_dm, Color(255,0,0), true )
+					render.DrawWireframeBox(last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_ph, mins_ph, color_white, true)
+					render.DrawWireframeBox(last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_dm, mins_dm, Color(255,0,0), true)
 				end
 
 			end

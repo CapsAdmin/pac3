@@ -44,7 +44,7 @@ function pace.RegisterPanels()
 		files = file.Find("pac3/editor/client/panels/*.lua", "LUA")
 	end
 
-	for _, name in pairs(files) do
-		include("pac3/editor/client/panels/" .. name)
+	for i = 1, #files do
+		include("pac3/editor/client/panels/" .. files[i])
 	end
 end

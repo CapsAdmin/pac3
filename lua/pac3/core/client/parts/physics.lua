@@ -1,6 +1,11 @@
+local RealFrameTime = RealFrameTime
+local Mesh = Mesh
+local Matrix = Matrix
+
 local physprop_enums = {}
 local physprop_indices = {}
-for i=0,500,1 do
+
+for i = 0, 500, 1 do
 	local name = util.GetSurfacePropName(i)
 	if name ~= "" then
 		physprop_enums[name] = name
@@ -8,15 +13,13 @@ for i=0,500,1 do
 	end
 end
 
-
-
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ThinkTime = 0
 PART.ClassName = "physics"
 
-PART.Group = 'model'
-PART.Icon = 'icon16/shape_handles.png'
+PART.Group = "model"
+PART.Icon = "icon16/shape_handles.png"
 
 BUILDER:StartStorableVars()
 
@@ -38,9 +41,9 @@ BUILDER:StartStorableVars()
 		:GetSet("MaxSpeedDamp", 1000)
 		:GetSet("MaxAngularDamp", 1000)
 		:GetSet("DampFactor", 1)
-	BUILDER:SetPropertyGroup("Speeds")
 
-		:GetSet("ConstantVelocity", Vector(0,0,0))
+	BUILDER:SetPropertyGroup("Speeds")
+		:GetSet("ConstantVelocity", Vector(0, 0, 0))
 
 	BUILDER:SetPropertyGroup("Shape")
 		:GetSet("BoxScale",Vector(1,1,1))
@@ -52,10 +55,9 @@ BUILDER:StartStorableVars()
 
 	BUILDER:SetPropertyGroup("InitialVelocity")
 		:GetSet("AddOwnerSpeed", false)
-		:GetSet("InitialVelocityVector", Vector(0,0,0))
+		:GetSet("InitialVelocityVector", Vector(0, 0, 0))
 		:GetSetPart("InitialVelocityPart")
 		:GetSet("OverrideInitialPosition", false, {description = "Whether the initial velocity part should be used as an initial position, otherwise it'll just be for the initial velocity's angle"})
-
 
 BUILDER:EndStorableVars()
 
@@ -86,6 +88,8 @@ function PART:SetMass(n)
 	end
 end
 
+local mat_wireframe
+
 function PART:MeshDraw()
 	if not IsValid(self.phys) then return end
 
@@ -93,15 +97,21 @@ function PART:MeshDraw()
 	local drawmesh = Mesh()
 
 	if mesh == nil or not self.Box then
-		render.DrawWireframeSphere( self.phys:GetPos(), self.Radius, 10, 10, Color( 255, 255, 255 ) )
+		render.DrawWireframeSphere(self.phys:GetPos(), self.Radius, 10, 10, color_white)
 	else
 		drawmesh:BuildFromTriangles(mesh)
 
-		render.SetMaterial( Material( "models/wireframe" ) )
+		if not mat_wireframe then
+			mat_wireframe = Material("models/wireframe")
+		end
+
+		render.SetMaterial(mat_wireframe)
+
 		local mat = Matrix()
 		mat:Translate(self.phys:GetPos())
 		mat:Rotate(self.phys:GetAngles())
-		cam.PushModelMatrix( mat )
+
+		cam.PushModelMatrix(mat)
 		drawmesh:Draw()
 		cam.PopModelMatrix()
 	end
@@ -109,6 +119,7 @@ end
 
 function PART:SetPreview(b)
 	self.Preview = b
+
 	if self.Preview then
 		hook.Add("PostDrawTranslucentRenderables", "pac_physics_preview"..self.UniqueID, function()
 			self:MeshDraw()
@@ -181,7 +192,6 @@ end
 local params = {}
 
 function PART:OnThink()
-
 	if self.Parent.GetWorldPosition then
 		if self.disabled then
 			self:Enable()
@@ -191,7 +201,6 @@ function PART:OnThink()
 			self:Disable()
 		end
 	end
-
 
 	local phys = self.phys
 
@@ -216,7 +225,7 @@ function PART:OnThink()
 			end
 
 			-- this is nicer i think
-			if self.ConstrainSphere ~= 0 and phys:GetPos():Distance(self.Parent:GetWorldPosition()) > self.ConstrainSphere then
+			if self.ConstrainSphere ~= 0 and phys:GetPos():DistToSqr(self.Parent:GetWorldPosition()) > (self.ConstrainSphere * self.ConstrainSphere) then
 				if not self.PushFollow then
 					phys:SetPos(self.Parent:GetWorldPosition() + (self.Parent:GetWorldPosition() - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
 				--new push mode
@@ -224,16 +233,16 @@ function PART:OnThink()
 					local vec = (self.Parent:GetWorldPosition() - phys:GetPos())
 					local current_dist = vec:Length()
 					local extra_dist = current_dist - self.ConstrainSphere
-					phys:AddVelocity(0.5 * vec:GetNormalized() * extra_dist / math.Clamp(self.SecondsToArrive,0.05,10))
+					phys:AddVelocity(0.5 * vec:GetNormalized() * extra_dist / math.Clamp(self.SecondsToArrive, 0.05, 10))
 				end
 			end
 		else
 			if self.ConstrainSphere ~= 0 then
 				local offset = self.Parent:GetWorldPosition() - phys:GetPos()
 
-				if offset:Length() > self.ConstrainSphere then
+				if offset:LengthSqr() > (self.ConstrainSphere * self.ConstrainSphere) then
 					phys:SetPos(self.Parent:GetWorldPosition() - offset:GetNormalized() * self.ConstrainSphere)
-					phys:SetVelocity(Vector())
+					phys:SetVelocity(vector_origin)
 				end
 			end
 		end
@@ -257,17 +266,26 @@ function PART:OnHide()
 		timer.Simple(0.4, function()
 			self:GetRootPart():OnShow()
 			self.Parent:OnShow()
-			for _,part in pairs(self:GetParent():GetChildrenList()) do
-				part:OnShow()
 
+			local siblings = self:GetParent():GetChildrenList()
+			for i = 1, #siblings do
+				siblings[i]:OnShow()
 			end
 		end)
 		return
 	end
+
 	timer.Simple(0, function() self:Disable() end)
 
-	hook.Remove("PostDrawTranslucentRenderables", "pac_physics_preview"..self.UniqueID)
+	hook.Remove("PostDrawTranslucentRenderables", "pac_physics_preview" .. self.UniqueID)
 end
+
+local valid_phys_pusher_list = {
+	["prop_physics"] = true,
+	["prop_physics_multiplayer"] = true,
+	["prop_physics_respawnable"] = true,
+	["prop_ragdoll"] = true
+}
 
 function PART:Enable()
 	if IsInvalidParent(self) then return end
@@ -310,36 +328,44 @@ function PART:Enable()
 		self.phys:AddVelocity(self:GetRootPart():GetOwner():GetVelocity())
 	end
 
-	timer.Simple(self.ThinkDelay, function() hook.Add("Tick", "pac_phys_repulsionthink"..self.UniqueID, function()
-		if not IsValid(self.phys) then hook.Remove("Tick", "pac_phys_repulsionthink"..self.UniqueID) return end
-		self.phys:AddVelocity(self.ConstantVelocity * RealFrameTime())
+	timer.Simple(self.ThinkDelay, function()
+		hook.Add("Tick", "pac_phys_repulsionthink" .. self.UniqueID, function()
+			if not IsValid(self.phys) then
+				hook.Remove("Tick", "pac_phys_repulsionthink" .. self.UniqueID)
+				return
+			end
 
-		if self.Pushable then
-			local pushvec = Vector(0,0,0)
-			local pos = self.phys:GetPos()
-			local ents_tbl = ents.FindInSphere(pos, self.Radius)
-			local valid_phys_pushers = 0
-			for i,ent in pairs(ents_tbl) do
-				if ent.GetPhysicsObject or ent:IsPlayer() then
-					if ent:IsPlayer() or ent:GetClass() == "prop_physics" or ent:GetClass() == "prop_ragdoll" then
+			self.phys:AddVelocity(self.ConstantVelocity * RealFrameTime())
+
+			if self.Pushable then
+				local pushvec = Vector(0, 0, 0)
+				local pos = self.phys:GetPos()
+				local valid_phys_pushers = 0
+
+				local ents_tbl = ents.FindInSphere(pos, self.Radius)
+				for i = 1, #ents_tbl do
+					local ent = ents_tbl[i]
+
+					if ent:IsPlayer() or (ent.GetPhysicsObject and valid_phys_pusher_list[ent:GetClass()]) then
 						valid_phys_pushers = valid_phys_pushers + 1
 						pushvec = pushvec + (pos - ent:GetPos()):GetNormalized() * 20
 					end
 				end
+
+				if valid_phys_pushers > 0 then
+					self.phys:AddVelocity(pushvec / valid_phys_pushers)
+				end
 			end
-			if valid_phys_pushers > 0 then self.phys:AddVelocity(pushvec / valid_phys_pushers) end
-		end
-
-
-	end) end)
+		end)
+	end)
 end
 
 function PART:Disable()
-	hook.Remove("Tick", "pac_phys_repulsionthink"..self.UniqueID)
+	hook.Remove("Tick", "pac_phys_repulsionthink" .. self.UniqueID)
+
 	if IsInvalidParent(self) then return end
 
 	local part = self:GetParent()
-
 	local ent = part:GetOwner()
 
 	if ent:IsValid() then

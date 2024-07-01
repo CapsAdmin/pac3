@@ -5,7 +5,7 @@ local vector_origin = vector_origin
 local Vector = Vector
 local Angle = Angle
 
-for _, v in pairs(ents.GetAll()) do
+for _, v in ents.Iterator() do
 	v.pac_bone_setup_data = nil
 end
 
@@ -13,8 +13,8 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.FriendlyName = "bone"
 PART.ClassName = "bone3"
-PART.Groups = {'entity', 'model'}
-PART.Icon = 'icon16/connect.png'
+PART.Groups = {"entity", "model"}
+PART.Icon = "icon16/connect.png"
 PART.is_bone_part = true
 
 BUILDER:StartStorableVars()
@@ -36,7 +36,7 @@ BUILDER:StartStorableVars()
 		BUILDER:PropertyOrder("Angles")
 		BUILDER:PropertyOrder("EyeAngles")
 		BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
-		BUILDER:GetSet("Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		BUILDER:GetSet("Scale", Vector(1, 1, 1), {editor_sensitivity = 0.25})
 		BUILDER:PropertyOrder("PositionOffset")
 		BUILDER:PropertyOrder("AngleOffset")
 

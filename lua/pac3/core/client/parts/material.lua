@@ -1,3 +1,7 @@
+local table_insert = table.insert
+local table_remove = table.remove
+local table_sort = table.sort
+
 local shader_params = include("pac3/libraries/shader_params.lua")
 
 local mat_hdr_level = GetConVar("mat_hdr_level")
@@ -58,7 +62,6 @@ local function TableToFlags(flags, valid_flags)
 end
 
 local function FlagsToTable(flags, valid_flags)
-
 	if not flags then return valid_flags.default_valid_flag end
 
 	local out = {}
@@ -104,7 +107,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	if shader_name == "vertexlitgeneric" then
 		PART.FriendlyName = "material"
-		PART.Group = {'modifiers', 'model', 'entity'}
+		PART.Group = {"modifiers", "model", "entity"}
 	else
 		PART.FriendlyName = "material " .. shader_name
 		PART.Group = "advanced"
@@ -118,6 +121,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	-- move this to tools or something
 	BUILDER:GetSet("LoadVmt", "", {editor_panel = "material"})
+
 	function PART:SetLoadVmt(path)
 		if not path or path == "" then return end
 
@@ -127,7 +131,6 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 		local vmt = util.KeyValuesToTable(str)
 		local shader = str:match("^(.-)%{"):gsub("%p", ""):Trim()
-
 
 		for k,v in pairs(self:GetVars()) do
 			local param = PART.ShaderParams[k]
@@ -181,14 +184,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	BUILDER:GetSet("MaterialOverride", "all", {enums = function(self, str)
-
 		local materials = {}
 
 		if pace.current_part:GetOwner():IsValid() then
 			materials = pace.current_part:GetOwner():GetMaterials()
 		end
 
-		table.insert(materials, "all")
+		table_insert(materials, "all")
 
 		local tbl = {}
 
@@ -205,10 +207,14 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			if not IsValid(self) and not remove then return end
 			local name = self:GetName()
 
-			for _, part in ipairs(self:GetRootPart():GetChildrenList()) do
+			local children = self:GetRootPart():GetChildrenList()
+			for i = 1, #children do
+				local part = children[i]
+
 				if part.GetMaterials then
-					for _, path in ipairs(part.Materials:Split(";")) do
-						if path == name then
+					local materials = part.Materials:Split(";")
+					for x = 1, #materials do
+						if materials[x] == name then
 							part:SetMaterials(part.Materials)
 							break
 						end
@@ -225,7 +231,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				if tonumber(str) then
 					num = tonumber(str)
 				elseif str ~= "all" and parent:GetOwner():IsValid() then
-					for i, v in ipairs(parent:GetOwner():GetMaterials()) do
+					local materials = parent:GetOwner():GetMaterials()
+					for i = 1, #materials do
+						local v = materials[i]
+
 						if (v:match(".+/(.+)") or v):lower() == str:lower() then
 							num = i
 							break
@@ -239,14 +248,14 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				for _, stack in pairs(parent.material_override) do
 					for i, v in ipairs(stack) do
 						if v == self then
-							table.remove(stack, i)
+							table_remove(stack, i)
 							break
 						end
 					end
 				end
 
 				if not remove then
-					table.insert(parent.material_override[num], self)
+					table_insert(parent.material_override[num], self)
 				end
 			end
 
@@ -257,7 +266,6 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		self.translation_vector = Vector()
 		self.rotation_angle = Angle(0, 0, 0)
 	end
-
 
 	function PART:GetNiceName()
 		local path = ""
@@ -290,8 +298,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	function PART:OnThink()
-		if self:GetOwner():IsValid() then
-			local materials = self:GetOwner():GetMaterials()
+		local owner = self:GetOwner()
+		if owner:IsValid() then
+			local materials = owner:GetMaterials()
 			if materials and #materials ~= self.last_material_count then
 				update_submaterial(self)
 				self.last_material_count = #materials
@@ -302,23 +311,27 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	PART.ShaderParams = {}
 	PART.TransformVars = {}
 
+	local vector_one = Vector(1, 1, 1)
+
 	local sorted_groups = {}
 	for k, v in pairs(groups) do
-		table.insert(sorted_groups, {k = k, v = v})
+		table_insert(sorted_groups, {k = k, v = v})
 	end
-	table.sort(sorted_groups, function(a, b) return a.k:lower() < b.k:lower() end)
+	table_sort(sorted_groups, function(a, b) return a.k:lower() < b.k:lower() end)
 
-	for _, v in ipairs(sorted_groups) do
-		local group, params =  v.k, v.v
+	for i = 1, #sorted_groups do
+		local g = sorted_groups[i]
+		local group, params =  g.k, g.v
 
 		local sorted_params = {}
 		for k, v in pairs(params) do
-			table.insert(sorted_params, {k = k, v = v})
+			table_insert(sorted_params, {k = k, v = v})
 		end
-		table.sort(sorted_params, function(a, b) return a.k:lower() < b.k:lower() end)
+		table_sort(sorted_params, function(a, b) return a.k:lower() < b.k:lower() end)
 
-		for _, v in ipairs(sorted_params) do
-			local key, info = v.k, v.v
+		for x = 1, #sorted_params do
+			local p = sorted_params[x]
+			local key, info = p.k, p.v
 
 			PART.ShaderParams[key] = info
 
@@ -330,9 +343,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 			if info.default == nil then
 				if info.type == "vec3" then
-					info.default = Vector(0,0,0)
+					info.default = Vector(0, 0, 0)
 				elseif info.type == "color" then
-					info.default = Vector(1,1,1)
+					info.default = Vector(1, 1, 1)
 				elseif info.type == "float" then
 					info.default = 0
 				elseif info.type == "vec2" then
@@ -379,7 +392,6 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				PART["Set" .. position_key] = function(self, vec)
 					self[position_key] = vec
 
-
 					self.translation_vector.x = self[position_key].x
 					self.translation_vector.y = self[position_key].y
 
@@ -398,7 +410,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				PART["Set" .. angle_key] = function(self, num)
 					self[angle_key] = num
 
-					self.rotation_angle.y = self[angle_key]*360
+					self.rotation_angle.y = self[angle_key] * 360
 
 					setup_matrix(self)
 
@@ -442,8 +454,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					self[property_name] = val
 
 					if val == "" or info.partial_hdr and mat_hdr_level:GetInt() > 0 and self[getnohdr](self) then
-						self:GetRawMaterial():SetUndefined(key)
-						self:GetRawMaterial():Recompute()
+						local mat = self:GetRawMaterial()
+						mat:SetUndefined(key)
+						mat:Recompute()
 					else
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then
@@ -479,8 +492,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				if isnumber(info.default) then
 					PART["Set" .. property_name] = function(self, val)
 						self[property_name] = val
+
 						local mat = self:GetRawMaterial()
 						mat:SetFloat(key, val)
+
 						if info.recompute then
 							mat:Recompute()
 						end
@@ -511,47 +526,62 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					else
 						PART["Set" .. property_name] = function(self, val)
 							if isvector(val) then
-								val = (val == Vector(1,1,1)) and true or false
+								val = val == vector_one
 							end
 
 							self[property_name] = val
-							local mat = self:GetRawMaterial()
 
+							local mat = self:GetRawMaterial()
 							mat:SetInt(key, val and 1 or 0)
-							if info.recompute then mat:Recompute() end
+
+							if info.recompute then
+								mat:Recompute()
+							end
 						end
 					end
 				elseif isvector(info.default) or info.type == "vec3" or info.type == "vec2" then
 					PART["Set" .. property_name] = function(self, val)
-						if isstring(val) then val = Vector() end
+						if isstring(val) then
+							val = Vector()
+						end
+
 						self[property_name] = val
+
 						local mat = self:GetRawMaterial()
 						mat:SetVector(key, val)
-						if info.recompute then mat:Recompute() end
+
+						if info.recompute then
+							mat:Recompute()
+						end
 					end
 				elseif info.type == "vec4" then
 					-- need vec4 type
 					PART["Set" .. property_name] = function(self, val)
+						local x, y, z, w
 
-						local x,y,z,w
 						if isstring(val) then
-							x,y,z,w = unpack(val:Split(" "))
+							x, y, z, w = unpack(val:Split(" "))
 							x = tonumber(x) or 0
 							y = tonumber(y) or 0
 							z = tonumber(z) or 0
 							w = tonumber(w) or 0
 						elseif isvector(val) then
-							x,y,z = val.x, val.y, val.z
+							x, y, z = val.x, val.y, val.z
 							w = 0
 						else
 							x, y, z, w = 0, 0, 0, 0
 						end
 
-						self[property_name] = ("%f %f %f %f"):format(x, y, z, w)
-						local mat = self:GetRawMaterial()
-						mat:SetString(key, ("[%f %f %f %f]"):format(x,y,z,w))
+						local vec4_str = ("%f %f %f %f"):format(x, y, z, w)
 
-						if info.recompute then mat:Recompute() end
+						self[property_name] = vec4_str
+
+						local mat = self:GetRawMaterial()
+						mat:SetString(key, vec4_str)
+
+						if info.recompute then
+							mat:Recompute()
+						end
 					end
 				end
 			end
@@ -563,6 +593,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	function PART:GetRawMaterial()
 		if not self.Materialm then
 			self.material_name = tostring({})
+
 			local mat = pac.CreateMaterial(self.material_name, shader_name, {})
 			self.Materialm = mat
 
@@ -572,6 +603,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				end
 			end
 		end
+
 		return self.Materialm
 	end
 

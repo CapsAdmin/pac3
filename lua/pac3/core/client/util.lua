@@ -81,7 +81,7 @@ end
 
 do --dev util
 	function pac.RemoveAllPACEntities()
-		for _, ent in pairs(ents.GetAll()) do
+		for _, ent in ents.Iterator() do
 			pac.UnhookEntityRender(ent)
 
 			if ent.IsPACEntity then
@@ -100,7 +100,7 @@ do --dev util
 		pac.RemoveAllParts()
 		pac.RemoveAllPACEntities()
 
-		for i, ent in ipairs(ents.GetAll()) do
+		for i, ent in ents.Iterator() do
 			ent.pac_ignored = nil
 			ent.pac_ignored_data = nil
 			ent.pac_drawing = nil
@@ -142,7 +142,6 @@ do --dev util
 
 	pac.convarcache = {}
 	function pac.CreateClientConVarFast(cvar,initial,save,t,server)
-
 		local cached = pac.convarcache[cvar]
 		if cached then return cached[1],cached[2] end
 
@@ -183,8 +182,8 @@ do --dev util
 
 		local function GetConVarValue() return val end
 
-		pac.convarcache[cvar]={GetConVarValue,c}
-		return GetConVarValue,c
+		pac.convarcache[cvar] = {GetConVarValue, c}
+		return GetConVarValue, c
 	end
 end
 
@@ -215,19 +214,44 @@ do
 		"bright"
 	}
 
-	function pac.HSVToNames(h,s,v)
+	local color_obj = Color(0, 0, 0)
+
+	function pac.HSVToNames(h, s, v)
 		return
-			hue[math.Round((1+(h/360)*#hue))] or hue[1],
-			sat[math.ceil(s*#sat)] or sat[1],
-			val[math.ceil(v*#val)] or val[1]
+			hue[math.Round((1 + (h / 360) * #hue))] or hue[1],
+			sat[math.ceil(s * #sat)] or sat[1],
+			val[math.ceil(v * #val)] or val[1]
 	end
 
+	--color can mean a color object or a vector using the range 0-255
 	function pac.ColorToNames(c)
 		if c.r == 255 and c.g == 255 and c.b == 255 then return "white", "", "bright" end
 		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
-		return pac.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
+
+		if c.ToHSV then
+			--is a color object, pass it straight to ColorToHSV
+			return pac.HSVToNames(ColorToHSV(c))
+		else
+			--is a vector pretending to be a color, convert to color for ColorToHSV
+			color_obj.r = c.r
+			color_obj.g = c.g
+			color_obj.b = c.b
+
+			return pac.HSVToNames(ColorToHSV(color_obj))
+		end
 	end
 
+	--vector color means a vector using the range 0-1
+	function pac.VectorColorToNames(c)
+		if c.r == 1 and c.g == 1 and c.b == 1 then return "white", "", "bright" end
+		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
+
+		color_obj.r = c.r * 255
+		color_obj.g = c.g * 255
+		color_obj.b = c.b * 255
+
+		return pac.HSVToNames(ColorToHSV(color_obj))
+	end
 
 	function pac.PrettifyName(str)
 		if not str then return end
@@ -235,11 +259,10 @@ do
 		str = str:gsub("_", " ")
 		return str
 	end
-
 end
 
 do
-	local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=custom error model, models/yourmodel.mdl")
+	local pac_error_mdl = CreateClientConVar("pac_error_mdl", "1", true, false, "0 = default error, 1 = custom error model, models/yourmodel.mdl")
 	local tc
 	local invalidCache = {}
 
@@ -466,7 +489,7 @@ end
 
 local mat
 
-for _, ent in pairs(ents.GetAll()) do
+for _, ent in ents.Iterator() do
 	ent.pac_can_legacy_scale = nil
 end
 

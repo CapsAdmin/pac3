@@ -15,7 +15,7 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("FOV", -1)
 BUILDER:EndStorableVars()
 
-for i, ply in ipairs(player.GetAll()) do
+for _, ply in player.Iterator() do
 	ply.pac_cameras = nil
 end
 

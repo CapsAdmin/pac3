@@ -36,48 +36,6 @@ include("wires.lua")
 include("wear_filter.lua")
 include("show_outfit_on_use.lua")
 
-do
-	local hue =
-	{
-		"red",
-		"orange",
-		"yellow",
-		"green",
-		"turquoise",
-		"blue",
-		"purple",
-		"magenta",
-	}
-
-	local sat =
-	{
-		"pale",
-		"",
-		"strong",
-	}
-
-	local val =
-	{
-		"dark",
-		"",
-		"bright"
-	}
-
-	function pace.HSVToNames(h,s,v)
-		return
-			hue[math.Round((1+(h/360)*#hue))] or hue[1],
-			sat[math.ceil(s*#sat)] or sat[1],
-			val[math.ceil(v*#val)] or val[1]
-	end
-
-	function pace.ColorToNames(c)
-		if c.r == 255 and c.g == 255 and c.b == 255 then return "white", "", "bright" end
-		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
-		return pace.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
-	end
-
-end
-
 function pace.CallHook(str, ...)
 	return hook.Call("pace_" .. str, GAMEMODE, ...)
 end
@@ -217,7 +175,7 @@ function pace.Panic()
 
 	pace.SafeRemoveSpecialPanel()
 
-	for i, ent in ipairs(ents.GetAll()) do
+	for _, ent in ents.Iterator() do
 		if ent:IsValid() then
 			ent.pac_onuse_only = nil
 			ent.pac_onuse_only_check = nil
@@ -403,8 +361,8 @@ do
 	end
 
 	net.Receive("pac_in_editor_posang", function()
-		local ply = net.ReadEntity()
-		if not IsValid( ply ) then return end
+		local ply = net.ReadPlayer()
+		if not IsValid(ply) then return end
 
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()

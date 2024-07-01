@@ -69,7 +69,9 @@ function pac.SetupENT(ENT, owner)
 	ENT.pac_owner = ENT.pac_owner or owner or "self"
 
 	local function find(parent, name)
-		for _, part in ipairs(parent:GetChildren()) do
+		local children = parent:GetChildren()
+		for i = 1, #children do
+			local part = children[i]
 
 			if part:GetName():lower():find(name) then
 				return part
@@ -81,7 +83,6 @@ function pac.SetupENT(ENT, owner)
 	end
 
 	function ENT:FindPACPart(outfit, name)
-
 		name = name:lower()
 
 		if not outfit.self then
@@ -106,7 +107,6 @@ function pac.SetupENT(ENT, owner)
 
 			part = find(part, name)
 
-
 			if part then
 				self.pac_part_find_cache[name] = part
 
@@ -118,7 +118,6 @@ function pac.SetupENT(ENT, owner)
 	end
 
 	function ENT:AttachPACPart(outfit, owner, keep_uniqueid)
-
 		if not outfit.self then
 			return self:AttachPACSession(outfit, owner)
 		end
@@ -236,7 +235,6 @@ function pac.SetupSWEP(SWEP, owner)
 end
 
 function pac.AddEntityClassListener(class, session, check_func, draw_dist)
-
 	if session.self then
 		session = {session}
 	end
@@ -298,7 +296,7 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 		end
 	end
 
-	for _, ent in pairs(ents.GetAll()) do
+	for _, ent in ents.Iterator() do
 		created(ent)
 	end
 
@@ -313,7 +311,7 @@ function pac.RemoveEntityClassListener(class, session, check_func)
 
 	check_func = check_func or function(ent) return ent:GetClass() == class end
 
-	for _, ent in pairs(ents.GetAll()) do
+	for _, ent in ents.Iterator() do
 		if check_func(ent) and ent.pac_outfits then
 			ent:RemovePACSession(session)
 		end

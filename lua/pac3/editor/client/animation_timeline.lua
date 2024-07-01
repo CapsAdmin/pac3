@@ -484,13 +484,21 @@ do
 					local menu = DermaMenu()
 					menu:SetPos(load:LocalToScreen())
 
-					for _, name in pairs(file.Find("animations/*.txt", "DATA")) do
+					local files = file.Find("animations/*.txt", "DATA")
+
+					for i = 1, #files do
+						local name = files[i]
+
 						menu:AddOption(name:match("(.+)%.txt"), function()
 							timeline.Load(util.JSONToTable(file.Read("animations/" .. name)))
 						end)
 					end
 
-					for _, name in pairs(file.Find("pac3/__animations/*.txt", "DATA")) do
+					files = file.Find("animations/*.txt", "DATA")
+
+					for i = 1, #files do
+						local name = files[i]
+
 						menu:AddOption(name:match("(.+)%.txt"), function()
 							timeline.Load(util.JSONToTable(file.Read("pac3/__animations/" .. name)))
 						end)
@@ -500,10 +508,10 @@ do
 
 					local x, y = bottom:LocalToScreen(0, 0)
 					x = x + bottom:GetWide()
+
 					menu:SetPos(x - menu:GetWide(), y - menu:GetTall())
 				end
 			end
-
 		end
 
 		do -- keyframes
@@ -529,16 +537,23 @@ do
 			function pnl.PerformLayout()
 				old(pnl)
 
+				local canvas = pnl:GetCanvas()
 				local h = self:GetTall() - 45
-				pnl:GetCanvas():SetTall(h)
+
+				canvas:SetTall(h)
 
 				if self.moving then return end
 
 				local x = 0
-				for k, v in ipairs(pnl:GetCanvas():GetChildren()) do
-					v:SetWide(math.max(1/v:GetData().FrameRate * secondDistance, 4))
+
+				local children = canvas:GetChildren()
+				for i = 1, #children do
+					local v = children[i]
+
+					v:SetWide(math.max(1 / v:GetData().FrameRate * secondDistance, 4))
 					v:SetTall(h)
 					v:SetPos(x, 0)
+
 					x = x + v:GetWide()
 				end
 			end
@@ -579,7 +594,8 @@ do
 			local restart = Material("icon16/control_repeat_blue.png")
 			local estyle = Material("icon16/arrow_branch.png")
 			pnl.Paint = function(s, w, h)
-				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
+				local scroll_canvas = self.keyframe_scroll:GetCanvas()
+				local offset = -scroll_canvas:GetPos()
 
 				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
@@ -608,45 +624,51 @@ do
 					end
 				end
 
-				for i = previousSecond, previousSecond+s:GetWide(), secondDistance/8 do
-					if i-offset > 0 and i-offset < ScrW() then
-						local x = i-offset
+				for i = previousSecond, previousSecond + s:GetWide(), secondDistance / 8 do
+					local x = i - offset
+					if x > 0 and x < ScrW() then
 						surface.SetDrawColor(0, 0, 0, 100)
-						surface.DrawLine(x+1, 1+1, x+1, pnl:GetTall()/2+1)
+						surface.DrawLine(x + 1, 1 + 1, x + 1, pnl:GetTall() / 2 + 1)
 
 						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
-						surface.DrawLine(x, 1, x, pnl:GetTall()/2)
+						surface.DrawLine(x, 1, x, pnl:GetTall() / 2)
 					end
 				end
 
-				local h = self.keyframe_scroll:GetCanvas():GetTall() + pnl:GetTall()
+				local h = scroll_canvas:GetTall() + pnl:GetTall()
+
 				if self.keyframe_scroll:GetVBar():IsVisible() then
 					h = h - self.keyframe_scroll:GetVBar():GetTall() + 5
 				end
 
-				for i, v in ipairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
+				local children = scroll_canvas:GetChildren()
+				for i = 1, #children do
+					local v = children[i]
+
 					local mat = v.restart and restart or v.start and start or false
 					local esmat = v.estyle and estyle or false
 
 					if mat then
 						local x = v:GetPos() - offset
 						if x > s:GetWide() - 10 then continue end
+
 						surface.SetDrawColor(255, 255, 255, 200)
-						surface.DrawLine(x, -mat:Height()/2 - 5, x, h)
+						surface.DrawLine(x, -mat:Height() / 2 - 5, x, h)
 
 						surface.SetDrawColor(255, 255, 255, 255)
 						surface.SetMaterial(mat)
-						surface.DrawTexturedRect(1+x, mat:Height() - 5, mat:Width(), mat:Height())
-
+						surface.DrawTexturedRect(1 + x, mat:Height() - 5, mat:Width(), mat:Height())
 					end
 
 					if esmat then
 						local ps = v:GetSize()
 						local x = v:GetPos() - offset + (ps * 0.5)
 						if x > s:GetWide() - 10 then continue end
+
 						surface.SetDrawColor(255, 255, 255, 255)
 						surface.SetMaterial(esmat)
-						surface.DrawTexturedRect(1+x - (esmat:Width() * 0.5), esmat:Height(), esmat:Width(), esmat:Height())
+						surface.DrawTexturedRect(1 + x - (esmat:Width() * 0.5), esmat:Height(), esmat:Width(), esmat:Height())
+
 						if ps >= 65 then
 							draw.SimpleText( v.estyle, pace.CurrentFont, x, esmat:Height() * 2, self:GetSkin().Colours.Label.Dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP )
 						else
@@ -657,7 +679,7 @@ do
 
 				if not timeline.animation_part then return end
 
-				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
+				local x = timeline.GetCycle() * scroll_canvas:GetWide()
 				x = x - offset
 
 				surface.SetDrawColor(255, 0, 0, 200)
@@ -665,24 +687,24 @@ do
 
 				surface.SetDrawColor(255, 0, 0, 255)
 				surface.SetMaterial(scrub)
-				surface.DrawTexturedRect(1 + x - scrub:Width()/2, -11, scrub:Width(), scrub:Height())
+				surface.DrawTexturedRect(1 + x - scrub:Width() * 0.5, -11, scrub:Width(), scrub:Height())
 			end
 		end
 	end
 
 	function TIMELINE:Paint(w, h)
-		self:GetSkin().tex.Tab_Control(0, 35, w, h-35)
+		self:GetSkin().tex.Tab_Control(0, 35, w, h - 35)
 	end
 
 	function TIMELINE:Think()
 		DFrame.Think(self)
 
 		if pace.Editor:GetPos() + pace.Editor:GetWide() / 2 < ScrW() / 2 then
-			self:SetSize(ScrW()-(pace.Editor.x+pace.Editor:GetWide()), 93)
-			self:SetPos(pace.Editor.x+pace.Editor:GetWide(), ScrH()-self:GetTall())
+			self:SetSize(ScrW() - (pace.Editor.x + pace.Editor:GetWide()), 93)
+			self:SetPos(pace.Editor.x + pace.Editor:GetWide(), ScrH() - self:GetTall())
 		else
-			self:SetSize(ScrW()-(ScrW()-pace.Editor.x), 93)
-			self:SetPos(0, ScrH()-self:GetTall())
+			self:SetSize(ScrW() - (ScrW() - pace.Editor.x), 93)
+			self:SetPos(0, ScrH() - self:GetTall())
 		end
 
 		if input.IsKeyDown(KEY_SPACE) then
@@ -739,9 +761,11 @@ do
 	end
 
 	function TIMELINE:Clear()
-		for i, v in pairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
-			v:Remove()
+		local children = self.keyframe_scroll:GetCanvas():GetChildren()
+		for i = 1, #children do
+			children[i]:Remove()
 		end
+
 		self.add_keyframe_button:SetDisabled(false)
 	end
 
@@ -749,9 +773,9 @@ do
 		local total = 0
 
 		if timeline.data and timeline.data.FrameData then
-			for i=1, #timeline.data.FrameData do
+			for i = 1, #timeline.data.FrameData do
 				local v = timeline.data.FrameData[i]
-				total = total+(1/(v.FrameRate or 1))
+				total = total + (1 / (v.FrameRate or 1))
 			end
 		end
 
@@ -764,9 +788,11 @@ do
 		local restartFrame = timeline.data.RestartFrame
 		if not restartFrame then return 0 end --no restart pos? start at the start
 
-		for i, v in ipairs(timeline.data.FrameData) do
+		for i = 1, #timeline.data.FrameData do
 			if i == restartFrame then return timeInSeconds end
-			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
+
+			local v = timeline.data.FrameData[i]
+			timeInSeconds = timeInSeconds + (1 / (v.FrameRate or 1))
 		end
 
 		return 0
@@ -778,9 +804,11 @@ do
 		local startFrame = timeline.data.StartFrame
 		if not startFrame then return 0 end --no restart pos? start at the start
 
-		for i, v in ipairs(timeline.data.FrameData) do
+		for i = 1, #timeline.data.FrameData do
 			if i == startFrame then return timeInSeconds end
-			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
+
+			local v = timeline.data.FrameData[i]
+			timeInSeconds = timeInSeconds + (1 / (v.FrameRate or 1))
 		end
 
 		return 0
@@ -799,7 +827,7 @@ do
 		keyframe:SetParent(self.keyframe_scroll)
 		self.keyframe_scroll:InvalidateLayout()
 
-		keyframe.Alternate = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()%2 == 1
+		keyframe.Alternate = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren() % 2 == 1
 
 		return keyframe
 	end
@@ -899,24 +927,29 @@ do
 				local panels = {}
 				local frames = {}
 
-				for k, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
+				local canvas_children = timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
+				for i = 1, #canvas_children do
+					local v = canvas_children[i]
+
 					table.insert(panels, v)
 					v:SetParent()
 				end
 
 				table.sort(panels, function(a, b)
-					return (a:GetPos() + a:GetWide() / 2) < (b:GetPos() + b:GetWide() / 2)
+					return (a:GetPos() + a:GetWide() * 0.5) < (b:GetPos() + b:GetWide() * 0.5)
 				end)
 
-				for i, v in ipairs(panels) do
+				for i = 1, #panels do
+					local v = panels[i]
+
 					v:SetParent(timeline.frame.keyframe_scroll)
-					v.Alternate = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()%2 == 1
+					v.Alternate = #canvas_children % 2 == 1
 
 					frames[i] = timeline.data.FrameData[v:GetAnimationIndex()]
 				end
 
-				for i, v in ipairs(frames) do
-					timeline.data.FrameData[i] = v
+				for i = 1, #frames do
+					timeline.data.FrameData[i] = frames[i]
 					panels[i].AnimationKeyIndex = i
 				end
 
@@ -924,6 +957,7 @@ do
 				self:SetCursor("hand")
 				self.move = nil
 				self.move_x = nil
+
 				timeline.frame.moving = false
 			end
 		end
@@ -975,30 +1009,38 @@ do
 
 			if not self:GetRestart() then
 				menu:AddOption(L"set restart", function()
-					for _, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
-						v:SetRestart(false)
+					local children = timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
+					for i = 1, #children do
+						children[i]:SetRestart(false)
 					end
+
 					self:SetRestart(true)
+
 					timeline.data.RestartFrame = self:GetAnimationIndex()
 				end):SetImage("icon16/control_repeat_blue.png")
 			else
 				menu:AddOption(L"unset restart", function()
 					self:SetRestart(false)
+
 					timeline.data.StartFrame = nil
 				end):SetImage("icon16/control_repeat.png")
 			end
 
 			if not self:GetStart() then
 				menu:AddOption(L"set start", function()
-					for _, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
-						v:SetStart(false)
+					local children = timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
+					for i = 1, #children do
+						children[i]:SetStart(false)
 					end
+
 					self:SetStart(true)
+
 					timeline.data.StartFrame = self:GetAnimationIndex()
 				end):SetImage("icon16/control_play_blue.png")
 			else
 				menu:AddOption(L"unset start", function()
 					self:SetStart(false)
+
 					timeline.data.StartFrame = nil
 				end):SetImage("icon16/control_play.png")
 			end
@@ -1039,11 +1081,17 @@ do
 			menu:AddOption(L"remove", function()
 				local frameNum = self:GetAnimationIndex()
 				if frameNum == 1 and not timeline.data.FrameData[2] then return end
+
 				table.remove(timeline.data.FrameData, frameNum)
 
 				local remove_i
 
-				for i, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
+				local scroll_canvas = timeline.frame.keyframe_scroll:GetCanvas()
+				local children = scroll_canvas:GetChildren()
+
+				for i = 1, #children do
+					local v = children[i]
+
 					if v == self then
 						remove_i = i
 					elseif v:GetAnimationIndex() > frameNum then
@@ -1052,15 +1100,18 @@ do
 					end
 				end
 
-				table.remove(timeline.frame.keyframe_scroll:GetCanvas():GetChildren(), remove_i)
+				table.remove(scroll_canvas:GetChildren(), remove_i)
 
 				timeline.frame.keyframe_scroll:InvalidateLayout()
 
 				self:Remove()
 
-				local count = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
+				children = scroll_canvas:GetChildren()
+
+				local count = #children
 				local offset = remove_i >= count and count - 1 or remove_i + 1
-				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
+
+				timeline.SelectKeyframe(children[offset])
 			end):SetImage("icon16/page_delete.png")
 
 			menu:AddOption(L"set easing style", function()

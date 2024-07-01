@@ -89,7 +89,7 @@ function PART:OnDraw()
 	self.vel = self.vel or VectorRand()
 	self.pos = self.pos or pos * 1
 
-	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then
+	if self.StopRadius ~= 0 and self.pos and self.pos:DistToSqr(pos) < (self.StopRadius * self.StopRadius) then
 		self.vel = Vector()
 		return
 	end

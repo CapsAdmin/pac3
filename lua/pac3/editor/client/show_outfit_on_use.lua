@@ -67,7 +67,7 @@ do
 		local alpha = (lastDisplayLabel - RealTime()) / 2
 		local key = string_upper( input_LookupBinding( "use" ) or "use" )
 		local text = "Press " .. key .. " to reveal this persons PAC3 outfit"
-		draw.DrawText(L(text), "pac_onuse_only_hint", ScrW() / 2, ScrH() * 0.3, Color(255, 255, 255, alpha * 255), TEXT_ALIGN_CENTER)
+		draw.DrawText(L(text), "pac_onuse_only_hint", ScrW() * 0.5, ScrH() * 0.3, Color(255, 255, 255, alpha * 255), TEXT_ALIGN_CENTER)
 	end)
 end
 
@@ -78,14 +78,14 @@ end
 cvars.AddChangeCallback("pac_onuse_only", pace.OnUseOnlyUpdates, "PAC3")
 
 concommand.Add("pac_onuse_reset", function()
-	for i, ent in ipairs(ents.GetAll()) do
+	for _, ent in ents.Iterator() do
 		if ent.pac_onuse_only then
 			ent.pac_onuse_only_check = true
 
 			if pac_IsPacOnUseOnly() then
-				pac.ToggleIgnoreEntity(ent, ent.pac_onuse_only_check, 'pac_onuse_only')
+				pac.ToggleIgnoreEntity(ent, ent.pac_onuse_only_check, "pac_onuse_only")
 			else
-				pac.ToggleIgnoreEntity(ent, false, 'pac_onuse_only')
+				pac.ToggleIgnoreEntity(ent, false, "pac_onuse_only")
 			end
 		end
 	end
@@ -93,7 +93,7 @@ end)
 
 local transmissions = {}
 
-timer.Create('pac3_transmissions_ttl', 1, 0, function()
+timer.Create("pac3_transmissions_ttl", 1, 0, function()
 	local time = RealTime()
 
 	for transmissionID, data in pairs(transmissions) do

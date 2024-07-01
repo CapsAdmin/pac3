@@ -1,4 +1,3 @@
-
 if game.SinglePlayer() then
 	if SERVER then
 		util.AddNetworkString("pac_footstep")
@@ -10,7 +9,7 @@ if game.SinglePlayer() then
 			net.Send(ply)
 
 			net.Start("pac_footstep")
-				net.WriteEntity(ply)
+				net.WritePlayer(ply)
 				net.WriteVector(pos)
 				net.WriteString(snd)
 				net.WriteFloat(vol)
@@ -26,13 +25,11 @@ if game.SinglePlayer() then
 				end)
 			else pac.RemoveHook("PlayerFootstep", "footstep_silence") end
 		end)
-
-
 	end
 
 	if CLIENT then
 		net.Receive("pac_footstep", function(len)
-			local ply = net.ReadEntity()
+			local ply = net.ReadPlayer()
 			local pos = net.ReadVector()
 			local snd = net.ReadString()
 			local vol = net.ReadFloat()
@@ -41,6 +38,7 @@ if game.SinglePlayer() then
 				hook.Run("pac_PlayerFootstep", ply, pos, snd, vol)
 			end
 		end)
+
 		net.Receive("pac_footstep_request_state_update", function()
 			net.Start("pac_signal_mute_footstep")
 			net.WriteBool(LocalPlayer().pac_mute_footsteps)
