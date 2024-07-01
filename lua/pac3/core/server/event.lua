@@ -3,6 +3,13 @@ util.AddNetworkString("pac_proxy")
 util.AddNetworkString("pac_event")
 util.AddNetworkString("pac_event_set_sequence")
 
+local master_default = "0"
+
+if string.find(engine.ActiveGamemode(), "sandbox") and game.SinglePlayer() then
+	master_default = "1"
+end
+CreateConVar("pac_sv_danger_mode", master_default, {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Enables the following features (provisory list):\nget NW var events\nnearest_life aimparts and bones")
+
 net.Receive("pac_event_set_sequence", function(len, ply)
 	local event = net.ReadString()
 	local num = net.ReadUInt(8)
