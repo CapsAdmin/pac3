@@ -475,7 +475,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								f:seek(material_end)
 							end
 
-							if is_localplayer and not found_materials[1] then
+							if is_localplayer and found_materials[1] == nil then
 								pac.Message(Color(255, 200, 50), url, ": could not find any materials in this model")
 							end
 

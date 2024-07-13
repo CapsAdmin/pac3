@@ -8,7 +8,7 @@ AnimStack = {
 		push = function(self, part)
 			local stack = self.stack
 
-			if not stack[1] then
+			if stack[1] == nil then
 				-- Empty stack
 				table.insert(stack, part)
 			else

@@ -87,7 +87,7 @@ local ReadStreamQueue = {
 				ErrorNoHalt("Receiving too many ReadStream requests!")
 				return
 			end
-
+			
 			for _, v in ipairs(queue) do
 				if v.identifier == stream.identifier then
 					ErrorNoHalt("Tried to start a new ReadStream for an already existing stream!")
@@ -296,6 +296,7 @@ local ReadingDataItem = {
 }
 setmetatable(ReadingDataItem, ReadingDataItem)
 
+
 function net.WriteStream(data, callback, dontcompress)
 	if not isstring(data) then
 		error("bad argument #1 to 'WriteStream' (string expected, got " .. type(data) .. ")", 2)
@@ -309,18 +310,20 @@ function net.WriteStream(data, callback, dontcompress)
 		data = util.Compress(data) or ""
 	end
 
-	if not data[1] then
+	if #data == 0 then
 		net.WriteUInt(0, 32)
 		return
-	elseif #data > net.Stream.MaxSize then
-		ErrorNoHalt("net.WriteStream request is too large! ", #data / 1048576, "MiB")
+	end
+
+	if #data > net.Stream.MaxSize then
+		ErrorNoHalt("net.WriteStream request is too large! ", #data/1048576, "MiB")
 		net.WriteUInt(0, 32)
 		return
 	end
 
 	local stream = net.Stream.WriteStreams:Add(WritingDataItem(data, callback, compressed))
 	if not stream then return end
-
+	
 	--print("WriteStream", #stream.chunks, stream.identifier, compressed)
 	net.WriteUInt(#stream.chunks, 32)
 	net.WriteUInt(stream.identifier, 32)
@@ -341,11 +344,10 @@ function net.ReadStream(ply, callback)
 			error("bad argument #1 to 'ReadStream' (Tried to use a NULL entity!)", 2)
 		end
 	end
-
 	if not isfunction(callback) then
 		error("bad argument #2 to 'ReadStream' (function expected, got " .. type(callback) .. ")", 2)
 	end
-
+	
 	local numchunks = net.ReadUInt(32)
 	if numchunks == nil then
 		return
