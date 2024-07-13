@@ -2,23 +2,24 @@ local SysTime = SysTime
 local pairs = pairs
 local Color = Color
 local tostring = tostring
+local Vector = Vector
+local EyePos = EyePos
+local ScrW = ScrW
+local ScrH = ScrH
 local cam_Start2D = cam.Start2D
 local cam_IgnoreZ = cam.IgnoreZ
-local Vector = Vector
+local cam_End2D = cam.End2D
 local math_Clamp = math.Clamp
-local EyePos = EyePos
 local surface_SetFont = surface.SetFont
 local surface_GetTextSize = surface.GetTextSize
 local draw_DrawText = draw.DrawText
 local string_format = string.format
 local input_GetCursorPos = input.GetCursorPos
-local vgui_CursorVisible = vgui.CursorVisible
-local ScrW = ScrW
-local ScrH = ScrH
 local input_LookupBinding = input.LookupBinding
-local LocalPlayer = LocalPlayer
 local input_IsMouseDown = input.IsMouseDown
-local cam_End2D = cam.End2D
+local vgui_CursorVisible = vgui.CursorVisible
+
+local white = Color(255, 255, 255) --its alpha will be temporarily tampered with, don't risk breaking color_white
 
 local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
 
@@ -70,6 +71,8 @@ function pac.DrawRenderTimeExceeded(ent)
 			surface_SetFont("ChatFont")
 			local _, h = surface_GetTextSize("|")
 
+			white.a = alpha * 255
+
 			draw_DrawText(
 				string_format(
 					"pac3 outfit took %.2f/%i ms to render",
@@ -79,9 +82,10 @@ function pac.DrawRenderTimeExceeded(ent)
 				"ChatFont",
 				pos_2d.x,
 				pos_2d.y,
-				Color(255,255,255,alpha * 255),
+				white,
 				1
 			)
+
 			local x, y = pos_2d.x, pos_2d.y + h
 
 			local mx, my = input_GetCursorPos()
@@ -93,9 +97,12 @@ function pac.DrawRenderTimeExceeded(ent)
 			local hovering = mx > x - dist and mx < x + dist and my > y - dist and my < y + dist
 
 			local button = vgui_CursorVisible() and "click" or ("press " .. input_LookupBinding("+use"))
-			draw_DrawText(button .. " here to try again", "ChatFont", x, y, Color(255,255,255,alpha * (hovering and 255 or 100) ), 1)
 
-			if hovering and LocalPlayer():KeyDown(IN_USE) or (vgui_CursorVisible() and input_IsMouseDown(MOUSE_LEFT)) then
+			white.a = alpha * (hovering and 255 or 100)
+
+			draw_DrawText(button .. " here to try again", "ChatFont", x, y, white, 1)
+
+			if hovering and pac.LocalPlayer:KeyDown(IN_USE) or (vgui_CursorVisible() and input_IsMouseDown(MOUSE_LEFT)) then
 				ent.pac_render_time_exceeded = nil
 			end
 		end

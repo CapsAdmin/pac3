@@ -15,6 +15,10 @@ local table = table
 local Color = Color
 local NULL = NULL
 
+local classname_event = "event"
+local prefix_get = "Get"
+local prefix_set = "Set"
+
 local pac_editor_scale = GetConVar("pac_editor_scale")
 local pac_popups_preferred_location = GetConVar("pac_popups_preferred_location")
 
@@ -232,7 +236,7 @@ do -- owner
 			local parent = parents[i]
 
 			-- legacy behavior
-			if parent.ClassName == "event" and not parent.RootOwner then
+			if parent.ClassName == classname_event and not parent.RootOwner then
 				local parent = parent:GetParent()
 				if parent:IsValid() then
 					local parent = parent:GetParent()
@@ -272,7 +276,7 @@ do -- scene graph
 		-- this will handle cases like if a part is removed and added again
 		for _, key in pairs(self.PartReferenceKeys) do
 			if self[key] and self[key].UniqueID == part.UniqueID then
-				self["Set" .. key](self, part)
+				self[prefix_set .. key](self, part)
 			end
 		end
 
@@ -284,7 +288,7 @@ do -- scene graph
 			if not keys then return end
 
 			for _, key in pairs(keys) do
-				self["Set" .. key](self, part)
+				self[prefix_set .. key](self, part)
 			end
 		end
 	end
@@ -486,6 +490,7 @@ do -- scene graph
 
 	function PART:CallRecursive(func, a, b, c)
 		assert(c == nil, "EXTEND ME")
+
 		if self[func] then
 			self[func](self, a, b, c)
 		end
@@ -500,8 +505,9 @@ do -- scene graph
 		end
 	end
 
-	function PART:CallRecursiveOnClassName(class_name, func, a,b,c)
+	function PART:CallRecursiveOnClassName(class_name, func, a, b, c)
 		assert(c == nil, "EXTEND ME")
+
 		if self[func] and self.ClassName == class_name then
 			self[func](self, a,b,c)
 		end
@@ -510,7 +516,7 @@ do -- scene graph
 		for i = 1, #children do
 			local child = children[i]
 
-			if child[func] and self.ClassName == class_name then
+			if child[func] and child.ClassName == class_name then
 				child[func](child, a,b,c)
 			end
 		end
@@ -599,7 +605,7 @@ do -- scene graph
 	end
 
 	function PART:SetSmallIcon(str)
-		if str == "event" then str = "icon16/clock_red.png" end
+		if str == classname_event then str = "icon16/clock_red.png" end
 
 		if self.pace_tree_node then
 			if self.pace_tree_node.Icon then
@@ -893,7 +899,7 @@ do -- serializing
 
 	do
 		function PART:GetProperty(name)
-			local val = self["Get" .. name]
+			local val = self[prefix_get .. name]
 
 			if val == nil then
 				if self.GetDynamicProperties then
@@ -908,9 +914,11 @@ do -- serializing
 		end
 
 		function PART:SetProperty(key, val)
-			if self["Set" .. key] ~= nil then
-				if self["Get" .. key](self) ~= val then
-					self["Set" .. key](self, val)
+			local setFunc = self[prefix_set .. key]
+
+			if setFunc ~= nil then
+				if self[prefix_get .. key](self) ~= val then
+					setFunc(self, val)
 				end
 			elseif self.GetDynamicProperties then
 				local info = self:GetDynamicProperties()[key]
@@ -930,8 +938,8 @@ do -- serializing
 
 				table_insert(out, {
 					key = key,
-					set = function(v) self["Set" .. key](self, v) end,
-					get = function() return self["Get" .. key](self) end,
+					set = function(v) self[prefix_set .. key](self, v) end,
+					get = function() return self[prefix_get .. key](self) end,
 					udata = pac.GetPropertyUserdata(self, key) or {},
 				})
 
@@ -1014,12 +1022,14 @@ do -- serializing
 
 			for key, value in next, tbl.self do
 				if key == "UniqueID" then goto CONTINUE end
+				local setFunc = self[prefix_set .. key]
 
-				if self["Set" .. key] then
+				if setFunc then
 					if key == "Material" then
 						table_insert(self.delayed_variables, {key = key, val = value})
 					end
-					self["Set" .. key](self, value)
+
+					setFunc(self, value)
 				elseif key ~= "ClassName" then
 					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 				end
@@ -1089,7 +1099,7 @@ do -- serializing
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			local var = self[key] and self["Get" .. key](self) or self[key]
+			local var = self[key] and self[prefix_get .. key](self) or self[key]
 			var = pac.CopyValue(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
@@ -1122,7 +1132,7 @@ do -- serializing
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			local var = self[key] and self["Get" .. key](self) or self[key]
+			local var = self[key] and self[prefix_get .. key](self) or self[key]
 			var = pac.CopyValue(var) or var
 
 			if key == "Name" and self[key] == "" then
@@ -1153,12 +1163,14 @@ do -- serializing
 
 				for key, value in pairs(tbl.self) do
 					if key == "UniqueID" then goto CONTINUE end
+					local setFunc = self[prefix_set .. key]
 
-					if self["Set" .. key] then
+					if setFunc then
 						if key == "Material" then
 							table_insert(self.delayed_variables, {key = key, val = value})
 						end
-						self["Set" .. key](self, value)
+
+						setFunc(self, value)
 					elseif key ~= "ClassName" then
 						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 					end
@@ -1192,7 +1204,7 @@ do -- serializing
 					goto CONTINUE
 				end
 
-				tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
+				tbl.self[key] = pac.CopyValue(self[prefix_get .. key](self))
                 ::CONTINUE::
 			end
 
@@ -1249,11 +1261,13 @@ do
 			return
 		end
 
-		if self.delayed_variables then
-			for i = 1, #self.delayed_variables do
-				local data = self.delayed_variables[i]
+		local delayedVars = self.delayed_variables
 
-				self["Set" .. data.key](self, data.val)
+		if delayedVars then
+			for i = 1, #delayedVars do
+				local data = delayedVars[i]
+
+				self[prefix_set .. data.key](self, data.val)
 			end
 
 			self.delayed_variables = nil
@@ -1272,6 +1286,7 @@ end
 --the popup system
 function PART:SetupEditorPopup(str, force_open, tbl)
 	local legacy_help_popup_hack = false
+
 	if not tbl then
 		legacy_help_popup_hack = false
 	elseif tbl.from_legacy then
@@ -1293,9 +1308,11 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 
 	local default_state = str == nil or str == ""
 	local info_string
-	if self.ClassName == "event" and default_state then
+
+	if self.ClassName == classname_event and default_state then
 		info_string = self:GetEventTutorialText()
 	end
+
 	info_string = info_string or str or self.ClassName .. "\nno special information available"
 
 	if default_state and pace then

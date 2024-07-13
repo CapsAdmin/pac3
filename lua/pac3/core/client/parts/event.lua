@@ -2481,8 +2481,6 @@ do
 
 		--outsource the part pool operations
 		pac.UpdateButtonEvents(ply, key, down)
-
-
 	end)
 
 	PART.OldEvents.button = {
@@ -2511,7 +2509,6 @@ do
 			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
 		end,
 		callback = function(self, ent, button, holdtime, toggle)
-
 			local holdtime = holdtime or 0
 			local toggle = toggle or false
 
@@ -2526,13 +2523,10 @@ do
 				self.toggleimpulsekey[button] = false
 			end
 
-			--print(button, "hold" ,self.holdtime)
 			local ply = self:GetPlayerOwner()
 			self.pac_broadcasted_buttons_holduntil = self.pac_broadcasted_buttons_holduntil or {}
 
-
 			if ply == pac.LocalPlayer then
-
 				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
 
 				if not ply.pac_broadcast_buttons[button] then
@@ -2544,19 +2538,13 @@ do
 					end
 					ply.pac_broadcast_buttons[button] = true
 				end
-
-				--print(button, ply.pac_broadcasted_buttons_holduntil[button], ply.pac_broadcast_buttons[button])
-				--PrintTable(ply.pac_broadcast_buttons)
-				--PrintTable(self.pac_broadcasted_buttons_holduntil)
 			end
 
 			local buttons = ply.pac_buttons
 
 			self.pac_broadcasted_buttons_holduntil[button] = self.pac_broadcasted_buttons_holduntil[button] or SysTime()
-			--print(button, self.toggle, self.togglestate)
-			--print(button,"until",self.pac_broadcasted_buttons_holduntil[button])
+
 			if buttons then
-				--print("trying to compare " .. SysTime() .. " > " .. self.pac_broadcasted_buttons_holduntil[button] - 0.05)
 				if self.toggle then
 					return self.togglestate
 				elseif self.holdtime > 0 then
@@ -2564,11 +2552,9 @@ do
 				else
 					return buttons[button]
 				end
-
 			end
-		end,
+		end
 	}
-
 end
 
 do

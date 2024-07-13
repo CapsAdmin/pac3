@@ -350,7 +350,7 @@ function PART:OnShow()
 				local ply_pos = self:GetPlayerOwner():GetPos()
 				local pos = self:GetWorldPosition()
 
-				if pos:DistToSqr(ply_pos) > (self.Radius * self.Radius) then
+				if pos:DistToSqr(ply_pos) > (self.Radius ^ 2) then
 					local clamped_pos = ply_pos + (pos - ply_pos):GetNormalized() * self.Radius
 					teleport_pos_final = clamped_pos
 				end

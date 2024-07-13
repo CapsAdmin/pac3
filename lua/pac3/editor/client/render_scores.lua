@@ -46,8 +46,7 @@ timer.Create("pac_render_times", 0.1, 0, function()
 	end
 end)
 
-local maxDist = 100
-maxDist = maxDist * maxDist
+local maxDist = 100 ^ 2
 
 pac.AddHook("HUDPaint", "pac_show_render_times", function()
 	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() then return end

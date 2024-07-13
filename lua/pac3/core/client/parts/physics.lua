@@ -225,7 +225,7 @@ function PART:OnThink()
 			end
 
 			-- this is nicer i think
-			if self.ConstrainSphere ~= 0 and phys:GetPos():DistToSqr(self.Parent:GetWorldPosition()) > (self.ConstrainSphere * self.ConstrainSphere) then
+			if self.ConstrainSphere ~= 0 and phys:GetPos():DistToSqr(self.Parent:GetWorldPosition()) > (self.ConstrainSphere ^ 2) then
 				if not self.PushFollow then
 					phys:SetPos(self.Parent:GetWorldPosition() + (self.Parent:GetWorldPosition() - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
 				--new push mode

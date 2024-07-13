@@ -28,7 +28,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 
 	local time = RealTime()
 
-	if not points[1] or points[#points].pos:DistToSqr(pos) > (spc * spc) then
+	if not points[1] or points[#points].pos:DistToSqr(pos) > (spc ^ 2) then
 		table_insert(points, {pos = pos * 1, life_time = time + len})
 	end
 

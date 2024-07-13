@@ -5,9 +5,8 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 PART.FriendlyName = "web sound"
 PART.ClassName = "sound2"
 
-PART.Icon = 'icon16/music.png'
-PART.Group = 'effects'
-
+PART.Icon = "icon16/music.png"
+PART.Group = "effects"
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")

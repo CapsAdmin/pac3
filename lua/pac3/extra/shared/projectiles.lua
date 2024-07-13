@@ -570,9 +570,7 @@ if SERVER then
 		part.Bounce = net.ReadInt(8) / 100
 
 		local radius_limit = 2000
-
-		local radius_limit_scaled_sqr = radius_limit * ply:GetModelScale()
-		radius_limit_scaled_sqr = radius_limit_scaled_sqr * radius_limit_scaled_sqr
+		local radius_limit_scaled_sqr = (radius_limit * ply:GetModelScale()) ^ 2
 
 		if pos:DistToSqr(ply:EyePos()) > radius_limit_scaled_sqr then
 			local ok = false

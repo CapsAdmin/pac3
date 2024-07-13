@@ -16,9 +16,12 @@ local IsValid = entMeta.IsValid
 local IsPlayer = entMeta.IsPlayer
 local IsDormant = entMeta.IsDormant
 local GetEyePos = entMeta.EyePos
+local GetTable = entMeta.GetTable
 local Alive = plyMeta.Alive
 local GetViewModel = plyMeta.GetViewModel
 local GetHands = plyMeta.GetHands
+local GetRagdollEntity = plyMeta.GetRagdollEntity
+local ShouldDrawLocalPlayer = plyMeta.ShouldDrawLocalPlayer
 
 local force_rendering = false
 local forced_rendering = false
@@ -257,32 +260,34 @@ end
 
 pac.AddHook("Think", "events", function()
 	for _, ply in player.Iterator() do
-		if not ent_parts[ply] then continue end
-		if pac.IsEntityIgnored(ply) then continue end
+		if not ent_parts[ply] or pac.IsEntityIgnored(ply) then continue end
+
+		local plyTbl = GetTable(ply)
 
 		if Alive(ply) then
-			if ply.pac_revert_ragdoll then
-				ply.pac_revert_ragdoll()
-				ply.pac_revert_ragdoll = nil
+			if plyTbl.pac_revert_ragdoll then
+				plyTbl.pac_revert_ragdoll()
+				plyTbl.pac_revert_ragdoll = nil
 			end
 			continue
 		end
 
-		local rag = ply:GetRagdollEntity()
+		local rag = GetRagdollEntity(ply)
 		if not IsValid(rag) then
 			pac.HideEntityParts(ply)
 			continue
 		end
 
 		-- so it only runs once
-		if ply.pac_ragdoll == rag then continue end
-		ply.pac_ragdoll = rag
+		if plyTbl.pac_ragdoll == rag then continue end
+		plyTbl.pac_ragdoll = rag
+
 		rag.pac_ragdoll_owner = ply
 
 		rag = hook.Run("PACChooseDeathRagdoll", ply, rag) or rag
 
-		if ply.pac_death_physics_parts then
-			if ply.pac_physics_died then return end
+		if plyTbl.pac_death_physics_parts then
+			if plyTbl.pac_physics_died then return end
 
 			for _, part in next, parts_from_uid(pac.Hash(ply)) do
 				if part.is_model_part then
@@ -316,8 +321,8 @@ pac.AddHook("Think", "events", function()
 					end
 				end
 			end
-			ply.pac_physics_died = true
-		elseif ply.pac_death_ragdollize or ply.pac_death_ragdollize == nil then
+			plyTbl.pac_physics_died = true
+		elseif plyTbl.pac_death_ragdollize or plyTbl.pac_death_ragdollize == nil then
 			pac.HideEntityParts(ply)
 
 			for _, part in next, ent_parts[ply] do
@@ -327,7 +332,7 @@ pac.AddHook("Think", "events", function()
 			rag:SetOwner(ply)
 			pac.ShowEntityParts(rag)
 
-			ply.pac_revert_ragdoll = function()
+			plyTbl.pac_revert_ragdoll = function()
 				ply.pac_ragdoll = nil
 
 				if not ent_parts[ply] then return end
@@ -749,7 +754,9 @@ do -- drawing
 		local pac_sv_draw_distance
 
 		pac.AddHook("Think", "update_parts", function()
-			localplayer = localplayer or LocalPlayer()	-- LocalPlayer never changes once its valid, right?
+			if not localplayer then
+				localplayer = LocalPlayer()	-- LocalPlayer never changes once its valid, right?
+			end
 
 			-- commonly used variables
 			pac.LocalPlayer = localplayer
@@ -758,7 +765,9 @@ do -- drawing
 			pac.RealTime = RealTime()
 			pac.FrameNumber = pac.FrameNumber + 1
 
-			pac_sv_draw_distance = pac_sv_draw_distance or GetConVar("pac_sv_draw_distance")
+			if not pac_sv_draw_distance then
+				pac_sv_draw_distance = GetConVar("pac_sv_draw_distance")
+			end
 
 			draw_dist = cvar_distance:GetInt()
 			sv_draw_dist = pac_sv_draw_distance:GetFloat()
@@ -819,13 +828,13 @@ do -- drawing
 				local cond = ent.IsPACWorldEntity
 
 				-- if the entity is the hands, check if we should not draw the localplayer
-				if (ent == pac.LocalHands or ent == pac.LocalViewModel) and not localplayer:ShouldDrawLocalPlayer() then
+				if (ent == pac.LocalHands or ent == pac.LocalViewModel) and not ShouldDrawLocalPlayer(localplayer) then
 					cond = true
 				end
 
 				-- if it's a player, draw if we can see them
 				if not cond and ent == localplayer then
-					cond = ent:ShouldDrawLocalPlayer()
+					cond = ShouldDrawLocalPlayer(ent)
 				end
 
 				-- if the entity has a camera part, draw if it's valid
