@@ -2,9 +2,33 @@ name: lint
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    paths:
+      - "lua/**"
+    types: [opened, synchronize]
   workflow_call:
 
+# partially taken from wiremod/wire/master/.github/workflows/lint.yml
 jobs:
-  lua-lint:
-    uses: FPtje/GLuaFixer/.github/workflows/glualint.yml@master
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Get any changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **.lua
+
+      - name: Download GluaFixer
+        if: steps.changed-files.outputs.any_changed
+        run: |
+          curl -o glualint.zip -L https://github.com/FPtje/GLuaFixer/releases/download/1.28.0/glualint-1.28.0-x86_64-linux.zip
+          unzip glualint.zip
+
+      - name: Lint Code
+        if: steps.changed-files.outputs.any_changed
+        run: |
+          ./glualint ${{ steps.changed-files.outputs.all_changed_files }}
