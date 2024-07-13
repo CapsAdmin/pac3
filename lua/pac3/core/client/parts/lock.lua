@@ -7,13 +7,22 @@ local Matrix = Matrix
 local physics_point_ent_classes = {
 	["prop_physics"] = true,
 	["prop_physics_multiplayer"] = true,
+	["prop_physics_respawnable"] = true,
 	["prop_ragdoll"] = true,
 	["weapon_striderbuster"] = true,
 	["item_item_crate"] = true,
 	["func_breakable_surf"] = true,
 	["func_breakable"] = true,
-	["physics_cannister"] = true
+	["physics_cannister"] = true,
+	["npc_satchel"] = true,
+	["npc_grenade_frag"] = true,
 }
+
+local convar_lock = GetConVar("pac_sv_lock")
+local convar_lock_grab = GetConVar("pac_sv_lock_grab")
+local convar_lock_max_grab_radius = GetConVar("pac_sv_lock_max_grab_radius")
+local convar_lock_teleport = GetConVar("pac_sv_lock_teleport")
+local convar_combat_enforce_netrate = GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside")
 
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
@@ -58,9 +67,8 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:OnThink()
-
-	if not GetConVar('pac_sv_lock'):GetBool() then return end
-	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
+	if not convar_lock:GetBool() then return end
+	if util.NetworkStringToID("pac_request_position_override_on_entity_grab") == 0 then self:SetError("This part is deactivated on the server") return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
@@ -79,7 +87,7 @@ function PART:OnThink()
 	end
 
 	if self.Mode == "Grab" then
-		if not GetConVar('pac_sv_lock_grab'):GetBool() then return end
+		if not convar_lock_grab:GetBool() then return end
 		if pac.Blocked_Combat_Parts then
 			if pac.Blocked_Combat_Parts[self.ClassName] then
 				return
@@ -90,7 +98,7 @@ function PART:OnThink()
 		end
 		self:CheckEntValidity()
 		if self.valid_ent then
-			local final_ang = Angle(0,0,0)
+			local final_ang = Angle(0, 0, 0)
 			if self.OverrideAngles then --if overriding angles
 				if self.is_first_time then
 					self.default_ang = self.target_ent:GetAngles() --record the initial ent angles
@@ -120,8 +128,10 @@ function PART:OnThink()
 			local relative_offset_pos = offset_matrix:GetTranslation()
 			local relative_offset_ang = offset_matrix:GetAngles()
 
-			if pac.LocalPlayer == self:GetPlayerOwner() then
-				if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+			local ply_owner = self:GetPlayerOwner()
+
+			if pac.LocalPlayer == ply_owner then
+				if not convar_combat_enforce_netrate:GetBool() then
 					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 				end
 				net.Start("pac_request_position_override_on_entity_grab")
@@ -140,7 +150,7 @@ function PART:OnThink()
 			if self.target_ent:IsPlayer() then
 				if self.OverrideEyeAngles then try_override_eyeang = true end
 			end
-			if pac.LocalPlayer == self:GetPlayerOwner() then
+			if pac.LocalPlayer == ply_owner then
 				net.WriteBool(self.OverrideAngles)
 				net.WriteBool(try_override_eyeang)
 				net.WriteBool(self.NoCollide)
@@ -184,18 +194,16 @@ function PART:OnThink()
 
 				local eyeang = self.target_ent:EyeAngles()
 				--print("eyeang", eyeang)
-				eyeang.p = 0*eyeang.p
+				eyeang.p = 0
 				eyeang.y = eyeang.y
-				eyeang.r = 0*eyeang.r
+				eyeang.r = 0
 				mat:Rotate(final_ang - eyeang) --this works
 				--mat:Rotate(eyeang)
 				--print("transform ang", final_ang)
 				--print("part's angles", self:GetWorldAngles())
 				--mat:Rotate(self:GetWorldAngles())
 
-
 				self.target_ent:EnableMatrix("RenderMultiply", mat)
-
 			end
 
 			self.grabbing = true
@@ -245,10 +253,8 @@ do
 			if part then
 				if part.ClassName == "lock" then
 					part:BreakLock(target_to_release)
-
 				end
 			end
-
 		else
 			MsgC(Color(200, 200, 200), "NOW! WE SEARCH YOUR LOCAL PARTS!\n")
 			for i,part in pairs(pac.GetLocalParts()) do
@@ -267,6 +273,8 @@ do
 	net.Receive("pac_mark_grabbed_ent", function(len)
 
 		local target_to_mark = net.ReadEntity()
+		if not IsValid(target_to_mark) then return end
+		if target_to_mark:EntIndex() == 0 then return end
 		local successful_grab = net.ReadBool()
 		local uid = net.ReadString()
 		local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid)
@@ -279,13 +287,12 @@ do
 			target_to_mark.IsGrabbedID = uid
 			target_to_mark:SetGravity(0)
 		end
-
 	end)
 end
 
 function PART:SetRadius(val)
 	self.Radius = val
-	local sv_dist = GetConVar("pac_sv_lock_max_grab_radius"):GetInt()
+	local sv_dist = convar_lock_max_grab_radius:GetInt()
 	if self.Radius > sv_dist then
 		self:SetInfo("Your radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
 	else
@@ -294,7 +301,7 @@ function PART:SetRadius(val)
 end
 
 function PART:OnShow()
-	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
+	if util.NetworkStringToID("pac_request_position_override_on_entity_grab") == 0 then self:SetError("This part is deactivated on the server") return end
 	local origin_part
 	self.is_first_time = true
 	if self.resetting_condition or self.forcebreak then
@@ -303,7 +310,7 @@ function PART:OnShow()
 			self.resetting_condition = false
 		end
 	end
-	pac.AddHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID, function()
+	pac.AddHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview" .. self.UniqueID, function()
 		if self.TargetPart:IsValid() then
 			origin_part = self.TargetPart
 		else
@@ -446,7 +453,7 @@ function PART:DecideTarget()
 					elseif self.PhysicsProps and (physics_point_ent_classes[ent_candidate:GetClass()] or string.find(ent_candidate:GetClass(),"item_") or string.find(ent_candidate:GetClass(),"ammo_")) then
 						chosen_ent = ent_candidate
 						table.insert(ents_candidates, ent_candidate)
-					elseif self.NPC and (ent_candidate:IsNPC() or ent_candidate.IsDrGEntity or ent_candidate.IsVJBaseSNPC) then
+					elseif self.NPC and (ent_candidate:IsNPC() or ent_candidate:IsNextBot() or ent_candidate.IsDrGEntity or ent_candidate.IsVJBaseSNPC) then
 						chosen_ent = ent_candidate
 						table.insert(ents_candidates, ent_candidate)
 					end

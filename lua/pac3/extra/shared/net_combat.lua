@@ -22,6 +22,9 @@ local damagezone_max_damage = CreateConVar("pac_sv_damage_zone_max_damage", "200
 local damagezone_max_length = CreateConVar("pac_sv_damage_zone_max_length", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum length")
 local damagezone_max_radius = CreateConVar("pac_sv_damage_zone_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum radius")
 local damagezone_allow_dissolve = CreateConVar("pac_sv_damage_zone_allow_dissolve", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enable entity dissolvers and removing NPCs\" weapons on death for damagezone")
+local damagezone_allow_damageovertime = CreateConVar("pac_sv_damage_zone_allow_damage_over_time", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow damage over time for damagezone")
+local damagezone_max_damageovertime_total_time = CreateConVar("pac_sv_damage_zone_max_damage_over_time_total_time", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum time that a DoT instance is allowed to last in total.\nIf your tick time multiplied by the count is beyond that, it will compress the ticks, but if your total time is more than 200% of the limit, it will reject the attack")
+local damagezone_allow_ragdoll_networking_for_hitpart = CreateConVar("pac_sv_damage_zone_allow_ragdoll_hitparts", "0", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to send information about corpses to all clients when a player's damage zone needs it for attaching hitparts")
 
 local lock_allow = CreateConVar("pac_sv_lock", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock parts serverside")
 local lock_allow_grab = CreateConVar("pac_sv_lock_grab", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part grabs serverside")
@@ -44,6 +47,7 @@ local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_da
 local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
 cvars.AddChangeCallback("pac_sv_block_combat_features_on_next_restart", function() print("Remember that pac_sv_block_combat_features_on_next_restart is applied on server startup! Only do it if you know what you're doing. You'll need to restart the server.") end)
 
+local debugging = CreateConVar("pac_sv_combat_debugging", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to get log prints for combat activity. If a player targets too many entities or sends messages too often, it will say it in the server console.")
 local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds.\nSee the related cvar pac_sv_combat_enforce_netrate_buffersize. That second convar is governed by this one, if the netrate enforcement is 0, the allowance doesn\"t matter")
 local netrate_allowance = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 60, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "the budgeted allowance to limit how many pac combat net messages can be sent in bursts. 0 to disable, otherwise a number of net messages of allowance.")
 local netrate_enforcement_sv_monitoring = CreateConVar("pac_sv_combat_enforce_netrate_monitor_serverside", 0, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether or not to let clients enforce their net message rates.\nSet this to 1 to get serverside prints telling you whenever someone is going over their allowance, but it'll still take the network bandwidth.\nSet this to 0 to let clients enforce their net rate and save some bandwidth but the server won't know who's spamming net messages.")
@@ -119,6 +123,13 @@ if SERVER then
 		["keyframe_rope"] = true,
 		["env_soundscape_proxy"] = true,
 		["gmod_hands"] = true,
+		["env_lightglow"] = true,
+		["point_spotlight"] = true,
+		["spotlight_end"] = true,
+		["beam"] = true,
+		["info_target"] = true,
+		["func_lod"] = true,
+
 	}
 
 
@@ -223,7 +234,20 @@ if SERVER then
 		armor = -1,
 	}
 
+	local when_to_print_messages = {}
+	local can_print = {}
+	local function CountDebugMessage(ply)
+		if CurTime() < when_to_print_messages[ply] then
+			can_print[ply] = false
+		else
+			can_print[ply] = true
+		end
+		when_to_print_messages[ply] = CurTime() + 1
+	end
 	local function CountNetMessage(ply)
+		if can_print[ply] == nil then can_print[ply] = true end
+		when_to_print_messages[ply] = when_to_print_messages[ply] or 0
+
 		local stime = SysTime()
 		local ms_basis = enforce_netrate:GetInt()/1000
 		local base_allowance = netrate_allowance:GetInt()
@@ -348,25 +372,31 @@ if SERVER then
 	end
 
 	--stopping condition to stop force or damage operation if too many entities, because net impact is proportional to players
-	local function TooManyEnts(count)
+	local function TooManyEnts(count, ply)
 		local playercount = player.GetCount()
 		local hard_limit = raw_ent_limit:GetInt()
 		local per_ply = per_ply_limit:GetInt()
 		--print(count .. " compared against hard limit " .. hard_limit .. " and " .. playercount .. " players*" .. per_ply .. " limit (" .. count*playercount .. " | " .. playercount*per_ply .. ")")
 		if count > hard_limit then
-			MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond hard limit.\n")
+			if debugging:GetBool() and can_print[ply] then
+				MsgC(Color(255,255,0), "[PAC3] : ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " TOO MANY ENTS (" .. count .. "). Beyond hard limit (".. hard_limit ..")\n")
+			end
 			return true
 		end
-		if not game.SinglePlayer() then
+		--if not game.SinglePlayer() then
 			if count > per_ply_limit:GetInt() * playercount then
-				MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond per-player sending limit.\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] : ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " TOO MANY ENTS (" .. count .. "). Beyond per-player sending limit (".. per_ply_limit:GetInt() .." per player)\n")
+				end
 				return true
 			end
 			if count * playercount > math.min(hard_limit, per_ply*playercount) then
-				MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond hard limit or player limit\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] : ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " TOO MANY ENTS (" .. count .. "). Beyond hard limit or player limit (" .. math.min(hard_limit, per_ply*playercount) .. ")\n")
+				end
 				return true
 			end
-		end
+		--end
 		return false
 	end
 
@@ -532,15 +562,15 @@ if SERVER then
 	local function UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow)
 		local existing_uidlayer = true
 		local healthvalue = 0
-		if not ply.pac_healthbars then
+		if ply.pac_healthbars == nil then
 			existing_uidlayer = false
 			ply.pac_healthbars = {}
 		end
-		if not ply.pac_healthbars[layer] then
+		if ply.pac_healthbars[layer] == nil then
 			existing_uidlayer = false
 			ply.pac_healthbars[layer] = {}
 		end
-		if not ply.pac_healthbars[layer][part_uid] then
+		if ply.pac_healthbars[layer][part_uid] == nil then
 			existing_uidlayer = false
 			ply.pac_healthbars[layer][part_uid] = num*barsize
 			healthvalue = num*barsize
@@ -570,8 +600,32 @@ if SERVER then
 
 	end
 
+	local function UpdateHealthBarsFromCMD(ply, action, num, part_uid)
+		if ply.pac_healthbars == nil then return end
+
+		local target_tbl
+		for checklayer,tbl in pairs(ply.pac_healthbars) do
+			if tbl[part_uid] ~= nil then
+				target_tbl = tbl
+			end
+		end
+
+		if target_tbl == nil then return end
+
+		--actions: set, add, subtract, replenish, remove
+		if action == "set" then
+			target_tbl[part_uid] = num
+		elseif action == "add" then
+			target_tbl[part_uid] = math.max(target_tbl[part_uid] + num,0)
+		elseif action == "subtract" then
+			target_tbl[part_uid] = math.max(target_tbl[part_uid] - num,0)
+		elseif action == "remove" then
+			target_tbl[part_uid] = nil
+		end
+	end
+
 	local function GatherExtraHPBars(ply)
-		if not ply.pac_healthbars then return 0,nil end
+		if ply.pac_healthbars == nil then return 0,nil end
 		local built_tbl = {}
 		local total_hp_value = 0
 
@@ -748,14 +802,14 @@ if SERVER then
 		local ply_count = 0
 		local ply_prog_count = 0
 		for i,v in pairs(ents_hits) do
-			if not (v:IsPlayer() or Is_NPC(v)) and not tbl.PointEntities then ents_hits[i] = nil end
-			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
-			if v:IsConstraint() then ents_hits[i] = nil end
+			if not (v:IsPlayer() or Is_NPC(v)) and not tbl.PointEntities then ents_hits[i] = nil continue end
+			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil continue end --CPPI check on the player
+			if v:IsConstraint() then  ents_hits[i] = nil continue end
 
-			if not NPCDispositionAllowsIt(ply, v) then ents_hits[i] = nil end
+			if not NPCDispositionAllowsIt(ply, v) then ents_hits[i] = nil continue end
 			if NPCDispositionIsFilteredOut(ply,v, tbl.FilterFriendlies, tbl.FilterNeutrals, tbl.FilterHostiles) then ents_hits[i] = nil end
 
-			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil
+			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil continue
 			else
 				ent_count = ent_count + 1
 				--print(v, "counted")
@@ -763,9 +817,9 @@ if SERVER then
 			end
 		end
 
+
 		--dangerous conditions: absurd amounts of entities, damaging a large percentage of the server's players beyond a certain point
-		if TooManyEnts(ent_count) or ((ply_count) > 12 and (ply_count > player_fraction:GetFloat() * player.GetCount())) then
-			print("early exit")
+		if TooManyEnts(ent_count, ply) or ((ply_count) > 12 and (ply_count > player_fraction:GetFloat() * player.GetCount())) then
 			return false,false,nil,{},{}
 		end
 
@@ -932,7 +986,7 @@ if SERVER then
 				dmg_info:SetDamage(fraction * tbl.Damage)
 			end
 
-			successful_hit_ents[ent] = true
+			table.insert(successful_hit_ents,ent)
 			--fire bullets if asked
 			local ents2 = {inflictor}
 			if tbl.Bullet then
@@ -1004,7 +1058,11 @@ if SERVER then
 				if tbl.DoNotKill then
 					kill = false	--durr
 				end
-				if kill then successful_kill_ents[ent] = true end
+				if kill then
+					table.insert(successful_kill_ents,ent)
+					ent.pac_damagezone_need_send_ragdoll = true
+					ent.pac_damagezone_killer = ply
+				end
 
 				--remove weapons on kill if asked
 				if kill and not ent:IsPlayer() and tbl.RemoveNPCWeaponsOnKill and pac_sv_damage_zone_allow_dissolve then
@@ -1079,10 +1137,33 @@ if SERVER then
 					timer.Simple(ply_prog_count / 32, function() DoDamage(ent) end)
 					ply_prog_count = ply_prog_count + 1
 				else
-					DoDamage(ent)
+					if tbl.DOTMode then
+						local counts = tbl.NoInitialDOT and tbl.DOTCount or tbl.DOTCount-1
+						local timer_entid = tbl.UniqueID .. "_" .. ent:GetClass() .. "_" .. ent:EntIndex()
+						if counts <= 0 then --nuh uh, timer 0 means infinite repeat
+							timer.Remove(timer_entid)
+						else
+							if timer.Exists(timer_entid) then
+								timer.Adjust(tbl.UniqueID, tbl.DOTTime, counts)
+							else
+								timer.Create(timer_entid, tbl.DOTTime, counts, function()
+									if not IsValid(ent) then timer.Remove(timer_entid) return end
+									DoDamage(ent)
+								end)
+							end
+						end
+						
+					end
+					if not tbl.NoInitialDOT then DoDamage(ent) end
 				end
 			end
 			if not hit and (oldhp > 0 and canhit) then hit = true end
+		end
+		if IsValid(ent) then
+			if kill then
+				timer.Remove(tbl.UniqueID .. "_" .. ent:GetClass() .. "_" .. ent:EntIndex())
+			end
+			return
 		end
 
 		return hit,kill,dmg,successful_hit_ents,successful_kill_ents
@@ -1157,7 +1238,7 @@ if SERVER then
 		["HunterTracer"] = 7,
 		["StriderTracer"] = 8,
 		["GunshipTracer"] = 9,
-		["ToolgunTracer"] = 10,
+		["ToolTracer"] = 10,
 		["LaserTracer"] = 11
 	}
 
@@ -1171,7 +1252,7 @@ if SERVER then
 			if pre_excluded_ent_classes[v:GetClass()] or (Is_NPC(v) and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectSelf)) then ents_hits[i] = nil
 			else ent_count = ent_count + 1 end
 		end
-		if TooManyEnts(ent_count) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
+		if TooManyEnts(ent_count, ply) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
 		for _,ent in pairs(ents_hits) do
 			local phys_ent
 			local ent_getphysobj = ent:GetPhysicsObject()
@@ -1472,7 +1553,7 @@ if SERVER then
 			ply:SetMoveType(ply.default_movetype)
 			targ_ent.default_movetype_reserved = nil
 		end
-		MsgC(Color(0,255,255), "Requesting lock break!\n")
+		if debugging:GetBool() and can_print[ply] then MsgC(Color(0,255,255), "Requesting lock break!\n") end
 
 		if ply.grabbed_by then --directly go for the grabbed_by player
 			net.Start("pac_request_lock_break")
@@ -1586,13 +1667,10 @@ if SERVER then
 			tbl.UniqueID = net.ReadString()
 
 			if not CountNetMessage(ply) then
-				if netrate_enforcement_sv_monitoring:GetBool() then
-					MsgC(Color(255,255,0), "[PAC3] Force part: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
-				end
-
+				if debugging:GetBool() and can_print[ply] then MsgC(Color(255,255,0), "[PAC3] Force part: ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " combat actions are too many or too fast! (spam warning)\n") end
 				hook.Remove("Tick", "pac_force_hold"..tbl.UniqueID)
 				active_force_ids[tbl.UniqueID] = nil
-
+				CountDebugMessage(ply)
 				return
 			end
 
@@ -1680,10 +1758,36 @@ if SERVER then
 
 		end)
 	end
+	
+	local active_DoT = {}
+	local requesting_corpses = {}
 
 	local function DeclareDamageZoneReceivers()
+		--networking for damagezone hitparts on corpses
+		hook.Add("CreateEntityRagdoll", "pac_ragdoll_assign", function(ent, rag)
+			if not ent.pac_damagezone_need_send_ragdoll then return end
+			if not ent.pac_damagezone_killer then return end
+			if not damagezone_allow:GetBool() then return end
+			if not damagezone_allow_ragdoll_networking_for_hitpart:GetBool() then return end
+			if not PlayerIsCombatAllowed(ent.pac_damagezone_killer) then return end
+			if not requesting_corpses[ent.pac_damagezone_killer] then return end
+			net.Start("pac_send_ragdoll")
+			net.WriteUInt(ent:EntIndex(), 12)
+			net.WriteEntity(rag)
+			net.Broadcast()
+		end)
+
+		net.Receive("pac_request_ragdoll_sends", function(len, ply)
+			local b = net.ReadBool()
+			if not damagezone_allow:GetBool() then return end
+			if not PlayerIsCombatAllowed(ply) then return end
+			requesting_corpses[ply] = b
+		end)
+
 		util.AddNetworkString("pac_request_zone_damage")
 		util.AddNetworkString("pac_hit_results")
+		util.AddNetworkString("pac_request_ragdoll_sends")
+		util.AddNetworkString("pac_send_ragdoll")
 		net.Receive("pac_request_zone_damage", function(len,ply)
 			--server allow
 			if not damagezone_allow:GetBool() then return end
@@ -1691,9 +1795,11 @@ if SERVER then
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
-				if netrate_enforcement_sv_monitoring:GetBool() then
-					MsgC(Color(255,255,0), "[PAC3] Damage zone: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] Damage zone: ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " combat actions are too many or too fast! (spam warning)\n")
+					can_print[ply] = false
 				end
+				CountDebugMessage(ply)
 				return
 			end
 
@@ -1729,6 +1835,18 @@ if SERVER then
 			tbl.ReverseDoNotKill = net.ReadBool()
 			tbl.CriticalHealth = net.ReadUInt(16)
 			tbl.RemoveNPCWeaponsOnKill = net.ReadBool()
+
+			tbl.DOTMode = net.ReadBool()
+			tbl.NoInitialDOT = net.ReadBool()
+			tbl.DOTCount = net.ReadUInt(7)
+			tbl.DOTTime = net.ReadUInt(11) / 64
+			tbl.UniqueID = net.ReadString()
+			local do_ents_feedback = net.ReadBool()
+			if not tbl.UniqueID then return end
+
+			if tbl.DOTTime == 0 or (tbl.DOTCount == 0 and not tbl.NoInitialDOT) then
+				tbl.DOTMode = false
+			end
 
 			local dmg_info = DamageInfo()
 
@@ -1891,13 +2009,23 @@ if SERVER then
 			hit,kill,highest_dmg,successful_hit_ents,successful_kill_ents = ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
 			highest_dmg = highest_dmg or 0
 			net.Start("pac_hit_results", true)
+			net.WriteString(tbl.UniqueID)
 			net.WriteBool(hit)
 			net.WriteBool(kill)
 			net.WriteFloat(highest_dmg)
-			net.WriteTable(successful_hit_ents)
-			net.WriteTable(successful_kill_ents)
+			net.WriteBool(hit and do_ents_feedback)
+			if successful_hit_ents and hit and do_ents_feedback and #successful_hit_ents < 20 then
+				local _,bits_before_hit = net.BytesWritten()
+				net.WriteTable(successful_hit_ents, true)
+				local _,bits_after_hit = net.BytesWritten()
+				--print("table is length " .. bits_after_hit - bits_before_hit .. " for " .. table.Count(successful_hit_ents) .. " ents hit, or about " .. ((bits_after_hit - bits_before_hit) / table.Count(successful_hit_ents) - 16) .. " per ent")
+				if kill then net.WriteTable(successful_kill_ents, true) end
+				local _,bits_after_kill = net.BytesWritten()
+				--print("table is length " .. bits_after_kill - bits_after_hit .. " for " .. table.Count(successful_kill_ents) .. " ents killed, or about " .. ((bits_after_kill - bits_after_hit) / table.Count(successful_kill_ents) - 16) .. " per ent")
+			end
 			net.Broadcast()
 		end)
+
 	end
 
 	local nextchecklock = CurTime()
@@ -1920,9 +2048,11 @@ if SERVER then
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
-				if netrate_enforcement_sv_monitoring:GetBool() then
-					MsgC(Color(255,255,0), "[PAC3] Lock grab: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] Lock grab: ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " combat actions are too many or too fast! (spam warning)\n")
+					can_print[ply] = false
 				end
+				CountDebugMessage(ply)
 				return
 			end
 
@@ -2025,7 +2155,7 @@ if SERVER then
 
 
 				if targ_ent:IsPlayer() and targ_ent:InVehicle() then --yank player out of vehicle
-					print("Kicking " .. targ_ent:Nick() .. " out of vehicle to be grabbed!")
+					if debugging:GetBool() and can_print[ply] then print("Kicking " .. targ_ent:Nick() .. " out of vehicle to be grabbed!") end
 					targ_ent:ExitVehicle()
 				end
 
@@ -2046,7 +2176,7 @@ if SERVER then
 									net.Send(targ_ent)
 									targ_ent.nextcalcviewTick = CurTime() + 0.1
 									targ_ent.has_calcview = true
-								else print("skipping") end
+								end
 								targ_ent:SetEyeAngles(alt_ang)
 								targ_ent:SetAngles(alt_ang)
 							else
@@ -2085,7 +2215,7 @@ if SERVER then
 					auth_ent_owner.grabbed_ents[targ_ent] = true
 					targ_ent.grabbed_by = auth_ent_owner
 					targ_ent.grabbed_by_uid = lockpart_UID
-					print(auth_ent, "grabbed", targ_ent, "owner grabber is", auth_ent_owner)
+					if debugging:GetBool() and can_print[ply] then print(auth_ent, "grabbed", targ_ent, "owner grabber is", auth_ent_owner) end
 				end
 				targ_ent.grabbed_by_time = CurTime()
 			else
@@ -2095,7 +2225,7 @@ if SERVER then
 			end
 
 			if need_breakup then
-				print("stop this now! reason: " .. breakup_condition)
+				if debugging:GetBool() and can_print[ply] then print("stop this now! reason: " .. breakup_condition) end
 				net.Start("pac_request_lock_break")
 				net.WriteEntity(targ_ent)
 				net.WriteString(lockpart_UID)
@@ -2127,9 +2257,11 @@ if SERVER then
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
-				if netrate_enforcement_sv_monitoring:GetBool() then
-					MsgC(Color(255,255,0), "[PAC3] Lock teleport: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] Lock teleport: ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " combat actions are too many or too fast! (spam warning)\n")
+					can_print[ply] = false
 				end
+				CountDebugMessage(ply)
 				return
 			end
 
@@ -2206,9 +2338,11 @@ if SERVER then
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
-				if netrate_enforcement_sv_monitoring:GetBool() then
-					MsgC(Color(255,255,0), "[PAC3] Hitscan: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] Hitscan: ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " combat actions are too many or too fast! (spam warning)\n")
+					can_print[ply] = false
 				end
+				CountDebugMessage(ply)
 				return
 			end
 
@@ -2295,17 +2429,21 @@ if SERVER then
 		end)
 	end
 
+	local active_healthmod_bars = {}
 	local function DeclareHealthModifierReceivers()
 		util.AddNetworkString("pac_request_healthmod")
 		util.AddNetworkString("pac_update_healthbars")
+		util.AddNetworkString("pac_request_extrahealthbars_action")
 		net.Receive("pac_request_healthmod", function(len,ply)
 			if not healthmod_allow:GetBool() then return end
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
-				if netrate_enforcement_sv_monitoring:GetBool() then
-					MsgC(Color(255,255,0), "[PAC3] Health modifier: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				if debugging:GetBool() and can_print[ply] then
+					MsgC(Color(255,255,0), "[PAC3] Health modifier: ") MsgC(Color(0,255,255), tostring(ply)) MsgC(Color(200,200,200), " combat actions are too many or too fast! (spam warning)\n")
+					can_print[ply] = false
 				end
+				CountDebugMessage(ply)
 				return
 			end
 
@@ -2356,6 +2494,7 @@ if SERVER then
 				local follow = net.ReadBool()
 
 				UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow)
+				active_healthmod_bars[part_uid] = ply.pac_healthmods[part_uid]
 
 			elseif action == "OnRemove" then
 				if ply.pac_damage_scalings then
@@ -2370,6 +2509,13 @@ if SERVER then
 				FixMaxHealths(ply)
 				UpdateHealthBars(ply, 0, 0, 0, 0, part_uid, follow)
 			end
+			SendUpdateHealthBars(ply)
+		end)
+		net.Receive("pac_request_extrahealthbars_action", function(len, ply)
+			local part_uid = net.ReadString()
+			local action = net.ReadString()
+			local num = net.ReadInt(16)
+			UpdateHealthBarsFromCMD(ply, action, num, part_uid)
 			SendUpdateHealthBars(ply)
 		end)
 	end
@@ -2659,4 +2805,3 @@ if CLIENT then
 	hook.Add("InitPostEntity", "PAC_Request_BlockedParts_On_Join", RequestBlockedParts)
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 end
-

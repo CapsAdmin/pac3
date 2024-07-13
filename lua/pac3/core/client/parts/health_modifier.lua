@@ -32,6 +32,7 @@ BUILDER:StartStorableVars()
 
 BUILDER:EndStorableVars()
 
+local part_UID_caches = {}
 
 function PART:SendModifier(str)
 	if self:IsHidden() then return end
@@ -45,6 +46,8 @@ function PART:SendModifier(str)
 	if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
 		if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 	end
+	part_UID_caches[self.UniqueID] = self
+	if self.Name ~= "" then part_UID_caches[self.Name] = self end
 
 	if str == "MaxHealth" and self.ChangeHealth then
 		net.Start("pac_request_healthmod")
@@ -135,6 +138,7 @@ function PART:SetDamageMultiplier(val)
 end
 
 function PART:OnRemove()
+	part_UID_caches = {} --we'll need this part removed from the cache
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if util.NetworkStringToID( "pac_request_healthmod" ) == 0 then return end
 	local found_remaining_healthmod = false
@@ -214,5 +218,30 @@ function PART:UpdateHPBars()
 	end
 end
 
+--expected structure : pac_healthbars uid_or_name action number
+--actions: set, add, subtract, refill, replenish, remove
+concommand.Add("pac_healthbar", function(ply, cmd, args)
+	local uid_or_name = args[1]
+	local num = tonumber(args[3]) or 0
+	if part_UID_caches[uid_or_name] ~= nil and args[2] ~= nil then
+		local part = part_UID_caches[uid_or_name]
+		uid = part.UniqueID
+		local action = args[2] or ""
+
+		--doesnt make sense to add or subtract 0
+		if ((action == "add" or action == "subtract") and num == 0) or (action == "") then return end
+		--replenish means set to full
+		if action == "refill" or  action == "replenish" then
+			action = "set"
+			num = part.BarsAmount * part.HealthBars
+		end
+		if action == "remove" then action = "set" num = 0 end
+		net.Start("pac_request_extrahealthbars_action")
+		net.WriteString(uid)
+		net.WriteString(action)
+		net.WriteInt(num, 16)
+		net.SendToServer()
+	end
+end, nil, "changes your health modifier's extra health value. arguments:\nuid or name: the unique ID or the name of the part\naction: add, subtract, refill, replenish, remove, set\nnumber")
 
 BUILDER:Register()
