@@ -28,7 +28,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 
 	local time = RealTime()
 
-	if not points[1] or points[#points].pos:Distance(pos) > spc then
+	if not points[1] or points[#points].pos:DistToSqr(pos) > (spc ^ 2) then
 		table_insert(points, {pos = pos * 1, life_time = time + len})
 	end
 
@@ -40,9 +40,9 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 		for i = #points, 1, -1 do
 			local data = points[i]
 
-			local f = (data.life_time - time)/len
+			local f = (data.life_time - time) / len
 			local f2 = f
-			f = -f+1
+			f = -f + 1
 
 			local coord = (1 / count) * (i - 1)
 
@@ -61,12 +61,17 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 
 	if self.CenterAttraction ~= 0 then
 		local attraction = FrameTime() * self.CenterAttraction
-		local center = Vector(0,0,0)
-		for _, data in ipairs(points) do
+		local center = Vector(0, 0, 0)
+
+		for i = 1, #points do
+			local data = points[i]
+
 			center:Zero()
-			for _, data in ipairs(points) do
-				center:Add(data.pos)
+
+			for x = 1, #points do
+				center:Add(points[x].pos)
 			end
+
 			center:Mul(1 / #points)
 			center:Sub(data.pos)
 			center:Mul(attraction)
@@ -77,9 +82,11 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 
 	if not self.Gravity:IsZero() then
 		local gravity = self.Gravity * FrameTime()
+
 		gravity:Rotate(ang)
-		for _, data in ipairs(points) do
-			data.pos:Add(gravity)
+
+		for i = 1, #points do
+			points[i].pos:Add(gravity)
 		end
 	end
 end
@@ -88,8 +95,8 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.FriendlyName = "trail"
 PART.ClassName = "trail2"
-PART.Icon = 'icon16/arrow_undo.png'
-PART.Group = 'effects'
+PART.Icon = "icon16/arrow_undo.png"
+PART.Group = "effects"
 PART.ProperColorRange = true
 
 BUILDER:StartStorableVars()
@@ -164,21 +171,23 @@ end
 function PART:OnDraw()
 	local pos, ang = self:GetDrawPosition()
 	local mat = self.material_override and self.material_override[0][1] and self.material_override[0][1]:GetRawMaterial() or self.Materialm
+
 	if not mat then return end
+
 	pac.DrawTrail(
 		self,
 		math.min(self.Duration, 10),
-		self.Spacing + (self.StartSize/10),
+		self.Spacing + (self.StartSize / 10),
 		pos,
 		ang,
 		mat,
 
-		self.StartColor.x*255, self.StartColor.y*255, self.StartColor.z*255,self.StartAlpha*255,
-		self.EndColor.x*255, self.EndColor.y*255, self.EndColor.z*255,self.EndAlpha*255,
+		self.StartColor.x * 255, self.StartColor.y * 255, self.StartColor.z * 255, self.StartAlpha * 255,
+		self.EndColor.x * 255, self.EndColor.y * 255, self.EndColor.z * 255, self.EndAlpha * 255,
 
 		self.StartSize,
 		self.EndSize,
-		1/self.Stretch
+		1 / self.Stretch
 	)
 end
 

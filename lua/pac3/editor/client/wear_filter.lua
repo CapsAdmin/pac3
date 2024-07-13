@@ -52,7 +52,8 @@ local function jsonid(ply)
 end
 
 local function update_ignore()
-	for _, ply in ipairs(player.GetHumans()) do
+	for _, ply in player.Iterator() do
+		if ply:IsBot() then continue end
 		pac.ToggleIgnoreEntity(ply, pace.ShouldIgnorePlayer(ply), "wear_filter")
 	end
 end
@@ -171,11 +172,11 @@ do
 	end
 end
 
-CreateClientConVar("pace_wear_filter_mode", "disabled")
-CreateClientConVar("pace_outfit_filter_mode", "disabled")
+local pace_wear_filter_mode = CreateClientConVar("pace_wear_filter_mode", "disabled")
+local pace_outfit_filter_mode = CreateClientConVar("pace_outfit_filter_mode", "disabled")
 
 function pace.ShouldIgnorePlayer(ply)
-	local mode = GetConVar("pace_outfit_filter_mode"):GetString()
+	local mode = pace_outfit_filter_mode:GetString()
 
 	if mode == "steam_friends" then
 		return ply:GetFriendStatus() ~= "friend"
@@ -189,12 +190,12 @@ function pace.ShouldIgnorePlayer(ply)
 end
 
 function pace.CreateWearFilter()
-	local mode = GetConVar("pace_wear_filter_mode"):GetString()
+	local mode = pace_wear_filter_mode:GetString()
 
 	local tbl = {}
 
-	for _, ply in ipairs(player.GetHumans()) do
-		if ply == pac.LocalPlayer then continue end
+	for _, ply in player.Iterator() do
+		if ply == pac.LocalPlayer or ply:IsBot() then continue end
 
 		if mode == "steam_friends" then
 			if ply:GetFriendStatus() == "friend" then
@@ -249,8 +250,9 @@ local function player_list_form(name, id, help)
 			local blacklist = cache[id]
 
 			local tbl = {}
-			for _, ply in ipairs(player.GetHumans()) do
-				if ply == pac.LocalPlayer then continue end
+			for _, ply in player.Iterator() do
+				if ply == pac.LocalPlayer or ply:IsBot() then continue end
+
 				if not blacklist[jsonid(ply)] then
 					table.insert(tbl, {
 						name = ply:Nick(),
@@ -319,8 +321,8 @@ do
 	end)
 
 	function pace.PopulateWearMenu(menu)
-		for _, ply in ipairs(player.GetHumans()) do
-			if ply == pac.LocalPlayer then continue end
+		for _, ply in player.Iterator() do
+			if ply == pac.LocalPlayer or ply:IsBot() then continue end
 
 			local icon = menu:AddOption(L "wear only for " .. ply:Nick(), function()
 				pace.WearParts(ply)
@@ -366,12 +368,12 @@ function pace.FillWearSettings(pnl)
 				mode.form = generic_form(L "Everyone can see your worn outfit.")
 			end
 
-			GetConVar("pace_wear_filter_mode"):SetString(value:gsub(" ", "_"))
+			pace_wear_filter_mode:SetString(value:gsub(" ", "_"))
 
 			mode.form:SetParent(list)
 		end
 
-		local mode_str = GetConVar("pace_wear_filter_mode"):GetString():gsub("_", " ")
+		local mode_str = pace_wear_filter_mode:GetString():gsub("_", " ")
 		mode:ChooseOption(mode_str)
 		mode:OnSelect(nil, mode_str)
 	end
@@ -408,14 +410,14 @@ function pace.FillWearSettings(pnl)
 				mode.form = generic_form(L "You will see everyone's outfits.")
 			end
 
-			GetConVar("pace_outfit_filter_mode"):SetString(value:gsub(" ", "_"))
+			pace_outfit_filter_mode:SetString(value:gsub(" ", "_"))
 
 			mode.form:SetParent(list)
 
 			update_ignore()
 		end
 
-		local mode_str = GetConVar("pace_outfit_filter_mode"):GetString():gsub("_", " ")
+		local mode_str = pace_outfit_filter_mode:GetString():gsub("_", " ")
 		mode:ChooseOption(mode_str)
 		mode:OnSelect(nil, mode_str)
 	end

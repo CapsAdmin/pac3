@@ -3,8 +3,8 @@
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "decal"
-PART.Group = 'effects'
-PART.Icon = 'icon16/paintbrush.png'
+PART.Group = "effects"
+PART.Icon = "icon16/paintbrush.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})

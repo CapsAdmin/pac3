@@ -30,7 +30,10 @@ local function OnMousePressed(self, mcode)
 end
 
 function PANEL:AddOutfits(folder, callback)
-	for i, name in pairs(file.Find(folder.."*", "DATA")) do
+	local files = file.Find(folder .. "*", "DATA")
+	for i = 1, #files do
+		local name = files[i]
+
 		if name:find("%.txt") then
 			local outfit = folder .. name
 			if file.Exists(outfit, "DATA") then
@@ -39,6 +42,7 @@ function PANEL:AddOutfits(folder, callback)
 					string.NiceSize(file.Size(outfit, "DATA")),
 					os.date("%m/%d/%Y %H:%M", file.Time(outfit, "DATA"))
 				)
+
 				filenode.FileName = name
 				filenode.OnSelect = callback
 				filenode.OnMousePressed = OnMousePressed

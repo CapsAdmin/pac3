@@ -169,11 +169,10 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	end
 
 	pac.AddHook("EntityTakeDamage", "PAC3MassDamageScale", function(target, dmginfo)
-		if (target:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH or DMG_VEHICLE)) then
+		if target:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH or DMG_VEHICLE) then
 			dmginfo:ScaleDamage(target.scale_mass or 1)
 		end
 	end)
-
 
 	if self.Noclip then
 		ply:SetMoveType(MOVETYPE_NONE)
@@ -265,7 +264,6 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	-- todo: don't allow adding more velocity to existing velocity if it exceeds
 	-- but allow decreasing
 	if not on_ground then
-
 		if ply:WaterLevel() >= 2 then
 			local ground_speed = self.RunSpeed
 
@@ -354,41 +352,40 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	if self.FinEfficiency > 0 then -- fin
 		local curvel = vel
 		local curup = ang:Forward()
+		local curspeed = curvel:Length()
 
 		local vec1 = curvel
 		local vec2 = curup
-		vec1 = vec1 - 2*(vec1:Dot(vec2))*vec2
-		local sped = vec1:Length()
+		vec1 = vec1 - 2 * (vec1:Dot(vec2)) * vec2
 
 		local finalvec = curvel
 		local modf = math.abs(curup:Dot(curvel:GetNormalized()))
-		local nvec = (curup:Dot(curvel:GetNormalized()))
+		local nvec = curup:Dot(curvel:GetNormalized())
 
 		if (self.pln == 1) then
-
 			if nvec > 0 then
 				vec1 = vec1 + (curup * 10)
 			else
 				vec1 = vec1 + (curup * -10)
 			end
 
-			finalvec = vec1:GetNormalized() * (math.pow(sped, modf) - 1)
+			finalvec = vec1:GetNormalized() * (math.pow(curspeed, modf) - 1)
 			finalvec = finalvec:GetNormalized()
 			finalvec = (finalvec * self.FinEfficiency) + curvel
 		end
 
-		if (self.FinLiftMode ~= "none") then
-			if (self.FinLiftMode == "normal") then
+		if self.FinLiftMode ~= "none" then
+			if self.FinLiftMode == "normal" then
 				local liftmul = 1 - math.abs(nvec)
-				finalvec = finalvec + (curup * liftmul * curvel:Length() * self.FinEfficiency) / 700
+				finalvec = finalvec + (curup * liftmul * curspeed * self.FinEfficiency) / 700
 			else
 				local liftmul = (nvec / math.abs(nvec)) - nvec
-				finalvec = finalvec + (curup * curvel:Length() * self.FinEfficiency * liftmul) / 700
+				finalvec = finalvec + (curup * curspeed * self.FinEfficiency * liftmul) / 700
 			end
 		end
 
 		finalvec = finalvec:GetNormalized()
-		finalvec = finalvec * curvel:Length()
+		finalvec = finalvec * curspeed
 
 		if self.FinCline then
 			local trace = {
@@ -396,13 +393,14 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 				endpos = mv:GetOrigin() + Vector(0, 0, -1000000),
 				mask = 131083
 			}
+
 			local trc = util.TraceLine(trace)
 
 			local MatType = trc.MatType
 
-			if (MatType == 67 or MatType == 77) then
+			if MatType == 67 or MatType == 77 then
 				local heatvec = Vector(0, 0, 100)
-				local cline = ((2 * (heatvec:Dot(curup)) * curup - heatvec)) * (math.abs(heatvec:Dot(curup)) / 1000)
+				local cline = (2 * (heatvec:Dot(curup)) * curup - heatvec) * (math.abs(heatvec:Dot(curup)) / 1000)
 				finalvec = finalvec + (cline * (self.FinEfficiency / 50))
 			end
 		end

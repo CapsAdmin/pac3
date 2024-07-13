@@ -3,8 +3,8 @@ local BUILDER, PART = pac.PartTemplate("base")
 PART.ClassName = "script"
 
 PART.ThinkTime = 0
-PART.Group = 'advanced'
-PART.Icon = 'icon16/page_white_gear.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/page_white_gear.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Code", "")
@@ -59,14 +59,12 @@ local lib =
 
 local function translate_xyz(x, y, z, T, def)
 	if T == "Vector" then
-
 		def.x = x or def.x
 		def.y = y or def.y
 		def.z = z or def.z
 
 		return def
 	elseif T == "Angle" then
-
 		def.p = x or def.p
 		def.y = y or def.y
 		def.r = z or def.r
@@ -90,7 +88,6 @@ local function translate_value(val, T)
 end
 
 local function CreateDummies(parts)
-
 	local obj = {
 		SetProperty = function(_, key, x, y, z)
 			if not key then return end

@@ -15,16 +15,22 @@ local L = pace.LanguageString
 
 function pace.AddLanguagesToMenu(menu)
 	local menu, pnl = menu:AddSubMenu(L"language")
+
 	pnl:SetImage("icon16/world_edit.png")
+
 	menu.GetDeleteSelf = function() return false end
 	menu:AddOption("english", function()
 		pace.SetLanguage("english")
 	end)
 
-	for key, val in pairs(file.Find("pac3/editor/client/translations/*", "LUA")) do
-		val = val:gsub("%.lua", "")
-		menu:AddOption(val, function()
-			pace.SetLanguage(val)
+	local files = file.Find("pac3/editor/client/translations/*", "LUA")
+
+	for i = 1, #files do
+		local path = files[i]
+
+		path = path:gsub("%.lua", "")
+		menu:AddOption(path, function()
+			pace.SetLanguage(path)
 		end)
 	end
 
@@ -56,11 +62,12 @@ function pace.ShowLanguageEditor()
 	table.Merge(strings, pace.CurrentTranslation)
 
 	for english, other in pairs(strings) do
-
 		local line = list:AddLine(english, other)
+
 		line.OnRightClick = function()
 			local menu = DermaMenu()
 			menu:SetPos(input.GetCursorPos())
+
 			menu:AddOption(L"edit", function()
 				local window = Derma_StringRequest(
 					L"translate",
@@ -73,16 +80,24 @@ function pace.ShowLanguageEditor()
 						pace.SaveCurrentTranslation()
 					end
 				)
-				for _, pnl in pairs(window:GetChildren()) do
+
+				local window_children = window:GetChildren()
+				for i = 1, #window_children do
+					local pnl = window_children[i]
+
 					if pnl.ClassName == "DPanel" then
-						for key, pnl in pairs(pnl:GetChildren()) do
-							if pnl.ClassName == "DTextEntry" then
-								pnl:SetAllowNonAsciiCharacters(true)
+						local pnl_children = pnl:GetChildren()
+						for x = 1, #pnl_children do
+							local pnl2 = pnl_children[x]
+
+							if pnl2.ClassName == "DTextEntry" then
+								pnl2:SetAllowNonAsciiCharacters(true)
 							end
 						end
 					end
 				end
 			end):SetImage(pace.MiscIcons.edit)
+
 			menu:AddOption(L"revert", function()
 				local new = CompileFile("pac3/editor/client/translations/"..lang..".lua")()[english]
 				pace.CurrentTranslation[english] = new

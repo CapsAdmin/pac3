@@ -1,7 +1,7 @@
 local NULL = NULL
 local pairs = pairs
 
-for _, v in pairs(ents.GetAll()) do
+for _, v in ents.Iterator() do
 	v.pac_bone_setup_data = nil
 end
 
@@ -10,7 +10,7 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 PART.FriendlyName = "legacy experimental bone"
 PART.ClassName = "bone2"
 PART.Group = "legacy"
-PART.Icon = 'icon16/connect.png'
+PART.Icon = "icon16/connect.png"
 PART.is_bone_part = true
 
 BUILDER:StartStorableVars()

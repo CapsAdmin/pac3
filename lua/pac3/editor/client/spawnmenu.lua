@@ -104,9 +104,9 @@ end
 CreateClientConVar("pac_limit_sounds_draw_distance", 20000, true, false, "Overall multiplier for PAC3 sounds")
 cvars.AddChangeCallback("pac_limit_sounds_draw_distance", function(_,_,val)
 	if not isnumber(val) then val = 0 end
-	pac.sounds_draw_dist_sqr = val * val
+	pac.sounds_draw_dist_sqr = val ^ 2
 end)
-pac.sounds_draw_dist_sqr = math.pow(GetConVar("pac_limit_sounds_draw_distance"):GetInt(), 2)
+pac.sounds_draw_dist_sqr = GetConVar("pac_limit_sounds_draw_distance"):GetInt() ^ 2
 
 CreateClientConVar("pac_volume", 1, true, false, "Overall multiplier for PAC3 sounds",0,1)
 cvars.AddChangeCallback("pac_volume", function(_,_,val)

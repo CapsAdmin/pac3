@@ -317,9 +317,11 @@ end
 function PANEL:DoChildrenOrder()
 	if not self.ChildNodes then return end
 
-	local last = table.Count(self.ChildNodes:GetChildren())
-	for k, Child in pairs(self.ChildNodes:GetChildren()) do
-		Child:SetLastChild(k == last)
+	local children = self.ChildNodes:GetChildren()
+	local last = #children
+
+	for i = 1, last do
+		children[i]:SetLastChild(i == last)
 	end
 end
 
@@ -530,15 +532,16 @@ end
 
 function PANEL:Copy()
 	local copy = vgui.Create("pac_dtree_node", self:GetParent())
+
 	copy:SetText(self:GetText())
 	copy:SetIcon(self:GetIcon())
 	copy:SetRoot(self:GetRoot())
 	copy:SetParentNode(self:GetParentNode())
 
 	if self.ChildNodes then
-		for k, v in pairs(self.ChildNodes:GetChildren()) do
-			local childcopy = v:Copy()
-			copy:InsertNode(childcopy)
+		local children = self.ChildNodes:GetChildren()
+		for i = 1, #children do
+			copy:InsertNode(children[i]:Copy())
 		end
 	end
 

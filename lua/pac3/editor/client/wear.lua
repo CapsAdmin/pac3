@@ -406,10 +406,13 @@ do
 		end
 	end)
 
+	local min_velocity_sqr = 50
+	min_velocity_sqr = min_velocity_sqr * min_velocity_sqr
+
 	pac.AddHook("KeyRelease", "request_outfits", function()
 		local me = pac.LocalPlayer
 
-		if me:IsValid() and me:GetVelocity():Length() > 50 then
+		if me:IsValid() and me:GetVelocity():LengthSqr() > min_velocity_sqr then
 			frames = frames + 200
 
 			if frames > 400 then

@@ -1,3 +1,4 @@
+local table_insert = table.insert
 
 local PREFIX = '[PAC3] '
 local PREFIX_COLOR = Color(255, 255, 0)
@@ -16,10 +17,10 @@ function pac.RepackMessage(strIn)
 
 	for line in string.gmatch(strIn, '([^ ]+)') do
 		if #output ~= 0 then
-			table.insert(output, ' ')
+			table_insert(output, ' ')
 		end
 
-		table.insert(output, line)
+		table_insert(output, line)
 	end
 
 	return output
@@ -33,55 +34,55 @@ local function FormatMessage(tabIn)
 		local valType = type(val)
 
 		if valType == 'number' then
-			table.insert(output, NUMBER_COLOR)
-			table.insert(output, tostring(val))
-			table.insert(output, prevColor)
+			table_insert(output, NUMBER_COLOR)
+			table_insert(output, tostring(val))
+			table_insert(output, prevColor)
 		elseif valType == 'string' then
 			if val:find('^https?://') then
-				table.insert(output, URL_COLOR)
-				table.insert(output, val)
-				table.insert(output, prevColor)
+				table_insert(output, URL_COLOR)
+				table_insert(output, val)
+				table_insert(output, prevColor)
 			else
-				table.insert(output, val)
+				table_insert(output, val)
 			end
 		elseif valType == 'Player' then
 			if team then
-				table.insert(output, team.GetColor(val:Team()) or ENTITY_COLOR)
+				table_insert(output, team.GetColor(val:Team()) or ENTITY_COLOR)
 			else
-				table.insert(output, ENTITY_COLOR)
+				table_insert(output, ENTITY_COLOR)
 			end
 
-			table.insert(output, val:Nick())
+			table_insert(output, val:Nick())
 
 			if val.SteamName and val:SteamName() ~= val:Nick() then
-				table.insert(output, ' (' .. val:SteamName() .. ')')
+				table_insert(output, ' (' .. val:SteamName() .. ')')
 			end
 
-			table.insert(output, '<')
-			table.insert(output, val:SteamID())
-			table.insert(output, '>')
-			table.insert(output, prevColor)
+			table_insert(output, '<')
+			table_insert(output, val:SteamID())
+			table_insert(output, '>')
+			table_insert(output, prevColor)
 		elseif valType == 'Entity' or valType == 'NPC' or valType == 'Vehicle' then
-			table.insert(output, ENTITY_COLOR)
-			table.insert(output, tostring(val))
-			table.insert(output, prevColor)
+			table_insert(output, ENTITY_COLOR)
+			table_insert(output, tostring(val))
+			table_insert(output, prevColor)
 		elseif IsColor(val) then
-			table.insert(output, val)
+			table_insert(output, val)
 			prevColor = val
 		elseif valType == 'table' then
-			table.insert(output, TABLE_COLOR)
-			table.insert(output, tostring(val))
-			table.insert(output, prevColor)
+			table_insert(output, TABLE_COLOR)
+			table_insert(output, tostring(val))
+			table_insert(output, prevColor)
 		elseif valType == 'function' then
-			table.insert(output, FUNCTION_COLOR)
-			table.insert(output, string.format('function - %p', val))
-			table.insert(output, prevColor)
+			table_insert(output, FUNCTION_COLOR)
+			table_insert(output, string.format('function - %p', val))
+			table_insert(output, prevColor)
 		elseif valType == 'boolean' then
-			table.insert(output, BOOLEAN_COLOR)
-			table.insert(output, tostring(val))
-			table.insert(output, prevColor)
+			table_insert(output, BOOLEAN_COLOR)
+			table_insert(output, tostring(val))
+			table_insert(output, prevColor)
 		else
-			table.insert(output, tostring(val))
+			table_insert(output, tostring(val))
 		end
 	end
 
@@ -114,6 +115,7 @@ end
 local DEBUG_MDL = false
 local VERBOSE = false
 
+-- build texture_keys table (setting as keys avoids duplicate entries)
 local shader_params = include("pac3/libraries/shader_params.lua")
 local texture_keys = {}
 
@@ -121,7 +123,7 @@ for _, shader in pairs(shader_params.shaders) do
 	for _, params in pairs(shader) do
 		for key, info in pairs(params) do
 			if info.type == "texture" then
-				texture_keys[key] = key
+				texture_keys[key] = true
 			end
 		end
 	end
@@ -130,12 +132,18 @@ end
 for _, params in pairs(shader_params.base) do
 	for key, info in pairs(params) do
 		if info.type == "texture" then
-			texture_keys[key] = key
+			texture_keys[key] = true
 		end
 	end
 end
 
 texture_keys["include"] = "include"
+
+-- build texture_keys_seq for sequential table reads of texture_keys
+local texture_keys_seq = {}
+for k in pairs(texture_keys) do
+	texture_keys_seq[#texture_keys_seq + 1] = k
+end
 
 -- for pac_restart
 PAC_MDL_SALT = PAC_MDL_SALT or 0
@@ -176,7 +184,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			id = util.CRC(id .. os.clock())
 		end
 
-		if skip_cache or not file.Exists("pac3_cache/downloads/"..id..".dat", "DATA") then
+		if skip_cache or not file.Exists("pac3_cache/downloads/" .. id .. ".dat", "DATA") then
+			local is_localplayer = ply == pac.LocalPlayer
 
 			local dir = "pac3_cache/" .. id .. "/"
 
@@ -194,12 +203,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 					assert(sig == 0x04034b50, "bad zip signature (file is not a zip?)")
 
-					f:Seek(pos+6) local bitflag = f:ReadShort()
-					f:Seek(pos+8) local compression_method = f:ReadShort()
-					f:Seek(pos+14) local crc = f:ReadShort()
-					f:Seek(pos+18) local size2 = f:ReadLong()
-					f:Seek(pos+22) local size = f:ReadLong()
-					f:Seek(pos+26) local file_name_length = f:ReadShort()
+					f:Seek(pos + 6) local bitflag = f:ReadShort()
+					f:Seek(pos + 8) local compression_method = f:ReadShort()
+					f:Seek(pos + 14) local crc = f:ReadShort()
+					f:Seek(pos + 18) local size2 = f:ReadLong()
+					f:Seek(pos + 22) local size = f:ReadLong()
+					f:Seek(pos + 26) local file_name_length = f:ReadShort()
 					local extra_field_length = f:ReadShort()
 
 					local name = f:Read(file_name_length):lower()
@@ -221,17 +230,22 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 					else
 						local ok = true
-						for i,v in ipairs(files) do
+
+						for i = 1, #files do
+							local v = files[i]
+
 							if v.file_name == name then
-								if ply == pac.LocalPlayer then
-									pac.Message(Color(255, 50,50), file_path .. " is already a file at " .. v.file_path)
+								if is_localplayer then
+									pac.Message(Color(255, 50, 50), file_path .. " is already a file at " .. v.file_path)
 								end
+
 								ok = false
 								break
 							end
 						end
+
 						if ok then
-							table.insert(files, {file_name = name, buffer = buffer, crc = crc, file_path = file_path})
+							table_insert(files, {file_name = name, buffer = buffer, crc = crc, file_path = file_path})
 						end
 					end
 				end
@@ -245,25 +259,31 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 			table.sort(files, function(a, b) return #a.buffer > #b.buffer end)
 
-			for i, v in ipairs(files) do
+			for i = 1, #files do
+				local v = files[i]
+
 				if v.file_name:EndsWith(".mdl") then
 					local name = v.file_name:match("(.+)%.mdl")
-					for _, v2 in ipairs(files) do
+
+					for i = 1, #files do
+						local v2 = files[i]
+
 						if v2.file_name:EndsWith(name .. ".ani") then
 							v.ani = v2
 							break
 						end
 					end
+
 					if v.ani then
-						v.file_name = v.file_name:gsub(".-(%..+)", "i"..count.."%1"):lower()
-						v.ani.file_name = v.ani.file_name:gsub(".-(%..+)", "i"..count.."%1"):lower()
+						v.file_name = v.file_name:gsub(".-(%..+)", "i" .. count .. "%1"):lower()
+						v.ani.file_name = v.ani.file_name:gsub(".-(%..+)", "i" .. count .. "%1"):lower()
 						count = count + 1
 					else
 						if not model_found or v.file_name:StartWith(model_found) then
 							model_found = v.file_name:match("(.-)%.")
 							v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
 						else
-							table.insert(other_models, v.file_name)
+							table_insert(other_models, v.file_name)
 						end
 					end
 				elseif v.file_name:EndsWith(".vtx") or v.file_name:EndsWith(".vvd") or v.file_name:EndsWith(".phy") then
@@ -271,12 +291,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						model_found = v.file_name:match("(.-)%.")
 						v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
 					else
-						table.insert(other_models, v.file_name)
+						table_insert(other_models, v.file_name)
 					end
 				end
 			end
 
-			if other_models[1] and ply == pac.LocalPlayer then
+			if other_models[1] and is_localplayer then
 				pac.Message(Color(255, 200, 50), url, ": the archive contains more than one model.")
 				pac.Message(Color(255, 200, 50), url, ": " .. model_found .. " was selected.")
 				pac.Message(Color(255, 200, 50), url, ": these are ignored:")
@@ -295,8 +315,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				local str = file.Read(path)
 				file.Delete(path)
 
-				pac.Message(Color(255, 50,50), err)
-				pac.Message(Color(255, 50,50), "the zip archive downloaded (", string.NiceSize(#str) ,") could not be parsed")
+				pac.Message(Color(255, 50, 50), err)
+				pac.Message(Color(255, 50, 50), "the zip archive downloaded (", string.NiceSize(#str) ,") could not be parsed")
 
 				local is_binary = false
 				for i = 1, #str do
@@ -308,9 +328,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				end
 
 				if not is_binary then
-					pac.Message(Color(255, 50,50), "the url isn't a binary zip archive. Is it a html website? here's the content:")
+					pac.Message(Color(255, 50, 50), "the url isn't a binary zip archive. Is it a html website? here's the content:")
 					print(str)
-				elseif ply == pac.LocalPlayer then
+				elseif is_localplayer then
 					file.Write("pac3_cache/failed_zip_download.dat", str)
 					pac.Message("the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
 				end
@@ -318,26 +338,34 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			end
 
 			local required = {
-				".mdl",
-				".vvd",
-				".dx90.vtx",
+				{".mdl", false},
+				{".vvd", false},
+				{".dx90.vtx", false},
 			}
-			local found = {}
-			for k,v in pairs(files) do
-				for _, ext in ipairs(required) do
-					if v.file_name:EndsWith(ext) then
-						table.insert(found, ext)
+
+			local foundCount = 0
+			for i = 1, #files do
+				local v = files[i]
+
+				for i = 1, #required do
+					local ext = required[i]
+
+					if v.file_name:EndsWith(ext[1]) then
+						ext[2] = true
+						foundCount = foundCount + 1
 						break
 					end
 				end
 			end
 
-			if #found < #required then
+			if foundCount < #required then
 				local str = {}
 
-				for _, ext in ipairs(required) do
-					if not table.HasValue(found, ext) then
-						table.insert(str, ext)
+				for i = 1, #required do
+					local ext = required[i]
+
+					if not ext[2] then
+						table_insert(str, ext[1])
 					end
 				end
 
@@ -349,7 +377,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			do -- hex models
 				local found_vmt_directories = {}
 
-				for i, data in ipairs(files) do
+				for i = 1, #files do
+					local data = files[i]
+
 					if data.file_name:EndsWith(".mdl") then
 						local found_materials = {}
 						local found_materialdirs = {}
@@ -407,7 +437,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								local material_name = (f:readString() .. ".vmt"):lower()
 								local found = false
 
-								for i, v in pairs(files) do
+								for i = 1, #files do
+									local v = files[i]
+
 									if v.file_name == material_name then
 										found = v.file_path
 										break
@@ -419,9 +451,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 
 								if not found then
-									for i, v in pairs(files) do
+									for i = 1, #files do
+										local v = files[i]
+
 										if string.find(v.file_path, material_name, 1, true) or string.find(material_name, v.file_name, 1, true) then
-											table.insert(files, {file_name = material_name, buffer = v.buffer, crc = v.crc, file_path = v.file_path})
+											table_insert(files, {file_name = material_name, buffer = v.buffer, crc = v.crc, file_path = v.file_path})
 											found = v.file_path
 											break
 										end
@@ -429,24 +463,24 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 
 								if not found then
-									if ply == pac.LocalPlayer then
+									if is_localplayer then
 										pac.Message(Color(255, 50,50), url, " the model wants to find ", material_name , " but it was not found in the zip archive")
 									end
+
 									local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
-									table.insert(files, {file_name = material_name, buffer = dummy, crc = util.CRC(dummy), file_path = material_name})
+									table_insert(files, {file_name = material_name, buffer = dummy, crc = util.CRC(dummy), file_path = material_name})
 								end
 
-								table.insert(found_materials, {name = material_name, offset = material_name_pos})
+								table_insert(found_materials, {name = material_name, offset = material_name_pos})
 								f:seek(material_end)
 							end
 
-							if ply == pac.LocalPlayer and #found_materials == 0 then
+							if is_localplayer and found_materials[1] == nil then
 								pac.Message(Color(255, 200, 50), url, ": could not find any materials in this model")
 							end
 
 							f:seek(old_pos)
 						end
-
 
 						do
 							vtf_dir_count = f:readUInt32()
@@ -454,6 +488,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 							local old_pos = f:tell()
 							f:seek(vtf_dir_offset)
+
 							for i = 1, vtf_dir_count do
 								local offset_pos = f:tell()
 								local offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
@@ -461,11 +496,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								local old_pos = f:tell()
 								f:seek(offset)
 								local dir = f:readString()
-								table.insert(found_materialdirs, {offset_pos = offset_pos, offset = offset, dir = dir})
-								table.insert(found_vmt_directories, {dir = dir})
+								table_insert(found_materialdirs, {offset_pos = offset_pos, offset = offset, dir = dir})
+								table_insert(found_vmt_directories, {dir = dir})
 								f:seek(old_pos)
 							end
-							table.sort(found_vmt_directories, function(a,b) return #a.dir>#b.dir end)
+
+							table.sort(found_vmt_directories, function(a, b) return #a.dir > #b.dir end)
 							f:seek(old_pos)
 						end
 
@@ -498,8 +534,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local file_name_offset = f:readUInt32()
 								local old_pos = f:tell()
-									f:seek(base_pos + file_name_offset)
-									table.insert(found_mdl_includes, {base_pos = base_pos, path = f:readString()})
+								f:seek(base_pos + file_name_offset)
+								table_insert(found_mdl_includes, {base_pos = base_pos, path = f:readString()})
+
 								f:seek(old_pos)
 							end
 
@@ -528,11 +565,15 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							f:write(newname .. string.rep("\0", 64-#newname))
 						end
 
-						for i,v in ipairs(found_mdl_includes) do
-							local file_name = (v.path:match(".+/(.+)") or v.path)
+						for i = 1, #found_mdl_includes do
+							local v = found_mdl_includes[i]
+
+							local file_name = v.path:match(".+/(.+)") or v.path
 							local found = false
 
-							for _, info in ipairs(files) do
+							for i = 1, #files do
+								local info = files[i]
+
 								if info.file_path == file_name then
 									file_name = info.file_name
 									found = true
@@ -543,22 +584,23 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							if found then
 								local path = "models/" .. dir .. file_name
 								local newoffset = f:size() + 1
+
 								f:seek(newoffset)
 								f:writeString(path)
 								f:seek(v.base_pos + 4)
 								f:writeInt32(newoffset - v.base_pos)
-							elseif ply == pac.LocalPlayer and not file.Exists(v.path, "GAME") then
+							elseif is_localplayer and not file.Exists(v.path, "GAME") then
 								pac.Message(Color(255, 50, 50), "the model want to include ", v.path, " but it doesn't exist")
 							end
 						end
 
 						-- if we extend the mdl file with vmt directories we don't have to change any offsets cause nothing else comes after it
 						if data.file_name == "model.mdl" then
-							for i,v in ipairs(found_materialdirs) do
+							for i = 1, #found_materialdirs do
 								local newoffset = f:size() + 1
 								f:seek(newoffset)
 								f:writeString(dir)
-								f:seek(v.offset_pos)
+								f:seek(found_materialdirs[i].offset_pos)
 								f:writeInt32(newoffset - 1) -- -1 to convert 1 indexed to 0 indexed
 							end
 						else
@@ -573,10 +615,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						local cursize = f:size()
 
 						-- Add nulls to align to 4 bytes
-						local padding = 4-cursize%4
-						if padding<4 then
-							f:seek(cursize+1)
-							f:write(string.rep("\0",padding))
+						local padding = 4 - cursize % 4
+						if padding < 4 then
+							f:seek(cursize + 1)
+							f:write(string.rep("\0", padding))
 							cursize = cursize + padding
 						end
 
@@ -586,7 +628,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						data.buffer = f:getString()
 
 						if DEBUG_MDL then
-							file.Write(data.file_name..".debug.new.dat", data.buffer)
+							file.Write(data.file_name .. ".debug.new.dat", data.buffer)
 						end
 
 						local crc = pac.StringStream()
@@ -595,7 +637,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 
-				for i, data in ipairs(files) do
+				for i = 1, #files do
+					local data = files[i]
+
 					if data.file_name:EndsWith(".vmt") then
 						local proxies = data.buffer:match('("?%f[%w_]P?p?roxies%f[^%w_]"?%s*%b{})')
 						data.buffer = data.buffer:lower():gsub("\\", "/")
@@ -608,14 +652,17 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							print(data.file_name .. ":")
 						end
 
-						for shader_param in pairs(texture_keys) do
+						for i = 1, #texture_keys_seq do
+							local shader_param = texture_keys_seq[i]
+
 							data.buffer = data.buffer:gsub('("?%$?%f[%w_]' .. shader_param .. '%f[^%w_]"?%s+"?)([^"%c]+)("?%s?)', function(l, vtf_path, r)
 								if vtf_path == "env_cubemap" then
 									return
 								end
 
 								local new_path
-								for _, info in ipairs(found_vmt_directories) do
+								for i = 1, #found_vmt_directories do
+									local info = found_vmt_directories[i]
 									if info.dir == "" then continue end
 
 									new_path, count = vtf_path:gsub("^" .. info.dir:gsub("\\", "/"):lower(), dir)
@@ -627,8 +674,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 
 								if not new_path then
-									for _, info in ipairs(files) do
+									for i = 1, #files do
+										local info = files[i]
 										local vtf_name = (vtf_path:match(".+/(.+)") or vtf_path)
+
 										if info.file_name:EndsWith(".vtf") then
 											if info.file_name == vtf_name .. ".vtf" or info.file_name == vtf_name then
 												new_path = dir .. vtf_name
@@ -644,12 +693,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 
 								if not new_path then
-									if not file.Exists("materials/" .. vtf_path .. ".vtf", "GAME") then
-										if ply == pac.LocalPlayer then
-											pac.Message(Color(255, 50, 50), "vmt ", data.file_name, " wants to find texture materials/", vtf_path, ".vtf for $", shader_param ," but it doesn't exist")
-											print(data.buffer)
-										end
+									if is_localplayer and not file.Exists("materials/" .. vtf_path .. ".vtf", "GAME") then
+										pac.Message(Color(255, 50, 50), "vmt ", data.file_name, " wants to find texture materials/", vtf_path, ".vtf for $", shader_param, " but it doesn't exist")
+										print(data.buffer)
 									end
+
 									new_path = vtf_path -- maybe it's a special texture? in that case i need to it
 								end
 
@@ -699,21 +747,28 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			f:Write("author here")f:WriteByte(0)
 			f:WriteLong(1)
 
-			for i, data in ipairs(files) do
+			for i = 1, #files do
+				local data = files[i]
+
 				f:WriteLong(i)
+
 				if data.file_name:EndsWith(".vtf") or data.file_name:EndsWith(".vmt") then
-					f:Write("materials/" .. dir .. data.file_name:lower())f:WriteByte(0)
+					f:Write("materials/" .. dir .. data.file_name:lower())
+					f:WriteByte(0)
 				else
-					f:Write("models/" .. dir .. data.file_name:lower())f:WriteByte(0)
+					f:Write("models/" .. dir .. data.file_name:lower())
+					f:WriteByte(0)
 				end
-				f:WriteLong(#data.buffer)f:WriteLong(0)
+
+				f:WriteLong(#data.buffer)
+				f:WriteLong(0)
 				f:WriteLong(data.crc)
 			end
 
 			f:WriteLong(0)
 
-			for i, data in ipairs(files) do
-				f:Write(data.buffer)
+			for i = 1, #files do
+				f:Write(files[i].buffer)
 			end
 
 			f:Flush()
@@ -730,7 +785,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			return
 		end
 
-		for k,v in pairs(tbl) do
+		-- tbl from game.MountGMA is a sequential list of file paths
+		for i = 1, #tbl do
+			local v = tbl[i]
+
 			if v:EndsWith("model.mdl") then
 				if VERBOSE and not DEBUG_MDL then
 					print("util.IsValidModel: ", tostring(util.IsValidModel(v)))

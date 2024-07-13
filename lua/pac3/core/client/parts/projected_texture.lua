@@ -2,7 +2,7 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "projected_texture"
 PART.Group = "effects"
-PART.Icon = 'icon16/lightbulb.png'
+PART.Icon = "icon16/lightbulb.png"
 PART.ProperColorRange = true
 
 BUILDER:StartStorableVars()
@@ -32,7 +32,7 @@ function PART:GetProjectedTexture()
 end
 
 function PART:GetNiceName()
-	local hue = pac.ColorToNames(self:GetColor())
+	local hue = pac.VectorColorToNames(self:GetColor())
 	return hue .. " projected texture"
 end
 
@@ -69,10 +69,9 @@ function PART:OnDraw()
 	ptex:Update()
 end
 
-
 function PART:SetColor(val)
 	self.Color = val
-	self:GetProjectedTexture():SetColor(Color(val.x*255, val.y*255, val.z*255, 1))
+	self:GetProjectedTexture():SetColor(Color(val.x * 255, val.y * 255, val.z * 255, 1))
 end
 
 function PART:SetBrightness(val)
@@ -94,7 +93,6 @@ function PART:SetHorizontalFOV(val)
 	self.HorizontalFOV = val
 	self:GetProjectedTexture():SetHorizontalFOV(val)
 end
-
 
 function PART:SetFOV(val)
 	self.FOV = val
@@ -119,7 +117,7 @@ end
 function PART:SetTextureFrame(val)
 	self.TextureFrame = val
 	if self.vtf_frame_limit then
-		self:GetProjectedTexture():SetTextureFrame(math.abs(val)%self.vtf_frame_limit)
+		self:GetProjectedTexture():SetTextureFrame(math.abs(val) % self.vtf_frame_limit)
 	else
 		self:GetProjectedTexture():SetTextureFrame(math.abs(val))
 	end
@@ -144,14 +142,17 @@ end
 
 function PART:OnHide()
 	local tex = self:GetProjectedTexture()
+
 	tex:SetBrightness(0)
 	tex:Update()
+
 	-- give it one frame to update
 	timer.Simple(0, function()
 		if tex:IsValid() then
 			tex:Remove()
 		end
 	end)
+
 	self.ptex = nil
 end
 

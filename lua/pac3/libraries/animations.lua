@@ -1,3 +1,5 @@
+local ipairs = ipairs
+
 local animations = pac.animations or {}
 
 animations.playing = {}
@@ -310,7 +312,11 @@ local function GetFrameBoneInfo(ent, tGestureTable, iFrame, iBoneID)
 end
 
 local function ProcessAnimations(ent)
-	for name, tbl in pairs(ent.pac_animations) do
+	local entTbl = ent:GetTable()
+
+	if not entTbl.pac_animations then return end
+
+	for name, tbl in pairs(entTbl.pac_animations) do
 		local frame = tbl.Frame
 		local frame_data = tbl.FrameData[frame]
 		local frame_delta = tbl.FrameDelta
@@ -344,11 +350,11 @@ local function ProcessAnimations(ent)
 
 	animations.ResetEntityBoneMatrix(ent)
 
-	if not ent.pac_animations then return end
+	if not entTbl.pac_animations then return end
 
 	local tBuffer = {}
 
-	for _, tbl in pairs(ent.pac_animations) do
+	for _, tbl in pairs(entTbl.pac_animations) do
 		local iCurFrame = tbl.Frame
 		local tFrameData = tbl.FrameData[iCurFrame]
 		local fFrameDelta = tbl.FrameDelta
@@ -444,14 +450,17 @@ local function ProcessAnimations(ent)
 	end
 
 	for iBoneID, mMatrix in pairs(tBuffer) do
-		pac.SetEntityBoneMatrix(ent, iBoneID, mMatrix)
+		pac.SetEntityBoneMatrix(ent, iBoneID, mMatrix, entTbl)
 	end
 end
 
+function animations.ResetEntityBoneMatrix(ent, entTbl)
+	if not entTbl then
+		entTbl = ent:GetTable()
+	end
 
-function animations.ResetEntityBoneMatrix(ent)
-	for i=0, ent:GetBoneCount() - 1 do
-		pac.ResetEntityBoneMatrix(ent, i)
+	for i = 0, ent:GetBoneCount() - 1 do
+		pac.ResetEntityBoneMatrix(ent, i, entTbl)
 	end
 end
 
@@ -654,10 +663,8 @@ function animations.StopAllEntityAnimations(ent, time)
 end
 
 hook.Add("Think", "pac_custom_animations", function()
-	for i,v in ipairs(animations.playing) do
-		if v.pac_animations then
-			ProcessAnimations(v)
-		end
+	for _, v in ipairs(animations.playing) do
+		ProcessAnimations(v)
 	end
 end)
 

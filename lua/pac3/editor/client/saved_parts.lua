@@ -1,8 +1,12 @@
 local L = pace.LanguageString
+local file_Find = file.Find
+local file_Exists = file.Exists
+local file_Time = file.Time
+local file_Size = file.Size
+local table_insert = table.insert
 
 -- load only when hovered above
 local function add_expensive_submenu_load(pnl, callback, subdir)
-
 	local old = pnl.OnCursorEntered
 	pnl.OnCursorEntered = function(...)
 		callback(subdir)
@@ -21,7 +25,6 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 			L"save parts",
 			L"filename:",
 			prompt_name or pace.LastSaveName or "autoload",
-
 			function(name)
 				pace.LastSaveName = name
 				pace.SaveParts(name, nil, override_part, overrideAsUsual)
@@ -46,36 +49,39 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 			data = override_part:ToSaveTable()
 		end
 	elseif override_part then
-		table.insert(data, override_part:ToSaveTable())
+		table_insert(data, override_part:ToSaveTable())
 		override_part = nil
 	end
 
-	if #data == 0 then
+	if data[1] == nil then
 		for key, part in pairs(pac.GetLocalParts()) do
 			if not part:HasParent() and part:GetShowInEditor() then
-				table.insert(data, part:ToSaveTable())
+				table_insert(data, part:ToSaveTable())
 			end
 		end
 	end
 
 	data = pac.CallHook("pace.SaveParts", data) or data
 
-	if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
+	if not override_part and file_Find("pac3/sessions/*", "DATA")[1] ~= nil and not name:find("/") then
 		pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 	else
-		if file.Exists("pac3/" .. name .. ".txt", "DATA") then
+		if file_Exists("pac3/" .. name .. ".txt", "DATA") then
 			local date = os.date("%y-%m-%d-%H_%M_%S")
 			local read = file.Read("pac3/" .. name .. ".txt", "DATA")
+
 			file.Write("pac3/__backup_save/" .. name .. "_" .. date .. ".txt", read)
 
-			local files, folders = file.Find("pac3/__backup_save/*", "DATA")
+			local files, folders = file_Find("pac3/__backup_save/*", "DATA")
 
 			if #files > 30 then
 				local targetFiles = {}
 
-				for i, filename in ipairs(files) do
-					local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
-					table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
+				for i = 1, #files do
+					local filename = files[i]
+					local time = file_Time("pac3/__backup_save/" .. filename, "DATA")
+
+					table_insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
 				end
 
 				table.sort(targetFiles, function(a, b)
@@ -100,28 +106,27 @@ local autoload_prompt = CreateConVar("pac_prompt_for_autoload", "1", {FCVAR_ARCH
 local auto_spawn_prop = CreateConVar("pac_autoload_preferred_prop", "2", {FCVAR_ARCHIVE}, "When loading a pac with an owner name suggesting a prop, notify you and then wait before auto-applying the outfit next time you spawn a prop.\n" ..
 																								"0 : do not check\n1 : check if only 1 such group is present\n2 : check if multiple such groups are present and queue one group at a time")
 
-
 function pace.Backup(data, name)
 	name = name or ""
 
 	if not data then
 		data = {}
-		for key, part in pairs(pac.GetLocalParts()) do
+		for key, part in next, pac.GetLocalParts() do
 			if not part:HasParent() and part:GetShowInEditor()  then
-				table.insert(data, part:ToSaveTable())
+				table_insert(data, part:ToSaveTable())
 			end
 		end
 	end
 
-	if #data > 0 then
-
-		local files, folders = file.Find("pac3/__backup/*", "DATA")
+	if data[1] ~= nil then
+		local files, folders = file_Find("pac3/__backup/*", "DATA")
 
 		if #files > maxBackups:GetInt() then
 			local temp = {}
-			for key, name in pairs(files) do
-				local time = file.Time("pac3/__backup/" .. name, "DATA")
-				table.insert(temp, {path = "pac3/__backup/" .. name, time = time})
+			for i = 1, #files do
+				local filename = files[i]
+
+				table_insert(temp, {path = "pac3/__backup/" .. filename, time = file_Time("pac3/__backup/" .. filename, "DATA")})
 			end
 
 			table.sort(temp, function(a, b)
@@ -164,7 +169,6 @@ end
 
 
 function pace.LoadParts(name, clear, override_part)
-
 	if not name then
 		local frm = vgui.Create("DFrame")
 		frm:SetTitle(L"parts")
@@ -174,7 +178,7 @@ function pace.LoadParts(name, clear, override_part)
 			pace.LoadParts(node.FileName, clear, override_part)
 		end
 
-		if #file.Find("pac3/sessions/*", "DATA") > 0 then
+		if #file_Find("pac3/sessions/*", "DATA") > 0 then
 			pnl:SetDir("sessions/")
 		else
 			pnl:SetDir("")
@@ -202,7 +206,7 @@ function pace.LoadParts(name, clear, override_part)
 
 	else
 		if name ~= "autoload.txt" and not string.find(name, "pac3/__backup") then
-			if file.Exists("pac3/" .. name .. ".txt", "DATA") then
+			if file_Exists("pac3/" .. name .. ".txt", "DATA") then
 				cookie.Set( "pac_last_loaded_outfit", name .. ".txt" )
 			end
 		end
@@ -213,7 +217,6 @@ function pace.LoadParts(name, clear, override_part)
 		pac.dprint("loading Parts %s", name)
 
 		if name:find("https?://") then
-
 			local ext = name:match("/.+%.(%a+)[%?&]?.-")
 			if ext == "txt" then
 				local function callback(str)
@@ -279,7 +282,6 @@ function pace.LoadParts(name, clear, override_part)
 						pace.LoadPartsFromTable(part, false, false)
 					end
 				end
-
 			else
 				if name == "autoload" and (not data or not next(data)) then
 					data, err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt", nil, true)
@@ -335,14 +337,14 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 			part = override_part or pac.CreatePart(data.self.ClassName, nil, data, pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), data.self.UniqueID):IsValid() and copy_id)
 		end
 
-		table.insert(partsLoaded, part)
+		table_insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
 		data = pace.FixUniqueIDs(data)
 
 		for key, tbl in pairs(data) do
 			local part = pac.CreatePart(tbl.self.ClassName, nil, tbl, pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), tbl.self.UniqueID):IsValid() and copy_id)
-			table.insert(partsLoaded, part)
+			table_insert(partsLoaded, part)
 		end
 	end
 
@@ -359,42 +361,47 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 end
 
 local function add_files(tbl, dir)
-	local files, folders = file.Find("pac3/" .. dir .. "/*", "DATA")
+	local files, folders = file_Find("pac3/" .. dir .. "/*", "DATA")
 
 	if folders then
-		for key, folder in pairs(folders) do
+		for i = 1, #folders do
+			local folder = folders[i]
+
 			if folder == "__backup" or folder == "objcache" or folder == "__animations" or folder == "__backup_save" then continue end
+
 			tbl[folder] = {}
 			add_files(tbl[folder], dir .. "/" .. folder)
 		end
 	end
 
 	if files then
-		for i, name in pairs(files) do
+		for i = 1, #files do
+			local name = files[i]
+
 			if name:find("%.txt") then
 				local path = "pac3/" .. dir .. "/" .. name
 
-				if file.Exists(path, "DATA") then
+				if file_Exists(path, "DATA") then
+					local time = file_Time(path, "DATA")
+
 					local data = {}
-						data.Name = name:gsub("%.txt", "")
-						data.FileName = name
-						data.Size = string.NiceSize(file.Size(path, "DATA"))
-						local time = file.Time(path, "DATA")
-						data.LastModified = os.date("%m/%d/%Y %H:%M", time)
-						data.Time = file.Time(path, "DATA")
-						data.Path = path
-						data.RelativePath = (dir .. "/" .. data.Name):sub(2)
+					data.Name = name:gsub("%.txt", "")
+					data.FileName = name
+					data.Size = string.NiceSize(file_Size(path, "DATA"))
+					data.LastModified = os.date("%m/%d/%Y %H:%M", time)
+					data.Time = time
+					data.Path = path
+					data.RelativePath = (dir .. "/" .. data.Name):sub(2)
 
 					local dat, err = pace.luadata.ReadFile(path)
 						data.Content = dat
 
 					if dat then
-						table.insert(tbl, data)
+						table_insert(tbl, data)
 					else
 						pac.dprint(("Decoding %s failed: %s\n"):format(path, err))
 						chat.AddText(("Could not load: %s\n"):format(path))
 					end
-
 				end
 			end
 		end
@@ -510,22 +517,27 @@ function pace.AddOneDirectorySavedPartsToMenu(menu, subdir, nicename)
 	if nicename then exp_submenu:SetText(nicename) end
 
 	add_expensive_submenu_load(pnl, function(subdir)
-		local files = file.Find(subdir .. "/*", "DATA")
+		local files = file_Find(subdir .. "/*", "DATA")
 		local files2 = {}
 		--PrintTable(files)
-		for i, filename in ipairs(files) do
-			table.insert(files2, {filename, file.Time(subdir .. filename, "DATA")})
+
+		for i = 1, #files do
+			local name = files[i]
+			table_insert(files2, {filename, file_Time(subdir .. filename, "DATA")})
 		end
 
 		table.sort(files2, function(a, b)
 			return a[2] > b[2]
 		end)
 
-		for _, data in pairs(files2) do
+		for i = 1, #files2 do
+			local data = files2[i]
 			local name = data[1]
 			local full_path = subdir .. "/" .. name
 			--print(full_path)
-			local friendly_name = name .. " " .. string.NiceSize(file.Size(full_path, "DATA"))
+
+			local friendly_name = name .. " " .. string.NiceSize(file_Size(full_path, "DATA"))
+
 			exp_submenu:AddOption(friendly_name, function() pace.LoadParts(subdir_head .. name, true) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
@@ -591,22 +603,26 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	local subdir = "pac3/__backup/*"
 
 	add_expensive_submenu_load(pnl, function(subdir)
-
-		local files = file.Find("pac3/__backup/*", "DATA")
+		local files = file_Find("pac3/__backup/*", "DATA")
 		local files2 = {}
 
-		for i, filename in ipairs(files) do
-			table.insert(files2, {filename, file.Time("pac3/__backup/" .. filename, "DATA")})
+		for i = 1, #files do
+			local name = files[i]
+
+			table_insert(files2, {name, file_Time("pac3/__backup/" .. name, "DATA")})
 		end
 
 		table.sort(files2, function(a, b)
 			return a[2] > b[2]
 		end)
 
-		for _, data in pairs(files2) do
+		for i = 1, #files2 do
+			local data = files2[i]
 			local name = data[1]
 			local full_path = "pac3/__backup/" .. name
-			local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file.Time(full_path, "DATA")) .. string.NiceSize(file.Size(full_path, "DATA"))
+
+			local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file_Time(full_path, "DATA")) .. string.NiceSize(file_Size(full_path, "DATA"))
+
 			backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
@@ -618,18 +634,21 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 
 	subdir = "pac3/__backup_save/*"
 	add_expensive_submenu_load(pnl, function()
-		local files = file.Find(subdir, "DATA")
+		local files = file_Find(subdir, "DATA")
 		local files2 = {}
 
-		for i, filename in ipairs(files) do
-			table.insert(files2, {filename, file.Time("pac3/__backup_save/" .. filename, "DATA")})
+		for i = 1, #files do
+			local name = files[i]
+
+			table_insert(files2, {name, file_Time("pac3/__backup_save/" .. name, "DATA")})
 		end
 
 		table.sort(files2, function(a, b)
 			return a[2] > b[2]
 		end)
 
-		for _, data in pairs(files2) do
+		for i = 1, #files2 do
+			local data = files2[i]
 			local name = data[1]
 			local stamp = data[2]
 			local nicename = name
@@ -639,7 +658,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				nicename = nicename:Replace(date, os.date(" %m/%d/%Y %H:%M:%S", stamp))
 			end
 
-			backups:AddOption(nicename:Replace(".txt", "") .. " (" .. string.NiceSize(file.Size("pac3/__backup_save/" .. name, "DATA")) .. ")",
+			backups:AddOption(nicename:Replace(".txt", "") .. " (" .. string.NiceSize(file_Size("pac3/__backup_save/" .. name, "DATA")) .. ")",
 				function()
 					pace.LoadParts("__backup_save/" .. name, true)
 				end)
@@ -671,7 +690,7 @@ local function populate_parts(menu, tbl, dir, override_part)
 		local data = {}
 		for key, part in pairs(pac.GetLocalParts()) do
 			if not part:HasParent() and part:GetShowInEditor() then
-				table.insert(data, part:ToSaveTable())
+				table_insert(data, part:ToSaveTable())
 			end
 		end
 		SetClipboardText(pace.luadata.Encode(data):sub(1, -1))
@@ -716,29 +735,27 @@ local function populate_parts(menu, tbl, dir, override_part)
 
 				L"yes", function()
 					local function delete_directory(dir)
-						local files, folders = file.Find(dir .. "*", "DATA")
+						local files, folders = file_Find(dir .. "*", "DATA")
 
-						for k, v in ipairs(files) do
-							file.Delete(dir .. v)
+						for i = 1, #files do
+							file.Delete(dir .. files[i])
 						end
 
-						for k, v in ipairs(folders) do
-							delete_directory(dir .. v .. "/")
+						for i = 1, #folders do
+							delete_directory(dir .. folders[i] .. "/")
 						end
 
-						if file.Find(dir .. "*", "DATA")[1] then
+						if file_Find(dir .. "*", "DATA")[1] then
 							Derma_Message("Cannot remove the directory.\nMaybe it contains hidden files?", "unable to remove directory", L"ok")
 						else
 							file.Delete(dir)
 						end
 					end
+
 					delete_directory("pac3/" .. dir .. "/")
 					pace.RefreshFiles()
 				end,
-
-				L"no", function()
-
-				end
+				L"no", function() end
 			)
 		end):SetImage("icon16/folder_delete.png")
 	end
@@ -767,7 +784,7 @@ function pace.FixUniqueIDs(data)
 	local function iterate(part)
 		ids[part.self.UniqueID] = ids[part.self.UniqueID] or {}
 
-		table.insert(ids[part.self.UniqueID], part)
+		table_insert(ids[part.self.UniqueID], part)
 
 		for key, part in pairs(part.children) do
 			iterate(part)
@@ -798,9 +815,9 @@ function pace.FixBadGrouping(data)
 
 	for key, part in pairs(data) do
 		if part.self.ClassName ~= "group" then
-			table.insert(parts, part)
+			table_insert(parts, part)
 		else
-			table.insert(other, part)
+			table_insert(other, part)
 		end
 	end
 
@@ -819,7 +836,7 @@ function pace.FixBadGrouping(data)
 		}
 
 		for k, v in pairs(other) do
-			table.insert(out, v)
+			table_insert(out, v)
 		end
 
 		return out

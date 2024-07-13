@@ -1,13 +1,16 @@
-local ipairs = ipairs
-local table_insert = table.insert
-local isnumber = isnumber
-local tonumber = tonumber
-local isstring = isstring
-local tostring = tostring
-local table_Merge = table.Merge
-local istable = istable
 local pac = pac
+local isnumber = isnumber
+local istable = istable
+local isstring = isstring
+local tonumber = tonumber
+local tostring = tostring
 local setmetatable = setmetatable
+local table_insert = table.insert
+local table_Merge = table.Merge
+
+local prefix_get = "Get"
+local prefix_set = "Set"
+local suffix_uid = "UID"
 
 pac.PartTemplates = pac.PartTemplates or {}
 pac.VariableOrder = {}
@@ -57,8 +60,8 @@ do
 	end
 
 	local function insert_key(tbl, key)
-		for _, k in ipairs(tbl) do
-			if k == key then
+		for i = 1, #tbl do
+			if tbl[i] == key then
 				return
 			end
 		end
@@ -67,7 +70,6 @@ do
 	end
 
 	function META:SetPropertyGroup(name)
-
 		local tbl = self.PART
 
 		self.group = name
@@ -102,15 +104,18 @@ do
 		pac.VariableOrder[tbl.ClassName] = pac.VariableOrder[tbl.ClassName] or {}
 		insert_key(pac.VariableOrder[tbl.ClassName], key)
 
+		local setKey = prefix_set .. key
+		local getKey = prefix_get .. key
+
 		if isnumber(def) then
-			tbl["Set" .. key] = tbl["Set" .. key] or function(self, var) self[key] = tonumber(var) end
-			tbl["Get" .. key] = tbl["Get" .. key] or function(self) return tonumber(self[key]) end
+			tbl[setKey] = tbl[setKey] or function(self, var) self[key] = tonumber(var) end
+			tbl[getKey] = tbl[getKey] or function(self) return tonumber(self[key]) end
 		elseif isstring(def) then
-			tbl["Set" .. key] = tbl["Set" .. key] or function(self, var) self[key] = tostring(var) end
-			tbl["Get" .. key] = tbl["Get" .. key] or function(self) return tostring(self[key]) end
+			tbl[setKey] = tbl[setKey] or function(self, var) self[key] = tostring(var) end
+			tbl[getKey] = tbl[getKey] or function(self) return tostring(self[key]) end
 		else
-			tbl["Set" .. key] = tbl["Set" .. key] or function(self, var) self[key] = var end
-			tbl["Get" .. key] = tbl["Get" .. key] or function(self) return self[key] end
+			tbl[setKey] = tbl[setKey] or function(self, var) self[key] = var end
+			tbl[getKey] = tbl[getKey] or function(self) return self[key] end
 		end
 
 		tbl[key] = def
@@ -137,12 +142,16 @@ do
 
 		local PART = self.PART
 
-		self:GetSet(key .. "UID", "", udata)
+		local setKey = prefix_set .. key
+		local getKey = prefix_get .. key
+		local uidKey = key .. suffix_uid
 
-		PART["Set" .. key .. "UID"] = function(self, uid)
+		self:GetSet(uidKey, "", udata)
+
+		PART[setKey .. suffix_uid] = function(self, uid)
 			if uid == "" or not uid then
-				self["Set" .. key](self, NULL)
-				self[key.."UID"] = ""
+				self[setKey](self, NULL)
+				self[uidKey] = ""
 				return
 			end
 
@@ -150,7 +159,7 @@ do
 				uid = uid.UniqueID
 			end
 
-			self[key.."UID"] = uid
+			self[uidKey] = uid
 
 			local owner_id = self:GetPlayerOwnerId()
 			local part = pac.GetPartFromUniqueID(owner_id, uid)
@@ -158,10 +167,10 @@ do
 			if part:IsValid() then
 				if part == self then
 					part = NULL
-					self[key.."UID"] = ""
+					self[uidKey] = ""
 				end
 
-				self["Set" .. key](self, part)
+				self[setKey](self, part)
 			elseif uid ~= "" then
 				self.unresolved_uid_parts = self.unresolved_uid_parts or {}
 				self.unresolved_uid_parts[owner_id] = self.unresolved_uid_parts[owner_id] or {}
@@ -170,15 +179,15 @@ do
 			end
 		end
 
-		PART["Set" .. key] = PART["Set" .. key] or function(self, var)
+		PART[setKey] = PART[setKey] or function(self, var)
 			self[key] = var
 			if var and var:IsValid() then
-				self[key.."UID"] = var:GetUniqueID()
+				self[uidKey] = var:GetUniqueID()
 			else
-				self[key.."UID"] = ""
+				self[uidKey] = ""
 			end
 		end
-		PART["Get" .. key] = PART["Get" .. key] or function(self) return self[key] end
+		PART[getKey] = PART[getKey] or function(self) return self[key] end
 		PART[key] = NULL
 
 		PART.PartReferenceKeys = PART.PartReferenceKeys or {}
@@ -188,8 +197,8 @@ do
 	end
 
 	function META:RemoveProperty(key)
-		self.PART["Set" .. key] = nil
-		self.PART["Get" .. key] = nil
+		self.PART[prefix_set .. key] = nil
+		self.PART[prefix_get .. key] = nil
 		self.PART["Is" .. key] = nil
 		self.PART[key] = nil
 

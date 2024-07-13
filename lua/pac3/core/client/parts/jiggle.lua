@@ -1,15 +1,16 @@
-local FrameTime = FrameTime
+local physenv_GetGravity = physenv.GetGravity
 local util_QuickTrace = util.QuickTrace
+local math_AngleDifference = math.AngleDifference
+local FrameTime = FrameTime
 local VectorRand = VectorRand
 local Vector = Vector
 local Angle = Angle
-local physenv_GetGravity = physenv.GetGravity
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "jiggle"
-PART.Group = 'model'
-PART.Icon = 'icon16/chart_line.png'
+PART.Group = "model"
+PART.Icon = "icon16/chart_line.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Strain", 0.5, {editor_onchange = function(self, num)
@@ -36,8 +37,6 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("Ground", false)
 	BUILDER:GetSet("ResetOnHide", false)
 BUILDER:EndStorableVars()
-
-local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
 	local pos, ang = self:GetDrawPosition()
@@ -83,16 +82,20 @@ function PART:OnDraw()
 		self.first_time_reset = false
 	end
 
-	local delta = FrameTime()
-	local speed = self.Speed * delta
+	if not self.pos then
+		self.pos = pos * 1
+	end
 
-	self.vel = self.vel or VectorRand()
-	self.pos = self.pos or pos * 1
-
-	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then
+	if self.StopRadius ~= 0 and self.pos:DistToSqr(pos) < (self.StopRadius ^ 2) then
 		self.vel = Vector()
 		return
 	end
+
+	if not self.vel then
+		self.vel = VectorRand()
+	end
+
+	local speed = self.Speed * FrameTime()
 
 	if self.JigglePosition then
 		if not self.ConstrainX then
@@ -148,9 +151,9 @@ function PART:OnDraw()
 	end
 
 	if self.ConstrainSphere > 0 then
-		local len = math.min(self.pos:Distance(pos), self.ConstrainSphere)
+		local diff = self.pos - pos
 
-		self.pos = pos + (self.pos - pos):GetNormalized() * len
+		self.pos = pos + (diff:GetNormalized() * math.min(diff:Length(), self.ConstrainSphere))
 	end
 
 	if self.JiggleAngle then

@@ -11,17 +11,20 @@ pac.EffectsBlackList =
 
 if not pac_loaded_particle_effects then
 	pac_loaded_particle_effects = {}
+
 	local files = file.Find("particles/*.pcf", "GAME")
 
-	for key, file_name in pairs(files) do
-		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
-			game.AddParticles("particles/" .. file_name)
+	for i = 1, #files do
+		local path = files[i]
+
+		if not pac_loaded_particle_effects[path] and not pac.BlacklistedParticleSystems[path:lower()] then
+			game.AddParticles("particles/" .. path)
 		end
 
-		pac_loaded_particle_effects[file_name] = true
+		pac_loaded_particle_effects[path] = true
 	end
 
-	pac.Message('Loaded total ', #files, ' particle systems')
+	pac.Message("Loaded total ", #files, " particle systems")
 end
 
 util.AddNetworkString("pac_effect_precached")
@@ -29,6 +32,7 @@ util.AddNetworkString("pac_request_precache")
 
 function pac.PrecacheEffect(name)
 	PrecacheParticleSystem(name)
+
 	net.Start("pac_effect_precached")
 	net.WriteString(name)
 	net.Broadcast()
@@ -42,18 +46,22 @@ net.Receive("pac_request_precache", function(len, pl)
 	-- Each player gets a 50 length queue
 	local plqueue = queue[pl]
 	if plqueue then
-		if #plqueue<50 then plqueue[#plqueue+1] = name end
+		if #plqueue < 50 then
+			plqueue[#plqueue + 1] = name
+		end
 	else
 		plqueue = {name}
 		queue[pl] = plqueue
+
 		local function processQueue()
-			if #plqueue == 0 then
-				queue[pl] = nil
-			else
+			if plqueue[1] ~= nil then
 				timer.Simple(0.5, processQueue)
-				pac.PrecacheEffect(table.remove(plqueue,1))
+				pac.PrecacheEffect(table.remove(plqueue, 1))
+			else
+				queue[pl] = nil
 			end
 		end
+
 		processQueue()
 	end
 end)
