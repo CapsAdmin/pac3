@@ -2429,7 +2429,6 @@ if SERVER then
 		end)
 	end
 
-	local active_healthmod_bars = {}
 	local function DeclareHealthModifierReceivers()
 		util.AddNetworkString("pac_request_healthmod")
 		util.AddNetworkString("pac_update_healthbars")
@@ -2494,7 +2493,6 @@ if SERVER then
 				local follow = net.ReadBool()
 
 				UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow)
-				active_healthmod_bars[part_uid] = ply.pac_healthmods[part_uid]
 
 			elseif action == "OnRemove" then
 				if ply.pac_damage_scalings then
