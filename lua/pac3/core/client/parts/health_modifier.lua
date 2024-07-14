@@ -242,6 +242,7 @@ concommand.Add("pac_healthbar", function(ply, cmd, args)
 		net.WriteInt(num, 16)
 		net.SendToServer()
 	end
-end, nil, "changes your health modifier's extra health value. arguments:\nuid or name: the unique ID or the name of the part\naction: add, subtract, refill, replenish, remove, set\nnumber")
+	if args[2] == nil then ply:PrintMessage(HUD_PRINTCONSOLE, "\nthis command needs at least two arguments.\nuid or name: the unique ID or the name of the part\naction: add, subtract, refill, replenish, remove, set\nnumber\n\nexample: pac_healthbar my_healthmod add 50\n") end
+end, nil, "changes your health modifier's extra health value. arguments:\nuid or name: the unique ID or the name of the part\naction: add, subtract, refill, replenish, remove, set\nnumber\n\nexample: pac_healthbar my_healthmod add 50")
 
 BUILDER:Register()

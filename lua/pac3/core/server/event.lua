@@ -15,7 +15,10 @@ end)
 
 -- event
 concommand.Add("pac_event", function(ply, _, args)
-	if not args[1] then return end
+	if args[1] == nil then
+		ply:PrintMessage(HUD_PRINTCONSOLE, "\npac_event needs at least one argument.\nname: any name, preferably without spaces\nmode: a number.\n\t0 turns off\n\t1 turns on\n\t2 toggles on/off\n\twithout a second argument, the event is a single-shot\n\ne.g. pac_event light 2\n")
+		return
+	end
 
 	local event = args[1]
 	local extra = tonumber(args[2]) or 0
@@ -35,10 +38,13 @@ concommand.Add("pac_event", function(ply, _, args)
 	ply.pac_command_events = ply.pac_command_events or {}
 	ply.pac_command_events[event] = ply.pac_command_events[event] or {}
 	ply.pac_command_events[event] = {name = event, time = pac.RealTime, on = extra}
-end)
+end, nil, "pac_event triggers command events. it needs at least one argument.\nname: any name, preferably without spaces\nmode: a number.\n\t0 turns off\n\t1 turns on\n\t2 toggles on/off\n\twithout a second argument, the event is a single-shot\n\ne.g. pac_event light 2")
 
 concommand.Add("+pac_event", function(ply, _, args)
-	if not args[1] then return end
+	if not args[1] then
+		ply:PrintMessage(HUD_PRINTCONSOLE, "+pac_event needs a name argument, and the toggling argument. e.g. +pac_event hold_light 2\nwithout the toggling arg, implicitly adds _on to the command name, like running \"pac_event name_on\", and \"pac_event name_off\" when released")
+		return
+	end
 
 	if args[2] == "2" or args[2] == "toggle" then
 		local event = args[1]
@@ -56,10 +62,13 @@ concommand.Add("+pac_event", function(ply, _, args)
 			net.WriteString(args[1] .. "_on")
 		net.Broadcast()
 	end
-end)
+end, nil, "activates a command event when bound. \ne.g. \"+pac_event name\" will run \"pac_event name_on\" when the button is held, \"pac_event name_off\" when the button is held. Take note these are instant commands, they would need a command event with duration.\nmeanwhile, \"+pac_event name 2\" will run \"pac_event name 1\" when the button is held, \"pac_event name 0\" when the button is held. Take note these are held commands.")
 
 concommand.Add("-pac_event", function(ply, _, args)
-	if not args[1] then return end
+	if not args[1] then
+		ply:PrintMessage(HUD_PRINTCONSOLE, "-pac_event needs a name argument, and the toggling argument. e.g. +pac_event hold_light 2\nwithout the toggling arg, implicitly adds _on to the command name, like running \"pac_event name_off\"")
+		return
+	end
 
 	if args[2] == "2" or args[2] == "toggle" then
 		local event = args[1]
@@ -81,6 +90,10 @@ end)
 -- proxy
 concommand.Add("pac_proxy", function(ply, _, args)
 	str = args[1]
+	if args[1] == nil then
+		ply:PrintMessage(HUD_PRINTCONSOLE, "\npac_proxy needs at least two arguments.\nname\nnumber, or a series of numbers for a vector. increment notation is available, such as ++1 or --1.\ne.g. pac_proxy myvector 1 2 3\ne.g. pac_proxy value ++5")
+		return
+	end
 
 	if ply:IsValid() then
 		ply.pac_proxy_events = ply.pac_proxy_events or {}
@@ -125,4 +138,4 @@ concommand.Add("pac_proxy", function(ply, _, args)
 	net.Broadcast()
 
 	--PrintTable(ply.pac_proxy_events[str])
-end)
+end, nil, "pac_proxy sets the number of a command function in a proxy. it is typically accessed as command(\"value\") needs at least two arguments.\nname: any name, preferably without spaces\nnumbers: a number, or a series of numbers for a vector. increment notation is available, such as ++1 and --1.\ne.g. pac_proxy myvector 1 2 3\ne.g. pac_proxy value ++5")
