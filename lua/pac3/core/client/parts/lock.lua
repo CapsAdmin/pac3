@@ -24,6 +24,13 @@ local convar_lock_max_grab_radius = GetConVar("pac_sv_lock_max_grab_radius")
 local convar_lock_teleport = GetConVar("pac_sv_lock_teleport")
 local convar_combat_enforce_netrate = GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside")
 
+--sorcerous hack fix
+if convar_lock == nil then timer.Simple(10, function() convar_lock = GetConVar("pac_sv_lock") end) end
+if convar_lock_grab == nil then timer.Simple(10, function() convar_lock_grab = GetConVar("pac_sv_lock_grab") end) end
+if convar_lock_teleport == nil then timer.Simple(10, function() convar_lock_teleport = GetConVar("pac_sv_lock_teleport") end) end
+if convar_lock_max_grab_radius == nil then timer.Simple(10, function() convar_lock_max_grab_radius = GetConVar("pac_sv_lock_max_grab_radius") end) end
+if convar_combat_enforce_netrate == nil then timer.Simple(10, function() convar_combat_enforce_netrate = GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside") end) end
+
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
@@ -310,7 +317,9 @@ function PART:OnShow()
 			self.resetting_condition = false
 		end
 	end
-	pac.AddHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview" .. self.UniqueID, function()
+	local hookID = "pace_draw_lockpart_preview" .. self.UniqueID
+	pac.AddHook("PostDrawOpaqueRenderables", hookID, function()
+		if not IsValid(self) then pac.RemoveHook("PostDrawOpaqueRenderables", hookID) return end
 		if self.TargetPart:IsValid() then
 			origin_part = self.TargetPart
 		else
