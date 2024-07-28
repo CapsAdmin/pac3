@@ -29,11 +29,13 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("RandomAngleVelocity", Vector(0,0,0))
 		BUILDER:GetSet("LocalAngleVelocity", Vector(0,0,0))
 	BUILDER:SetPropertyGroup("Physics")
-		BUILDER:GetSet("Mass", 100)
+		BUILDER:GetSet("Freeze", false, {description = "frozen like physgun"})
+		BUILDER:GetSet("Mass", 100, {editor_clamp = {0,50000}}) --there's actually a 50k limit
+		BUILDER:GetSet("ImpactSounds", true, {description = "allow physics impact sounds, applies to physical projectiles"})
 		BUILDER:GetSet("SurfaceProperties", "default", {enums = physprop_enums})
 		BUILDER:GetSet("RescalePhysMesh", false, {description = "experimental! tries to scale the collide mesh by the radius! Stay within  small numbers! 1 radius should be associated with a full-size model"})
 		BUILDER:GetSet("OverridePhysMesh", false, {description = "experimental! tries to redefine the projectile's model to change the physics mesh"})
-		BUILDER:GetSet("FallbackSurfpropModel", "models/props_junk/PopCan01a.mdl")
+		BUILDER:GetSet("FallbackSurfpropModel", "models/props_junk/PopCan01a.mdl", {editor_friendly = "collide mesh", editor_panel = "model"})
 		BUILDER:GetSet("Damping", 0)
 		BUILDER:GetSet("Gravity", true)
 		BUILDER:GetSet("Collisions", true)
@@ -264,6 +266,8 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			net.WriteBool(self.DrawShadow)
 			net.WriteBool(self.Sticky)
 			net.WriteBool(self.BulletImpact)
+			net.WriteBool(self.Freeze)
+			net.WriteBool(self.ImpactSounds)
 
 			--vectors
 			net.WriteVector(self.RandomAngleVelocity)
@@ -277,14 +281,21 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			net.WriteUInt(attract_ids[self.AttractMode] or 2,3)
 
 			--numbers
-			net.WriteUInt(self.Radius,12)
+			local using_decimal = (self.Radius % 1 ~= 0) and self.RescalePhysMesh
+			net.WriteBool(using_decimal)
+			if using_decimal then
+				net.WriteFloat(self.Radius)
+			else
+				net.WriteUInt(self.Radius,12)
+			end
+			
 			net.WriteUInt(self.DamageRadius,12)
 			net.WriteUInt(self.Damage,24)
-			net.WriteUInt(1000*self.Speed,16)
+			net.WriteInt(1000*self.Speed,18)
 			net.WriteUInt(self.Maximum,7)
 			net.WriteUInt(100*self.LifeTime,14) --might need decimals
 			net.WriteUInt(100*self.Delay,9) --might need decimals
-			net.WriteUInt(self.Mass,18)
+			net.WriteUInt(self.Mass,16)
 			net.WriteInt(100*self.Spread,10)
 			net.WriteInt(100*self.Damping,20) --might need decimals
 			net.WriteInt(self.Attract,14)
@@ -364,6 +375,15 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 				ent:PhysicsInitSphere(math.Clamp(self.Radius, 1, 500), self.SurfaceProperties)
 			else
 				ent:PhysicsInitBox(Vector(1,1,1) * - math.Clamp(self.Radius, 1, 500), Vector(1,1,1) * math.Clamp(self.Radius, 1, 500), self.SurfaceProperties)
+				if self.OverridePhysMesh then
+					local valid_fallback = util.IsValidModel( self.FallbackSurfpropModel ) and not IsUselessModel(self.FallbackSurfpropModel)
+					ent:PhysicsInitBox(Vector(1,1,1) * - math.Clamp(self.Radius, 1, 500), Vector(1,1,1) * math.Clamp(self.Radius, 1, 500), self.FallbackSurfpropModel)
+					if self.OverridePhysMesh and valid_fallback then
+						ent:SetModel(self.FallbackSurfpropModel)
+						ent:PhysicsInit(SOLID_VPHYSICS)
+						ent:GetPhysicsObject():SetMaterial(self.SurfaceProperties)
+					end
+				end
 			end
 
 			ent.RenderOverride = function()
@@ -471,6 +491,8 @@ function PART:SetMass(val)
 	local sv_max = GetConVar("pac_sv_projectile_max_mass"):GetInt()
 	if self.Mass > sv_max then
 		self:SetInfo("Your mass is beyond the server's maximum permitted! Server max is " .. sv_max)
+	elseif val > 50000 then
+		self:SetInfo("The game has a maximum of 50k mass")
 	else
 		self:SetInfo(nil)
 	end

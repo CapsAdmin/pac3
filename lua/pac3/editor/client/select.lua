@@ -334,7 +334,23 @@ function pace.SelectBone(ent, callback, only_movable)
 	)
 end
 
-function pace.SelectPart(parts, callback)
+function pace.SelectPart(parts, callback, property)
+	--mark some editor-related info for selecting the part via the editor labels
+	last_current_part = pace.current_part
+	pace.bypass_tree = true
+	pace.selecting_property_key = property.CurrentKey
+	pace.selecting_property = property
+	pac.AddHook("Tick", "selecting_part", function()
+		if not pace.selecting_property_key then pac.RemoveHook("Tick", "selecting_part") pace.bypass_tree = false end
+		if last_current_part ~= pace.current_part then --we've selected another part so 
+			local new_select = pace.current_part
+			last_current_part["Set" .. pace.selecting_property_key](last_current_part, new_select)
+			pace.bypass_tree = false
+			timer.Simple(0.4, function() pace.OnPartSelected(last_current_part, false) end)
+			pace.StopSelect()
+		end
+		if not pace.IsSelecting then pac.RemoveHook("Tick", "selecting_part") pace.bypass_tree = false end
+	end)
 	select_something(
 		parts,
 

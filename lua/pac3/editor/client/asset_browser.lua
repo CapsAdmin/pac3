@@ -196,6 +196,32 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 	end
 end
 
+local function install_right_click_for_favorite_folder(icon, path, pathid, resource_type)
+	resource_type = resource_type or pace.model_browser_browse_types_tbl[1] or "models"
+	icon.DoRightClick = function()
+		local menu = DermaMenu()
+		if not table.HasValue(pace.bookmarked_ressources[resource_type],  "folder:" .. path) then
+			menu:AddOption(L"add folder to favorites : " .. path, function()
+				table.insert(pace.bookmarked_ressources[resource_type], "folder:" .. path)
+				pace.SaveRessourceBookmarks()
+			end):SetImage("icon16/star.png")
+		else
+			menu:AddOption(L"remove folder from favorites : " .. path, function()
+				table.remove(pace.bookmarked_ressources[resource_type], table.KeyFromValue( pace.bookmarked_ressources[resource_type], "folder:" .. path ))
+				pace.SaveRessourceBookmarks()
+			end):SetImage("icon16/cross.png")
+		end
+		menu:Open()
+	end
+	timer.Simple(1, function()
+		if not icon.GetChildNodes then return end
+		for i,child in ipairs(icon:GetChildNodes()) do
+			install_right_click_for_favorite_folder(child, child:GetFolder(), child:GetPathID(), resource_type)
+		end
+	end)
+	
+end
+
 local function get_unlit_mat(path)
 	if path:find("%.png$") then
 		return Material(path:match("materials/(.+)"))
@@ -899,9 +925,11 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	sound_list:Dock(FILL)
 	sound_list:SetMultiSelect(false)
 	sound_list:SetVisible(false)
-
+	frame.sound = ""
+	frame.lines = {}
 	local function AddGeneric(self, sound, ...)
 		local line = self:AddLine(sound, ...)
+		table.insert(frame.lines, line)
 		local play = vgui.Create("DImageButton", line)
 		play:SetImage("icon16/control_play.png")
 		play:SizeToContents()
@@ -993,8 +1021,21 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 						end):SetImage("icon16/cross.png")
 					end
 				end
+				if not frame.QuickListBuildMode then
+					local pnl = menu:AddOption("Enable Quick list build mode", function() frame.QuickListBuildMode = true frame.sound = "" end) pnl:SetTooltip("Left click will concatenate a new sound to the part's list using semicolon notation. Preview using the play button instead.")
+				else
+					menu:AddOption("Disable Quick list build mode", function()
+						frame.QuickListBuildMode = nil frame.sound = ""
+						for i,v in ipairs(frame.lines) do if v.Columns then v.Columns[1]:SetColor(Color(0,0,0)) end end
+					end)
+				end
 				menu:MakePopup() menu:RequestFocus()
 			else
+				if frame.QuickListBuildMode then
+					line.Columns[1]:SetColor(Color(0,250,60)) --the file name
+					if frame.sound ~= "" then sound = frame.sound .. ";" .. sound end
+					frame.sound = sound
+				end
 				pace.model_browser_callback(sound, "GAME")
 			end
 		end
@@ -1200,6 +1241,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	do -- mounted
 		local function addBrowseContent(viewPanel, node, name, icon, path, pathid)
 			local function on_select(self, node)
+				install_right_click_for_favorite_folder(node, node:GetFolder(), pathid, resource_type)
 				if viewPanel and viewPanel.currentNode and viewPanel.currentNode == node then return end
 
 				node.dir = self.dir
@@ -1315,12 +1357,12 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 				tree:OnNodeSelected(node)
 				viewPanel.currentNode = node
 			end
-
+			local oldnode = node
+			oldnode.name = name
 			node = node:AddNode(name, icon)
 			node:SetFolder("")
 			node:SetPathID(pathid)
 			node.viewPanel = viewPanel
-
 			for _, dir in ipairs(browse_types) do
 				local files, folders = file.Find(path .. dir .. "/*", pathid)
 				if files and (files[1] or folders[1]) then
@@ -1341,6 +1383,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 			end
 
 			node.OnNodeSelected = on_select
+			install_right_click_for_favorite_folder(node, node:GetFolder(), node:GetPathID(), resource_type)
+
 		end
 
 		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)

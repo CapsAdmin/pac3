@@ -44,6 +44,13 @@ do -- projectile entity
 	end
 
 	if SERVER then
+		local physprop_indices = {}
+		for i=0,200,1 do
+			local name = util.GetSurfacePropName(i)
+			if name ~= "" then
+				physprop_indices[name] = i
+			end
+		end
 		pac.AddHook("EntityTakeDamage", "pac_projectile", function(ent, dmg)
 			local a, i = dmg:GetAttacker(), dmg:GetInflictor()
 
@@ -65,7 +72,7 @@ do -- projectile entity
 
 			self.projectile_owner = ply
 
-			local radius = math.Clamp(part.Radius, 1, pac_sv_projectile_max_phys_radius:GetFloat())
+			local radius = math.Clamp(part.Radius, 0.01, pac_sv_projectile_max_phys_radius:GetFloat())
 			if part.Sphere then
 				self:PhysicsInitSphere(radius, part.SurfaceProperties)
 			else
@@ -76,14 +83,13 @@ do -- projectile entity
 				if part.OverridePhysMesh and valid_fallback then
 					self:SetModel(part.FallbackSurfpropModel)
 					self:PhysicsInit(SOLID_VPHYSICS)
-					self:PhysicsInitMultiConvex(self:GetPhysicsObject():GetMeshConvexes(), part.SurfaceProperties)
 				end
 
 				if valid_fallback and part.RescalePhysMesh then
 					local physmesh = self:GetPhysicsObject():GetMeshConvexes()
 					--hack from prop resizer
-					for convexkey, convex in pairs( physmesh ) do
-						for poskey, postab in pairs( convex ) do
+					for convexkey, convex in ipairs( physmesh ) do
+						for poskey, postab in ipairs( convex ) do
 							convex[ poskey ] = postab.pos * radius
 						end
 					end
@@ -100,10 +106,13 @@ do -- projectile entity
 			local phys = self:GetPhysicsObject()
 			phys:SetMaterial(part.SurfaceProperties)
 
-
 			phys:EnableGravity(part.Gravity)
-			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
-			phys:AddAngleVelocity(Vector(part.RandomAngleVelocity.x * math.Rand(-1,1), part.RandomAngleVelocity.y * math.Rand(-1,1), part.RandomAngleVelocity.z * math.Rand(-1,1)))
+			if not part.Freeze then
+				phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
+				phys:AddAngleVelocity(Vector(part.RandomAngleVelocity.x * math.Rand(-1,1), part.RandomAngleVelocity.y * math.Rand(-1,1), part.RandomAngleVelocity.z * math.Rand(-1,1)))
+			else
+				phys:EnableMotion(false)
+			end
 
 			phys:AddAngleVelocity(part.LocalAngleVelocity)
 
@@ -129,6 +138,7 @@ do -- projectile entity
 			self:SetAimDir(part.AimDir)
 			self:DrawShadow(part.DrawShadow)
 			self.part_data = part
+			self.surface_data = util.GetSurfaceData(physprop_indices[part.SurfaceProperties])
 		end
 
 		local damage_types = {
@@ -276,6 +286,20 @@ do -- projectile entity
 			if not self.part_data then return end
 			if not self.projectile_owner:IsValid() then return end
 
+			local our_surfdata = self.surface_data
+			local their_surfdata = util.GetSurfaceData(data.TheirSurfaceProps)
+
+			if (self.part_data.ImpactSounds) then
+				if data.Speed >= 300 then
+					if (data.Speed >= our_surfdata.hardVelocityThreshold) or (our_surfdata.hardnessFactor >= their_surfdata.hardThreshold) then
+						self:EmitSound(our_surfdata.impactHardSound)
+					else
+						self:EmitSound(our_surfdata.impactSoftSound)
+					end
+				elseif data.Speed >= 50 then
+					self:EmitSound(our_surfdata.impactSoftSound)
+				end
+			end
 			net.Start("pac_projectile_collide_event", true)
 				net.WriteEntity(self)
 				net.WriteTable({}) -- nothing for now
@@ -531,6 +555,8 @@ if SERVER then
 		part.DrawShadow = net.ReadBool()
 		part.Sticky = net.ReadBool()
 		part.BulletImpact = net.ReadBool()
+		part.Freeze = net.ReadBool()
+		part.ImpactSounds = net.ReadBool()
 
 		--vectors
 		part.RandomAngleVelocity = net.ReadVector()
@@ -545,14 +571,16 @@ if SERVER then
 		part.AttractMode = table.KeyFromValue(attract_ids, net.ReadUInt(3))
 
 		--numbers
-		part.Radius = net.ReadUInt(12)
+		local using_decimal = net.ReadBool()
+		if not using_decimal then part.Radius = net.ReadUInt(12) else part.Radius = net.ReadFloat() end
+
 		part.DamageRadius = net.ReadUInt(12)
-		part.Damage = net.ReadUInt(24)
-		part.Speed = net.ReadUInt(16) / 1000
+		part.Damage = math.Clamp(net.ReadUInt(24), 0, pac_sv_projectile_max_damage:GetFloat())
+		part.Speed = math.Clamp(net.ReadInt(18) / 1000, -pac_sv_projectile_max_speed:GetFloat(), pac_sv_projectile_max_speed:GetFloat())
 		part.Maximum = net.ReadUInt(7)
 		part.LifeTime = net.ReadUInt(14) / 100
 		part.Delay = net.ReadUInt(9) / 100
-		part.Mass = net.ReadUInt(18)
+		part.Mass = net.ReadUInt(16)
 		part.Spread = net.ReadInt(10) / 100
 		part.Damping = net.ReadInt(20) / 100
 		part.Attract = net.ReadInt(14)

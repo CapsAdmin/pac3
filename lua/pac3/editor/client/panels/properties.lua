@@ -170,6 +170,24 @@ function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, ba
 
 end
 
+local function get_files_recursively(tbl, path, extension)
+	local returning_call = false
+	if not tbl then returning_call = true tbl = {} end
+	local files, folders = file.Find(path .. "/*", "GAME")
+	for _,file in ipairs(files) do
+		if istable(extension) then
+			for _,ext in ipairs(extension) do
+				if string.GetExtensionFromFilename(file) == ext then
+					table.insert(tbl, path.."/"..file)
+				end
+			end
+		elseif string.GetExtensionFromFilename(file) == extension then
+			table.insert(tbl, path.."/"..file)
+		end
+	end
+	for _,folder in ipairs(folders) do get_files_recursively(tbl, path.."/"..folder, extension) end
+	if returning_call then return tbl end
+end
 
 local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	local btn = vgui.Create("DButton", self)
@@ -648,6 +666,7 @@ do -- list
 	end
 
 	function PANEL:Clear()
+		if pace.bypass_tree then return end
 		for key, data in pairs(self.List) do
 			data.left:Remove()
 			data.right:Remove()
@@ -701,6 +720,7 @@ do -- list
 	end
 
 	function PANEL:Populate(flat_list)
+		if pace.bypass_tree then return end
 		self:Clear()
 
 		for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
@@ -922,6 +942,88 @@ do -- non editable string
 	pace.RegisterPanel(PANEL)
 end
 
+local position_multicopy_properties = {
+	["Position"] = true,
+	["Angles"] = true,
+	["PositionOffset"] = true,
+	["AngleOffset"] = true,
+}
+local appearance_multicopy_properties = {
+	["Material"] = true,
+	["Color"] = true,
+	["Brightness"] = true,
+	["Alpha"] = true,
+	["Translucent"] = true,
+	["BlendMode"] = true
+}
+
+local function install_movable_multicopy(copymenu, key)
+	if position_multicopy_properties[key] then
+		copymenu:AddOption("Copy Angles & Position", function()
+			pace.MultiCopy(pace.current_part, {"Angles", "Position"})
+		end)
+		copymenu:AddOption("Copy Angle & Position Offsets", function()
+			pace.MultiCopy(pace.current_part, {"AngleOffset", "PositionOffset"})
+		end)
+		copymenu:AddOption("Copy Angle & Position and their Offsets", function()
+			pace.MultiCopy(pace.current_part, {"Angles", "Position", "AngleOffset", "PositionOffset"})
+		end)
+		copymenu:AddOption("Copy Angles & Angle Offset", function()
+			pace.MultiCopy(pace.current_part, {"Angles", "AngleOffset"})
+		end)
+		copymenu:AddOption("Copy Position & Position Offset", function()
+			pace.MultiCopy(pace.current_part, {"Position", "PositionOffset"})
+		end)
+	end
+end
+local function install_appearance_multicopy(copymenu, key)
+	if appearance_multicopy_properties[key] then
+		copymenu:AddOption("Material & Color", function()
+			pace.MultiCopy(pace.current_part, {"Material", "Color"})
+		end)
+		copymenu:AddOption("Material & Color & Brightness", function()
+			pace.MultiCopy(pace.current_part, {"Material", "Color", "Brightness"})
+		end)
+		copymenu:AddOption("Transparency", function()
+			pace.MultiCopy(pace.current_part, {"Alpha", "Translucent", "BlendMode"})
+		end):SetTooltip("Alpha, Translucent, Blend mode")
+		copymenu:AddOption("Copy Material & Color & Alpha", function()
+			pace.MultiCopy(pace.current_part, {"Material", "Color", "Alpha"})
+		end)
+		copymenu:AddOption("All appearance-related properties", function()
+			pace.MultiCopy(pace.current_part, {"Material", "Color", "Brightness", "Alpha", "Translucent", "BlendMode"})
+		end):SetTooltip("Material, Color, Brightness, Alpha, Translucent, Blend mode")
+	end
+end
+local function reformat_color(col, proper_in, proper_out)
+	local multiplier = 1
+	if not proper_in then multiplier = multiplier / 255 end
+	if not proper_out then multiplier = multiplier * 255 end
+	col.r = math.Clamp(col.r * multiplier,0,255)
+	col.g = math.Clamp(col.g * multiplier,0,255)
+	col.b = math.Clamp(col.b * multiplier,0,255)
+	col.a = math.Clamp(col.a * multiplier,0,255)
+	return col
+end
+local function do_multicopy()
+	if not pace.multicopy_source or not pace.multicopy_selected_properties then return end
+	for i,v in ipairs(pace.multicopy_selected_properties) do
+		local key = v[1]
+		local val = v[2] if not val then continue end if val == "" then continue end
+		if pace.current_part["Set"..key] then
+			if key == "Color" then
+				local color = pace.multicopy_source:GetColor()
+				local color_copy = Color(color.r,color.g,color.b)
+				reformat_color(color_copy, pace.multicopy_source.ProperColorRange, pace.current_part.ProperColorRange)
+				local vec = Vector(color_copy.r,color_copy.g,color_copy.b)
+				pace.current_part["Set"..key](pace.current_part,vec)
+			else
+				pace.current_part["Set"..key](pace.current_part,val)
+			end
+		end
+	end
+end
+
 do -- base editable
 	local PANEL = {}
 
@@ -1029,14 +1131,41 @@ do -- base editable
 		end
 	end
 
+	function pace.MultiCopy(part, tbl)
+		pace.clipboardtooltip = ""
+		pace.multicopy_selected_properties = {}
+		local str_tbl = {[1] = "multiple properties from " .. tostring(part)}
+		for i,v in ipairs(tbl) do
+			if part["Get"..v] then
+				local val = part["Get" .. v](part)
+				table.insert(pace.multicopy_selected_properties, {v, val})
+				table.insert(str_tbl,v .. " : " .. tostring(val))
+			end
+		end
+		pace.clipboardtooltip = table.concat(str_tbl, "\n")
+		pace.multicopying = true
+		pace.multicopy_source = part
+	end
 	function PANEL:PopulateContextMenu(menu)
-		menu:AddOption(L"copy", function()
+
+		pace.clipboardtooltip = pace.clipboardtooltip or ""
+		local copymenu, copypnl = menu:AddSubMenu(L"copy", function()
 			pace.clipboard = pac.CopyValue(self:GetValue())
-		end):SetImage(pace.MiscIcons.copy)
-		menu:AddOption(L"paste", function()
-			self:SetValue(pac.CopyValue(pace.clipboard))
-			self.OnValueChanged(self:GetValue())
-		end):SetImage(pace.MiscIcons.paste)
+			pace.clipboardtooltip = pace.clipboard .. " (from " .. tostring(pace.current_part) .. ")"
+			pace.multicopying = false
+		end) copypnl:SetImage(pace.MiscIcons.copy) copymenu.GetDeleteSelf = function() return false end
+		install_movable_multicopy(copymenu, self.CurrentKey)
+		install_appearance_multicopy(copymenu, self.CurrentKey)
+
+		local pnl = menu:AddOption(L"paste", function()
+			if pace.multicopying then
+				do_multicopy()
+				pace.PopulateProperties(pace.current_part)
+			else
+				self:SetValue(pac.CopyValue(pace.clipboard))
+				self.OnValueChanged(self:GetValue())
+			end
+		end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(pace.clipboardtooltip)
 
 		--command's String variable
 		if self.CurrentKey == "String" then
@@ -1251,6 +1380,7 @@ do -- base editable
 			for id,mat in ipairs(mats) do
 				pnl:AddOption(string.GetFileFromFilename(mat), function()
 					pace.current_part:SetLoadVmt(mat)
+					pace.current_part:SetNotes("last loaded VMT: " .. mat)
 				end)
 			end
 		end
@@ -1289,31 +1419,66 @@ do -- base editable
 				}
 			end
 
-			local pnl, menu2 = menu:AddSubMenu(L"Load favourite models", function()
+			local menu2, pnl = menu:AddSubMenu(L"Load favourite models", function()
             end)
-			menu2:SetImage("icon16/cart_go.png")
+			pnl:SetImage("icon16/cart_go.png")
 
 			local pm = pace.current_part:GetPlayerOwner():GetModel()
+			local pm_selected = player_manager.TranslatePlayerModel(GetConVar("cl_playermodel"):GetString())
 
-			pnl:AddOption("Current playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
+			if pm_selected ~= pm then
+				menu2:AddOption("Selected playermodel - " .. string.gsub(string.GetFileFromFilename(pm_selected), ".mdl", ""), function()
+					pace.current_part:SetModel(pm_selected)
+					pace.current_part.pace_properties["Model"]:SetValue(pm_selected)
+					pace.PopulateProperties(pace.current_part)
+
+				end):SetImage("materials/spawnicons/"..string.gsub(pm_selected, ".mdl", "")..".png")
+			end
+			menu2:AddOption("Active playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
 				pace.current_part:SetModel(pm)
-
 				pace.current_part.pace_properties["Model"]:SetValue(pm)
 				pace.PopulateProperties(pace.current_part)
-
 			end):SetImage("materials/spawnicons/"..string.gsub(pm, ".mdl", "")..".png")
 
+			if IsValid(pac.LocalPlayer:GetActiveWeapon()) then
+				local wep = pac.LocalPlayer:GetActiveWeapon()
+				local wep_mdl = wep:GetModel()
+				menu2:AddOption("Active weapon - " .. wep:GetClass() .. " - model - " .. string.gsub(string.GetFileFromFilename(wep_mdl), ".mdl", ""), function()
+					pace.current_part:SetModel(wep_mdl)
+					pace.current_part.pace_properties["Model"]:SetValue(wep_mdl)
+					pace.PopulateProperties(pace.current_part)
+				end):SetImage("materials/spawnicons/"..string.gsub(wep_mdl, ".mdl", "")..".png")
+			end
+
 			for id,mdl in ipairs(pace.bookmarked_ressources["models"]) do
-				pnl:AddOption(string.GetFileFromFilename(mdl), function()
-					self:SetValue(mdl)
-
-					pace.current_part:SetModel(mdl)
-					timer.Simple(0.2, function()
-						pace.current_part.pace_properties["Model"]:SetValue(mdl)
-						pace.PopulateProperties(pace.current_part)
+				if string.sub(mdl, 1, 7) == "folder:" then
+					mdl = string.sub(mdl, 8, #mdl)
+					local menu3, pnl2 = menu2:AddSubMenu(string.GetFileFromFilename(mdl), function()
 					end)
+					pnl2:SetImage("icon16/folder.png")
 
-				end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
+					local files = get_files_recursively(nil, mdl, "mdl")
+
+					for i,file in ipairs(files) do
+						menu3:AddOption(string.GetFileFromFilename(file), function()
+							self:SetValue(file)
+							pace.current_part:SetModel(file)
+							timer.Simple(0.2, function()
+								pace.current_part.pace_properties["Model"]:SetValue(file)
+								pace.PopulateProperties(pace.current_part)
+							end)
+						end):SetImage("materials/spawnicons/"..string.gsub(file, ".mdl", "")..".png")
+					end
+				else
+					menu2:AddOption(string.GetFileFromFilename(mdl), function()
+						self:SetValue(mdl)
+						pace.current_part:SetModel(mdl)
+						timer.Simple(0.2, function()
+							pace.current_part.pace_properties["Model"]:SetValue(mdl)
+							pace.PopulateProperties(pace.current_part)
+						end)
+					end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
+				end
 			end
 		end
 
@@ -1337,9 +1502,9 @@ do -- base editable
 				}
 			end
 
-			local pnl, menu2 = menu:AddSubMenu(L"Load favourite materials", function()
+			local menu2, pnl = menu:AddSubMenu(L"Load favourite materials", function()
             end)
-			menu2:SetImage("icon16/cart_go.png")
+			pnl:SetImage("icon16/cart_go.png")
 
 			for id,mat in ipairs(pace.bookmarked_ressources["materials"]) do
 				mat = string.gsub(mat, "^materials/", "")
@@ -1347,7 +1512,7 @@ do -- base editable
 
 				if string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
 					mat_no_ext = string.gsub(mat_no_ext, "%[%d+,%d+%]", "")
-					pace.AddSubmenuWithBracketExpansion(pnl, function(str)
+					pace.AddSubmenuWithBracketExpansion(menu2, function(str)
 						str = str or ""
 						str = string.StripExtension(string.gsub(str, "^materials/", ""))
 						self:SetValue(str)
@@ -1359,7 +1524,7 @@ do -- base editable
 					end, mat_no_ext, "vmt", "materials")
 
 				else
-					pnl:AddOption(string.StripExtension(mat), function()
+					menu2:AddOption(string.StripExtension(mat), function()
 						self:SetValue(mat_no_ext)
 						if self.CurrentKey == "Material" then
 							pace.current_part:SetMaterial(mat_no_ext)
@@ -1369,6 +1534,50 @@ do -- base editable
 					end):SetMaterial(mat)
 				end
 
+			end
+
+			local pac_materials = {}
+			local has_pac_materials = false
+
+			local class_shaders = {
+				["material"] = "VertexLitGeneric",
+				["material_3d"] = "VertexLitGeneric",
+				["material_2d"] = "UnlitGeneric",
+				["material_eye refract"] = "EyeRefract",
+				["material_refract"] = "Refract",
+			}
+
+			for _,part in pairs(pac.GetLocalParts()) do
+				if part.Name ~= "" and string.find(part.ClassName, "material") then
+					if pac_materials[class_shaders[part.ClassName]] == nil then pac_materials[class_shaders[part.ClassName]] = {} end
+					has_pac_materials = true
+					pac_materials[class_shaders[part.ClassName]][part:GetName()] = {part = part, shader = class_shaders[part.ClassName]}
+				end
+			end
+			if has_pac_materials then
+				menu2:AddSpacer()
+				for shader,mats in pairs(pac_materials) do
+					local shader_submenu = menu2:AddSubMenu("pac3 materials - " .. shader)
+					for mat,tbl in pairs(mats) do
+						local part = tbl.part
+						local pnl2 = shader_submenu:AddOption(mat, function()
+							self:SetValue(mat)
+							if self.CurrentKey == "Material" then
+								pace.current_part:SetMaterial(mat)
+							elseif self.CurrentKey == "SpritePath" then
+								pace.current_part:SetSpritePath(mat)
+							end
+						end)
+						pnl2:SetMaterial(pac.Material(mat, part))
+						pnl2:SetTooltip(tbl.shader)
+					end
+				end
+			end
+
+			if self.CurrentKey == "Material" and pace.current_part.ClassName == "particles" then
+				pnl:SetTooltip("Appropriate shaders for particles are UnlitGeneric materials.\nOOtherwise, they should usually be additive or use VertexAlpha")
+			elseif self.CurrentKey == "SpritePath" then
+				pnl:SetTooltip("Appropriate shaders for sprites are UnlitGeneric materials.\nOOtherwise, they should usually be additive or use VertexAlpha")
 			end
 		end
 
@@ -1387,17 +1596,43 @@ do -- base editable
 					}
 				end
 
-				local pnl, menu2 = menu:AddSubMenu(L"Load favourite sounds", function()
+				local menu2, pnl = menu:AddSubMenu(L"Load favourite sounds", function()
 				end)
-				menu2:SetImage("icon16/cart_go.png")
+				pnl:SetImage("icon16/cart_go.png")
 
 				for id,snd in ipairs(pace.bookmarked_ressources["sound"]) do
 					local extension = string.GetExtensionFromFilename(snd)
 					local snd_no_ext = string.StripExtension(snd)
 					local single_menu = not favorites_menu_expansion:GetBool()
 
-					if string.find(snd_no_ext, "%[%d+,%d+%]") then --find the bracket notation
-						pace.AddSubmenuWithBracketExpansion(pnl, function(str)
+					if string.sub(snd, 1, 7) == "folder:" then
+						snd = string.sub(snd, 8, #snd)
+						local menu3, pnl2 = menu2:AddSubMenu(string.GetFileFromFilename(snd), function()
+						end)
+						pnl2:SetImage("icon16/folder.png") pnl2:SetTooltip(snd)
+
+						local files = get_files_recursively(nil, snd, {"wav", "mp3", "ogg"})
+
+						for i,file in ipairs(files) do
+							file = string.sub(file,7,#file) --"sound/"
+							local icon = "icon16/sound.png"
+							if string.find(file, "music") or string.find(file, "theme") then
+								icon = "icon16/music.png"
+							elseif string.find(file, "loop") then
+								icon = "icon16/arrow_rotate_clockwise.png"
+							end
+							local pnl3 = menu3:AddOption(string.GetFileFromFilename(file), function()
+								self:SetValue(file)
+								if self.CurrentKey == "Sound" then
+									pace.current_part:SetSound(file)
+								elseif self.CurrentKey == "Path" then
+									pace.current_part:SetPath(file)
+								end
+							end)
+							pnl3:SetImage(icon) pnl3:SetTooltip(file)
+						end
+					elseif string.find(snd_no_ext, "%[%d+,%d+%]") then --find the bracket notation
+						pace.AddSubmenuWithBracketExpansion(menu2, function(str)
 							self:SetValue(str)
 							if self.CurrentKey == "Sound" then
 								pace.current_part:SetSound(str)
@@ -1408,7 +1643,7 @@ do -- base editable
 
 					elseif not single_menu and string.find(snd_no_ext, "%d+") then	--find a file ending in a number
 																					--expand only if we want it with the cvar
-						pace.AddSubmenuWithBracketExpansion(pnl, function(str)
+						pace.AddSubmenuWithBracketExpansion(menu2, function(str)
 							self:SetValue(str)
 							if self.CurrentKey == "Sound" then
 								pace.current_part:SetSound(str)
@@ -1427,7 +1662,7 @@ do -- base editable
 							icon = "icon16/arrow_rotate_clockwise.png"
 						end
 
-						pnl:AddOption(snd, function()
+						menu2:AddOption(snd, function()
 							self:SetValue(snd)
 							if self.CurrentKey == "Sound" then
 								pace.current_part:SetSound(snd)
@@ -1444,8 +1679,7 @@ do -- base editable
 		end
 
 		--long string menu to bypass the DLabel's limits, only applicable for sound2 for urls and base part's notes
-		if (pace.current_part.ClassName == "sound2" and self.CurrentKey == "Path") or self.CurrentKey == "Notes" then
-
+		if (pace.current_part.ClassName == "sound2" and self.CurrentKey == "Path") or self.CurrentKey == "Notes" or (pace.current_part.ClassName == "text" and self.CurrentKey == "Text") then
 			menu:AddOption(L"Insert long text", function()
 				local pnl = vgui.Create("DFrame")
 				local DText = vgui.Create("DTextEntry", pnl)
@@ -1453,7 +1687,7 @@ do -- base editable
 				DText:SetMaximumCharCount(50000)
 
 				pnl:SetSize(1200,800)
-				pnl:SetTitle("Long text for " .. self.CurrentKey .. ". Do not touch the label after this!")
+				pnl:SetTitle("Long text with newline support for " .. self.CurrentKey .. ". Do not touch the label after this!")
 				pnl:SetPos(200, 100)
 				DButtonOK:SetText("OK")
 				DButtonOK:SetSize(80,20)
@@ -1464,11 +1698,14 @@ do -- base editable
 				DText:SetContentAlignment(7)
 				pnl:MakePopup()
 				DText:RequestFocus()
+				DText:SetText(pace.current_part[self.CurrentKey])
 
 				DButtonOK.DoClick = function()
 					local str = DText:GetText()
 					if self.CurrentKey == "Notes" then
 						pace.current_part.Notes = str
+					elseif self.CurrentKey == "Text" then
+						pace.current_part.Text = str
 					elseif pace.current_part.ClassName == "sound2" then
 						pace.current_part.AllPaths = str
 						pace.current_part:UpdateSoundsFromAll()
@@ -1810,25 +2047,36 @@ do -- vector
 		end
 
 		function PANEL:PopulateContextMenu(menu)
-			menu:AddOption(L"copy", function()
+			pace.clipboardtooltip = pace.clipboardtooltip or ""
+			local copymenu, copypnl = menu:AddSubMenu(L"copy", function()
 				pace.clipboard = pac.CopyValue(self.vector)
-			end):SetImage(pace.MiscIcons.copy)
-			menu:AddOption(L"paste", function()
-				local val = pac.CopyValue(pace.clipboard)
-				if isnumber(val) then
-					val = ctor(val, val, val)
-				elseif isvector(val) and type == "angle" then
-					val = ctor(val.x, val.y, val.z)
-				elseif isangle(val) and type == "vector" then
-					val = ctor(val.p, val.y, val.r)
-				end
+				pace.clipboardtooltip = tostring(pace.clipboard) .. " (from " .. tostring(pace.current_part) .. ")"
+				pace.multicopying = false
+			end) copypnl:SetImage(pace.MiscIcons.copy) copymenu.GetDeleteSelf = function() return false end
+			install_movable_multicopy(copymenu, self.CurrentKey)
+			install_appearance_multicopy(copymenu, self.CurrentKey)
 
-				if _G.type(val):lower() == type or type == "color" or type == "color2" then
-					self:SetValue(val)
+			local pnl = menu:AddOption(L"paste", function()
+				if pace.multicopying then
+					do_multicopy()
+					pace.PopulateProperties(pace.current_part)
+				else
+					local val = pac.CopyValue(pace.clipboard)
+					if isnumber(val) then
+						val = ctor(val, val, val)
+					elseif isvector(val) and type == "angle" then
+						val = ctor(val.x, val.y, val.z)
+					elseif isangle(val) and type == "vector" then
+						val = ctor(val.p, val.y, val.r)
+					end
 
-					self.OnValueChanged(self.vector * 1)
+					if _G.type(val):lower() == type or type == "color" or type == "color2" then
+						self:SetValue(val)
+
+						self.OnValueChanged(self.vector * 1)
+					end
 				end
-			end):SetImage(pace.MiscIcons.paste)
+			end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(pace.clipboardtooltip)
 			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
@@ -2376,9 +2624,9 @@ function pace.OpenTreeSearch()
 	end
 
 	function edit.OnEnter()
-		if self.previous_search ~= edit:GetText() then
+		if edit.previous_search ~= edit:GetText() then
 			perform_search()
-			self.previous_search = edit:GetText()
+			edit.previous_search = edit:GetText()
 		elseif not table.IsEmpty(pace.tree_search_matches) then
 			fwd:DoClick()
 		else

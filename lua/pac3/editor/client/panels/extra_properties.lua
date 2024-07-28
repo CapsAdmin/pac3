@@ -188,7 +188,7 @@ do -- part
 			if not self:IsValid() then return end
 			self:SetValue(part:GetUniqueID())
 			self.OnValueChanged(part)
-		end)
+		end, self)
 	end
 
 	function PANEL:MoreOptionsRightClick(key)
@@ -927,14 +927,19 @@ do --projectile radius
 	PANEL.ClassName = "properties_projectile_radii"
 	PANEL.Base = "pace_properties_number"
 
+	local testing_mesh
+	local drawing = false
+	local phys_mesh_vis = {}
 	function PANEL:OnValueSet()
 		time = os.clock() + 6
 		local function stop()
 			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_projectile_radii")
+			timer.Simple(0.2, function() SafeRemoveEntity(testing_mesh) end) drawing = false
 		end
 		local last_part = pace.current_part
 
 		hook.Add("PostDrawOpaqueRenderables", "pace_draw_projectile_radii", function()
+			drawing = true
 			if time < os.clock() then
 				stop()
 			end
@@ -947,7 +952,37 @@ do --projectile radius
 				else
 					local mins_ph = Vector(last_part.Radius,last_part.Radius,last_part.Radius)
 					local mins_dm = Vector(last_part.DamageRadius,last_part.DamageRadius,last_part.DamageRadius)
-					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_ph, mins_ph, Color(255,255,255), true )
+					if last_part.OverridePhysMesh then
+						if not IsValid(testing_mesh) then testing_mesh = ents.CreateClientProp("models/props_junk/PopCan01a.mdl") end
+						testing_mesh:PhysicsInit(SOLID_VPHYSICS)
+						if testing_mesh:GetModel() ~= last_part.FallbackSurfpropModel then
+							testing_mesh:SetModel(last_part.FallbackSurfpropModel)
+							testing_mesh:PhysicsInit(SOLID_VPHYSICS)
+							phys_mesh_vis = {}
+							for i = 0, testing_mesh:GetPhysicsObjectCount() - 1 do
+								for i2,tri in ipairs(testing_mesh:GetPhysicsObjectNum( i ):GetMeshConvexes()) do
+									for i3,vert in ipairs(tri) do
+										table.insert(phys_mesh_vis, vert)
+									end
+								end
+							end
+						end
+						local obj = Mesh()
+						obj:BuildFromTriangles(phys_mesh_vis)
+						cam.Start3D(pac.EyePos, pac.EyeAng)
+							render.SetMaterial(Material("models/wireframe"))
+								local mat = Matrix()
+								mat:Translate(last_part:GetWorldPosition())
+								mat:Rotate(last_part:GetWorldAngles())
+								mat:Scale(Vector(last_part.Radius,last_part.Radius,last_part.Radius))
+								cam.PushModelMatrix( mat )
+								render.CullMode(MATERIAL_CULLMODE_CW)obj:Draw()
+								render.CullMode(MATERIAL_CULLMODE_CCW)obj:Draw()
+							cam.PopModelMatrix()
+						cam.End3D()
+					else
+						render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_ph, mins_ph, Color(255,255,255), true )
+					end
 					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_dm, mins_dm, Color(255,0,0), true )
 				end
 
