@@ -54,7 +54,7 @@ function PART:IsValid()
 end
 
 function PART:PreInitialize()
-	if pace == nil then pace = _G.pace return end --I found that it is localized before pace was created
+	if pace == nil then pace = _G.pace end --I found that it is localized before pace was created
 	self.Children = {}
 	self.ChildrenMap = {}
 	self.modifiers = {}
