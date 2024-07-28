@@ -1,6 +1,7 @@
 local shader_params = include("pac3/libraries/shader_params.lua")
 
 local mat_hdr_level = GetConVar("mat_hdr_level")
+local dump_vmt_when_load_vmt = CreateConVar("pac_material_dump_vmt", "2", FCVAR_ARCHIVE, "whether to print the VMT information when using the Load VMT field in materials\n0= don't\n1 = print only the path as a single line\n2 = full prints for the raw VMT and extracted table")
 
 local material_flags = {
 	debug = bit.lshift(1, 0),
@@ -120,6 +121,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	BUILDER:GetSet("LoadVmt", "", {editor_panel = "material"})
 	function PART:SetLoadVmt(path)
 		if not path or path == "" then return end
+		if (self.Notes == "") or (string.sub(self.Notes, 1, 15) == "last loaded VMT") then
+			self:SetNotes("last loaded VMT: " .. path)
+		end
 
 		local str = file.Read("materials/" .. path .. ".vmt", "GAME")
 
@@ -139,11 +143,16 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			end
 		end
 
-		print(str)
-		print("======")
-		PrintTable(vmt)
-		print("======")
-
+		if dump_vmt_when_load_vmt:GetInt() == 1 then
+			print("====== VMT loaded: " .. path)
+		elseif dump_vmt_when_load_vmt:GetInt() == 2 then
+			print("\n====== "  .. path .. " raw VMT text:\n")
+			print(str)
+			print("====== extracted table:\n")
+			PrintTable(vmt)
+			print("\n======")
+		end
+		local errors = {"cannot convert material parameter:"}
 		for k,v in pairs(vmt) do
 			if k:StartWith("$") then k = k:sub(2) end
 
@@ -175,9 +184,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 				func(self, v)
 			else
-				pac.Message("cannot convert material parameter " .. k)
+				table.insert(errors,k)
+				if dump_vmt_when_load_vmt:GetInt() == 2 then
+					pac.Message("cannot convert material parameter " .. k)
+				end
 			end
 		end
+		if #errors > 1 then self:SetWarning(table.concat(errors, "\n")) else self:SetWarning() end
 	end
 
 	BUILDER:GetSet("MaterialOverride", "all", {enums = function(self, str)

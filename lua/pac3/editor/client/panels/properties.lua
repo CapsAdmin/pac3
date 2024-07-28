@@ -1380,7 +1380,6 @@ do -- base editable
 			for id,mat in ipairs(mats) do
 				pnl:AddOption(string.GetFileFromFilename(mat), function()
 					pace.current_part:SetLoadVmt(mat)
-					pace.current_part:SetNotes("last loaded VMT: " .. mat)
 				end)
 			end
 		end
