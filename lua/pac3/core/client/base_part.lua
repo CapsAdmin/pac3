@@ -54,6 +54,7 @@ function PART:IsValid()
 end
 
 function PART:PreInitialize()
+	if pace == nil then pace = _G.pace return end --I found that it is localized before pace was created
 	self.Children = {}
 	self.ChildrenMap = {}
 	self.modifiers = {}
@@ -1222,6 +1223,8 @@ end
 
 --the popup system
 function PART:SetupEditorPopup(str, force_open, tbl)
+	if pace.Editor == nil then return end
+	if self.pace_tree_node == nil then return end
 	local legacy_help_popup_hack = false
 	if not tbl then
 		legacy_help_popup_hack = false

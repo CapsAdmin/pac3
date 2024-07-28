@@ -21,7 +21,7 @@ CreateConVar("pac_popups_preferred_location", "pac tree label", FCVAR_ARCHIVE, "
 	"part world : if part is base_movable, place it next to the part in the viewport\n"..
 	"screen : static x,y on screen no matter what. That would be at the center\n"..
 	"cursor : right on the cursor\n"..
-	"editor bar : next to the toolbar")
+	"menu bar : next to the toolbar")
 
 
 function pace.OpenPopupConfig()
@@ -272,7 +272,10 @@ function pac.InfoPopup(str, tbl, x, y)
 
 		elseif tbl.obj_type == "part world" then
 			if tbl.pac_part then
-				local global_position = tbl.pac_part:GetRootPart():GetOwner():GetPos() + tbl.pac_part:GetRootPart():GetOwner():OBBCenter()*1.5
+				local ent = tbl.pac_part:GetRootPart():GetOwner()
+				if not IsValid(ent) then ent = pac.LocalPlayer end
+				local global_position = pac.LocalPlayer:GetPos()
+				if ent.GetPos then global_position = (ent:GetPos() + ent:OBBCenter()*1.5) end
 				if tbl.pac_part.GetWorldPosition then
 					global_position = tbl.pac_part:GetWorldPosition() --if part is a base_movable, we'll get its position right away
 				elseif tbl.pac_part:GetParent().GetWorldPosition then
@@ -288,7 +291,7 @@ function pac.InfoPopup(str, tbl, x, y)
 		elseif tbl.obj_type == "cursor" then
 			self:SetPos(input.GetCursorPos())
 
-		elseif tbl.obj_type == "editor bar" then
+		elseif tbl.obj_type == "menu bar" then
 			if not pace.Editor:IsLeft() then
 				self:SetPos(pace.Editor:GetX() - self:GetWide(),self:GetY())
 			else
@@ -362,7 +365,7 @@ function pac.InfoPopup(str, tbl, x, y)
 	function pnl:Think()
 		self:MoveToObj(tbl)
 		if input.IsButtonDown(KEY_P) and input.IsButtonDown(KEY_LALT) then --auto-kill if alt-p
-			tbl.pac_part.killpopup = true
+			if tbl.pac_part then tbl.pac_part.killpopup = true end
 			self:Remove()
 		end
 
@@ -397,7 +400,7 @@ function pac.InfoPopup(str, tbl, x, y)
 			self.mouse_doclick_possible_at = CurTime()
 		end
 
-		if not IsValid(tbl.pac_part) and tbl.pac_part ~= false then self:Remove() end
+		if not IsValid(tbl.pac_part) and tbl.pac_part ~= false and tbl.pac_part ~= nil then self:Remove() end
 		self.exp_width = self.exp_width or 800
 		self.exp_height = self.exp_height or 500
 		--resizing code, initially the label should start small

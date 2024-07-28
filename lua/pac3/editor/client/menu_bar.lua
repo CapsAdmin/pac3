@@ -255,10 +255,153 @@ local function populate_options(menu)
 		rendering:AddCVar(L"no outfit reflections", "pac_optimization_render_once_per_frame", "1", "0")
 end
 
+local function get_events()
+	local events = {}
+	for k,v in pairs(pac.GetLocalParts()) do
+		if v.ClassName == "event" then
+			local e = v:GetEvent()
+			if e == "command" then
+				local cmd, time, hide = v:GetParsedArgumentsForObject(v.Events.command)
+				local b = false
+				events[cmd] = pac.LocalPlayer.pac_command_events[cmd] and pac.LocalPlayer.pac_command_events[cmd].on == 1 or false
+			end
+		end
+	end
+	return events
+end
+
 local function populate_player(menu)
 	local pnl = menu:AddOption(L"t pose", function() pace.SetTPose(not pace.GetTPose()) end):SetImage("icon16/user_go.png")
 	menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end):SetImage("icon16/user_delete.png")
 	menu:AddOption(L"reset zoom", function() pace.ResetZoom() end):SetImage("icon16/magnifier.png")
+
+	local seq_cmdmenu, pnl2 = menu:AddSubMenu(L"sequenced command events") pnl2:SetImage("icon16/clock.png")
+	seq_cmdmenu.GetDeleteSelf = function() return false end
+
+	local full_cmdmenu, pnl3 = menu:AddSubMenu(L"full list of command events") pnl3:SetImage("icon16/clock_play.png")
+	full_cmdmenu.GetDeleteSelf = function() return false end
+
+	local full_proxymenu, pnl4 = menu:AddSubMenu(L"full list of command proxies") pnl4:SetImage("icon16/calculator.png")
+	full_proxymenu.GetDeleteSelf = function() return false end
+
+	local rebuild_events_menu
+	local rebuild_seq_menu
+	local rebuild_proxies_menu
+
+
+	local rebuild_seq_menu = function()
+		seq_cmdmenu:Clear()
+		if pac.LocalPlayer.pac_command_event_sequencebases == nil then return end
+		for cmd, tbl in pairs(pac.LocalPlayer.pac_command_event_sequencebases) do
+			if tbl.max ~= 0 then
+				local submenu, pnl3 = seq_cmdmenu:AddSubMenu(cmd) pnl3:SetImage("icon16/clock_red.png")
+				submenu.GetDeleteSelf = function() return false end
+				if tbl.min == nil then return end
+				for i=tbl.min,tbl.max,1 do
+					local func_sequenced = function()
+						RunConsoleCommand("pac_event_sequenced", cmd, "set", tostring(i,0)) rebuild_events_menu()
+					end
+					local option = submenu:AddOption(cmd..i,func_sequenced) option:SetIsCheckable(true) option:SetRadio(true)
+					if i == tbl.current then option:SetChecked(true) end
+					if pac.LocalPlayer.pac_command_events[cmd..i] then
+						if pac.LocalPlayer.pac_command_events[cmd..i].on == 1  then
+							option:SetChecked(true)
+						end
+					end
+					function option:SetChecked(b)
+						if ( self:GetChecked() != b ) then
+							self:OnChecked( b )
+						end
+						self.m_bChecked = b
+						if b then func_sequenced() end
+						timer.Simple(0.4, rebuild_events_menu)
+					end
+				end
+			end
+		end
+	end
+
+	if pac.LocalPlayer.pac_command_event_sequencebases then
+		if table.Count(pac.LocalPlayer.pac_command_event_sequencebases) > 0 then
+			rebuild_seq_menu()
+		end
+	end
+
+	rebuild_events_menu = function()
+		full_cmdmenu:Clear()
+		for cmd, b in SortedPairs(get_events()) do
+			local option = full_cmdmenu:AddOption(cmd,function() RunConsoleCommand("pac_event", cmd, "2") end) option:SetIsCheckable(true)
+			if b then option:SetChecked(true) end
+			function option:OnChecked(b)
+				if b then RunConsoleCommand("pac_event", cmd, "1") else RunConsoleCommand("pac_event", cmd, "0") end rebuild_seq_menu()
+			end
+			if pace.command_colors[cmd] ~= nil then
+				local clr = Color(unpack(string.Split(pace.command_colors[cmd]," ")))
+				clr.a = 100
+				option.PaintOver = function(_,w,h) surface.SetDrawColor(clr) surface.DrawRect(0,0,w,h) end
+			end
+		end
+	end
+
+	rebuild_proxies_menu = function()
+		full_proxymenu:Clear()
+		for cmd, tbl in SortedPairs(pac.LocalPlayer.pac_proxy_events) do
+			local num = tbl.x
+			if tbl.y ~= 0 or tbl.z ~= 0 then
+				num = tbl.x .. " " .. tbl.y .. " " .. tbl.z
+			end
+			full_proxymenu:AddOption(cmd .. " : " .. num,function()
+				Derma_StringRequest("Set new value for pac_proxy " .. cmd, "please input a number or spaced vector-notation.\n++ and -- notation is also supported for any component.\nit shall be used in a proxy expression as command(\""..cmd.."\")", num,
+					function(str)
+						local args = string.Split(str, " ")
+						RunConsoleCommand("pac_proxy", cmd, unpack(args))
+						timer.Simple(0.4, rebuild_proxies_menu)
+					end)
+			end)
+		end
+	end
+	
+	if pac.LocalPlayer.pac_command_events then
+		if table.Count(pac.LocalPlayer.pac_command_events) > 0 then
+			rebuild_events_menu()
+		end
+	end
+	if pac.LocalPlayer.pac_proxy_events then
+		if table.Count(pac.LocalPlayer.pac_proxy_events) > 0 then
+			rebuild_proxies_menu()
+		end
+	end
+
+	function pnl2:Think()
+		if self:IsHovered() then
+			if not self.isrebuilt then
+				rebuild_events_menu()
+				self.isrebuilt = true
+			end
+		else
+			self.isrebuilt = false
+		end
+	end
+	function pnl3:Think()
+		if self:IsHovered() then
+			if not self.isrebuilt then
+				rebuild_seq_menu()
+				self.isrebuilt = true
+			end
+		else
+			self.isrebuilt = false
+		end
+	end
+	function pnl4:Think()
+		if self:IsHovered() then
+			if not self.isrebuilt then
+				rebuild_proxies_menu()
+				self.isrebuilt = true
+			end
+		else
+			self.isrebuilt = false
+		end
+	end
 
 	-- this should be in pacx but it's kinda stupid to add a hook just to populate the player menu
 	-- make it more generic
