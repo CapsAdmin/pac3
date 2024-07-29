@@ -269,6 +269,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	function PART:Initialize()
 		self.translation_vector = Vector()
 		self.rotation_angle = Angle(0, 0, 0)
+		timer.Simple(0, function()
+			self:SetbasetexturetransformAngle(self:GetbasetexturetransformAngle())
+		end)
 	end
 
 
