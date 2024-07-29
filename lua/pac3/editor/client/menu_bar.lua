@@ -296,7 +296,7 @@ local function populate_player(menu)
 			if tbl.max ~= 0 then
 				local submenu, pnl3 = seq_cmdmenu:AddSubMenu(cmd) pnl3:SetImage("icon16/clock_red.png")
 				submenu.GetDeleteSelf = function() return false end
-				if tbl.min == nil then return end
+				if tbl.min == nil then continue end
 				for i=tbl.min,tbl.max,1 do
 					local func_sequenced = function()
 						RunConsoleCommand("pac_event_sequenced", cmd, "set", tostring(i,0)) rebuild_events_menu()
@@ -335,6 +335,7 @@ local function populate_player(menu)
 			function option:OnChecked(b)
 				if b then RunConsoleCommand("pac_event", cmd, "1") else RunConsoleCommand("pac_event", cmd, "0") end rebuild_seq_menu()
 			end
+			if pace.command_colors == nil then continue end
 			if pace.command_colors[cmd] ~= nil then
 				local clr = Color(unpack(string.Split(pace.command_colors[cmd]," ")))
 				clr.a = 100
@@ -345,6 +346,7 @@ local function populate_player(menu)
 
 	rebuild_proxies_menu = function()
 		full_proxymenu:Clear()
+		if pac.LocalPlayer.pac_proxy_events == nil then return end
 		for cmd, tbl in SortedPairs(pac.LocalPlayer.pac_proxy_events) do
 			local num = tbl.x
 			if tbl.y ~= 0 or tbl.z ~= 0 then
