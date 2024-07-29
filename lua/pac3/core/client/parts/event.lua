@@ -1462,10 +1462,21 @@ PART.OldEvents = {
 		operator_type = "string", preferred_operator = "find simple",
 		tutorial_explanation = "fire_bullets supposedly checks what types of bullets you're firing",
 		arguments = {{find_ammo = "string"}, {time = "number"}},
+		userdata = {{default = "AR2", enums = function()
+			local tbl = {}
+			for i=-1,512,1 do
+				local name = game.GetAmmoName(i)
+				if name then
+					tbl[name .. " (ID ="..i..")"] = name
+				end
+			end
+			return tbl
+		end}, {default = 0.1}},
 		callback = function(self, ent, find_ammo, time)
 			time = time or 0.1
 
 			ent = try_viewmodel(ent)
+			if game.SinglePlayer() and ent.pac_hide_bullets ~= ent:GetNWBool("pac_hide_bullets", false) then net.Start("pac_hide_bullets_get") net.WriteBool(ent.pac_hide_bullets) net.SendToServer() end
 
 			local data = ent.pac_fire_bullets
 			local b = false
@@ -3377,14 +3388,24 @@ pac.AddHook("EntityEmitSound", "emit_sound", function(data)
 	end
 end)
 
-pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
-	if not ent:IsValid() or not ent.pac_has_parts then return end
-	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
-	if ent.pac_hide_bullets then
-		return false
-	end
-	pac.CallRecursiveOnAllParts("OnFireBullets")
-end)
+if game.SinglePlayer() then
+	net.Receive("pac_fire_bullets_for_singleplayer", function()
+		local ent = net.ReadEntity()
+		if not ent:IsValid() or not ent.pac_has_parts then return end
+		local ammo_type = net.ReadUInt(8)
+		ent.pac_fire_bullets = {name = game.GetAmmoName(ammo_type), time = pac.RealTime, reset = true}
+		pac.CallRecursiveOnAllParts("OnFireBullets")
+	end)
+else
+	pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
+		if not ent:IsValid() or not ent.pac_has_parts then return end
+		ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
+		pac.CallRecursiveOnAllParts("OnFireBullets")
+		if ent.pac_hide_bullets then
+			return false
+		end
+	end)
+end
 
 --for regaining focus on cameras from first person, hacky thing to not loop through localparts every time
 --only if the received command name matches that of a camera's linked command event
