@@ -95,6 +95,35 @@ local function DrawHermite(width, x0,y0,x1,y1,c0,c1,alpha,samples)
 	render.PopFilterMin()
 end
 
+local function draw_hermite(x,y, w,h, ...)
+	local cam3d = {
+		type = "3D",
+
+		x = 0,
+		y = 0,
+		w = w,
+		h = h,
+
+		znear = -10000,
+		zfar = 10000,
+
+		origin = Vector(x,y,-1000),
+		angles = Angle(-90,0,90),
+
+		ortho = {
+			left = 0,
+			right = w,
+
+			top = -h,
+			bottom = 0
+		}
+	}
+
+	cam.Start(cam3d)
+	DrawHermite(...)
+	cam.End(cam3d)
+end
+
 local function draw_hermite_list(part, tbl, property)
 	for _, part2 in pairs(tbl) do
 		local from = part
@@ -152,34 +181,7 @@ local function draw_hermite_list(part, tbl, property)
 	end
 end
 
-local function draw_hermite(x,y, w,h, ...)
-	local cam3d = {
-		type = "3D",
 
-		x = 0,
-		y = 0,
-		w = w,
-		h = h,
-
-		znear = -10000,
-		zfar = 10000,
-
-		origin = Vector(x,y,-1000),
-		angles = Angle(-90,0,90),
-
-		ortho = {
-			left = 0,
-			right = w,
-
-			top = -h,
-			bottom = 0
-		}
-	}
-
-	cam.Start(cam3d)
-	DrawHermite(...)
-	cam.End(cam3d)
-end
 --[[
 	function PANEL:DrawHermite(...)
 		local x, y = self:ScreenToLocal(0,0)
