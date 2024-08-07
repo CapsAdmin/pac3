@@ -489,7 +489,7 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	local str_ref =
 	[[
 
-    I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
+    I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN, INVERT)
 	]]
 
 	local str_header =
@@ -513,7 +513,7 @@ if (first() | dupefinished()) {
     Indices = 1
 
         #- Data structure
-        #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
+        #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Invert)
         #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
 
         #- Editing holograms
@@ -556,6 +556,7 @@ if (first() | dupefinished()) {
             holoMaterial(Index, This[9, string])
             holoColor(Index, This[10, vector4])
             holoSkin(Index, This[11, number])
+            holoInvertModel(Index, This[12, number])
         }
 
         if (ToggleShading) { holoDisableShading(Index, 1) }
@@ -675,6 +676,7 @@ elseif (CoreStatus == "RunThisCode") {
 			MATERIAL = ("%q"):format(part:GetMaterial()),
 			MODEL = ("%q"):format(part:GetModel()),
 			SKIN = part.GetSkin and part:GetSkin() or "0",
+			INVERT = part:GetInvert() and "1" or "0",
 			PARENT = "entity()"
 		})
 
