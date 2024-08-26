@@ -501,7 +501,8 @@ function PANEL:PopulateParts(node, parts, children)
 
 			fix_folder_funcs(part_node)
 
-			if part.Description then part_node:SetTooltip(L(part.Description)) end
+			if part.Description then part_node:SetTooltip(L(part.Description)) end --ok but have we ever had any Description other than "right click to add parts"?
+			if part.Notes ~= "" then part_node.Label:SetTooltip(part.Notes) end --idk if anyone uses Notes but tooltips are good if they have something on them. It can easily be overridden by other code anyway.
 
 			part.pace_tree_node = part_node
 			part_node.part = part
