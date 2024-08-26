@@ -28,6 +28,7 @@ BUILDER:StartStorableVars()
 
 		BUILDER:GetSet("RootOwner", false)
 		BUILDER:GetSetPart("TargetPart")
+		BUILDER:GetSet("MultipleTargetParts", "")
 		BUILDER:GetSetPart("OutputTargetPart", {hide_in_editor = true})
 		BUILDER:GetSet("AffectChildren", false)
 		BUILDER:GetSet("Expression", "")
@@ -101,6 +102,69 @@ function PART:GetTarget()
 	return self:GetParent()
 end
 
+function PART:GetOrFindCachedPart(uid_or_name)
+	local part = nil
+	self.erroring_cached_parts = {}
+	self.found_cached_parts = self.found_cached_parts or {}
+	if self.found_cached_parts[uid_or_name] then self.erroring_cached_parts[uid_or_name] = nil return self.found_cached_parts[uid_or_name] end
+	if self.erroring_cached_parts[uid_or_name] then return end
+
+	local owner = self:GetPlayerOwner()
+	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
+	if not part:IsValid() then
+		part = pac.FindPartByName(pac.Hash(owner), uid_or_name, self)
+	else
+		self.found_cached_parts[uid_or_name] = part
+		return part
+	end
+	if not part:IsValid() then
+		self.erroring_cached_parts[uid_or_name] = true
+	else
+		self.found_cached_parts[uid_or_name] = part
+		return part
+	end
+	return part
+end
+
+function PART:SetMultipleTargetParts(str)
+	self.MultipleTargetParts = str
+	self.MultiTargetPart = {}
+	if str == "" then self.MultiTargetPart = nil self.ExtraHermites = nil return end
+	if not string.find(str, ";") then
+		local part = self:GetOrFindCachedPart(str)
+		if IsValid(part) then
+			self:SetTargetPart(part)
+			self.MultipleTargetParts = ""
+		else
+			timer.Simple(3, function()
+				local part = self:GetOrFindCachedPart(str)
+				if part then
+					self:SetTargetPart(part)
+					self.MultipleTargetParts = ""
+				end
+			end)
+		end
+		self.MultiTargetPart = nil
+	else
+		self:SetTargetPart()
+		self.MultiTargetPart = {}
+		self.ExtraHermites = {}
+		local uid_splits = string.Split(str, ";")
+		for i,uid2 in ipairs(uid_splits) do
+			local part = self:GetOrFindCachedPart(uid2)
+			if not IsValid(part) then
+				timer.Simple(3, function()
+					local part = self:GetOrFindCachedPart(uid2)
+					if part then table.insert(self.MultiTargetPart, part) table.insert(self.ExtraHermites, part) end
+				end)
+			else table.insert(self.MultiTargetPart, part) table.insert(self.ExtraHermites, part) end
+		end
+		self.ExtraHermites_Property = "MultipleTargetParts"
+	end
+
+end
+
+
 function PART:SetVariableName(str)
 	self.VariableName = str
 end
@@ -132,7 +196,16 @@ end
 function PART:Initialize()
 	self.vec_additive = {}
 	self.next_vel_calc = 0
+	self.invalid_parts_in_expression = {}
+	if self:GetPlayerOwner() == pac.LocalPlayer then
+		self.errors_override = true
+		timer.Simple(5, function() self.errors_override = false end) --initialize hack to stop erroring when referenced parts aren't created yet but will be created shortly
+	end
+
 end
+
+PART.Tutorials = include("pac3/editor/client/proxy_function_tutorials.lua")
+
 
 PART.Functions =
 {
@@ -357,6 +430,42 @@ for ease,f in pairs(math.ease) do
 	end
 end
 
+PART.Inputs.sample_and_hold = function(self, seed, duration, min, max, ease)
+	if not seed then self:SetInfo("sample_and_hold's arguments are (seed, duration, min, max, ease)\nease is a string like \"linear\" \"InSine\" or \"InOutElastic\"") end
+	seed = seed or 0
+
+	min = min or 0
+	max = max or 1
+
+	duration = duration or 1
+	if duration == 0 then return min + math.random()*(max-min) end
+
+	self.samplehold = self.samplehold or {}
+	self.samplehold_prev = self.samplehold_prev or {}
+	self.samplehold_prev[seed] = self.samplehold_prev[seed] or {value = min, refresh = CurTime()}
+	self.samplehold[seed] = self.samplehold[seed] or {value = min + math.random()*(max-min), refresh = CurTime() + duration}
+
+	local prev = self.samplehold_prev[seed].value
+	local frac = 1 - (self.samplehold[seed].refresh - CurTime()) / duration
+	local delta = self.samplehold[seed].value - prev
+
+	if CurTime() > self.samplehold[seed].refresh then
+		self.samplehold_prev[seed] = self.samplehold[seed]
+		self.samplehold[seed] = {value = min + math.random()*(max-min), refresh = CurTime() + duration}
+	end
+	if not ease then
+		return self.samplehold[seed].value
+	elseif ease == "lin" or ease == "linear" then
+		return prev + frac * delta
+	else
+		local eased_frac = math.ease[ease_aliases[ease]] and math.ease[ease_aliases[ease]](frac) or 1
+		return prev + eased_frac*delta
+	end
+end
+PART.Inputs.samplehold = PART.Inputs.sample_and_hold
+PART.Inputs.random_drift = PART.Inputs.sample_and_hold
+PART.Inputs.drift = PART.Inputs.sample_and_hold
+
 PART.Inputs.timeex = function(s)
 	s.time = s.time or pac.RealTime
 
@@ -364,42 +473,222 @@ PART.Inputs.timeex = function(s)
 end
 
 PART.Inputs.part_distance = function(self, uid1, uid2)
-
 	if not uid1 then return 0 end
-	local owner = self:GetPlayerOwner()
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
 
-	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
-	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
-
-	local PartB = pac.GetPartFromUniqueID(pac.Hash(owner), uid2) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid2)
-	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(owner), uid2, self) end
-	if not PartB:IsValid() then
-		if not uid2 then --no second argument, take parent
-			PartB = self:GetParent()
-		else --second argument exists and failed to find anything, ERROR
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
 			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in part_distance"
 		end
 	end
 
-	if not PartA:IsValid() and uid1 then --first argument exists and failed to find anything, ERROR
+	if not IsValid(PartA) then --first argument exists and failed to find anything, ERROR
 		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_distance"
 	end
 
-	if not PartA:IsValid() or not PartB:IsValid() then return 0 end
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
 	if not PartA.Position or not PartB.Position then return 0 end
 	self.valid_parts_in_expression[PartA] = PartA
 	self.valid_parts_in_expression[PartB] = PartB
 	return (PartB:GetWorldPosition() - PartA:GetWorldPosition()):Length()
 end
 
+PART.Inputs.sum = function(self, ...)
+	sum = 0
+	local args = { ... }
+	if not args[1] then return 0 end
+	for i=1,#args,1 do
+		sum = sum + args[i]
+	end
+	return sum
+end
+
+PART.Inputs.product = function(self, ...)
+	sum = 1
+	local args = { ... }
+	if not args[1] then return 0 end
+	for i=1,#args,1 do
+		sum = sum * args[i]
+	end
+	return sum
+end
+
+PART.Inputs.average = function(self, ...)
+	sum = 0
+	local args = { ... } if isvector(args[1]) then sum = vector_origin end
+	if not args[1] then return 0 end
+	for i=1,#args,1 do
+		sum = sum + args[i]
+	end
+	return sum / #args
+end
+PART.Inputs.mean = PART.Inputs.average
+
+PART.Inputs.median = function(self, ...)
+	sum = 0
+	local args = { ... } if isvector(args[1]) then sum = vector_origin end
+	if not args[1] then return 0 end
+	table.sort(args)
+	local count = #args
+	if (count % 2) == 1 then
+		return args[math.floor(count/2) + 1]
+	else
+		return (args[count/2] + args[count/2 + 1]) / 2
+	end
+	return sum
+end
+
+
+PART.Inputs.part_pos_x = function(self, uid1)
+	local PartA
+	if not uid1 then --no argument, take parent
+		PartA = self:GetParent()
+		return PartA:GetWorldPosition().x
+	else
+		PartA = self:GetOrFindCachedPart(uid1)
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_pos_x"
+	end
+
+	if not IsValid(PartA) then return 0 end
+	if not PartA.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	return PartA:GetWorldPosition().x
+end
+
+PART.Inputs.part_pos_y = function(self, uid1)
+	local PartA
+	if not uid1 then --no argument, take parent
+		PartA = self:GetParent()
+		return PartA:GetWorldPosition().y
+	else
+		PartA = self:GetOrFindCachedPart(uid1)
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_pos_y"
+	end
+
+	if not IsValid(PartA) then return 0 end
+	if not PartA.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	return PartA:GetWorldPosition().y
+end
+
+PART.Inputs.part_pos_z = function(self, uid1)
+	local PartA
+	if not uid1 then --no argument, take parent
+		PartA = self:GetParent()
+		return PartA:GetWorldPosition().z
+	else
+		PartA = self:GetOrFindCachedPart(uid1)
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_pos_z"
+	end
+
+	if not IsValid(PartA) then return 0 end
+	if not PartA.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	return PartA:GetWorldPosition().z
+end
+
+PART.Inputs.delta_x = function(self, uid1, uid2)
+	if not uid1 then return 0 end
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in delta_x"
+		end
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in delta_x"
+	end
+
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
+	return PartB:GetWorldPosition().x - PartA:GetWorldPosition().x
+end
+
+PART.Inputs.delta_y = function(self, uid1, uid2)
+	if not uid1 then return 0 end
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in delta_y"
+		end
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in delta_y"
+	end
+
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
+	return PartB:GetWorldPosition().y - PartA:GetWorldPosition().y
+end
+
+PART.Inputs.delta_z = function(self, uid1, uid2)
+	if not uid1 then return 0 end
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in delta_z"
+		end
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in delta_z"
+	end
+
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
+	return PartB:GetWorldPosition().z - PartA:GetWorldPosition().z
+end
+
 PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 	if not uid1 then return 0 end
 	num1 = num1 or 0
 	num2 = num2 or 1
-	local owner = self:GetPlayerOwner()
-
-	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
-	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
+	local PartA = self:GetOrFindCachedPart(uid1)
 
 	if not IsValid(PartA) then
 		if uid1 then --first argument exists and failed to find anything, ERROR
@@ -438,17 +727,30 @@ PART.Inputs.ezfade = function(self, speed, starttime, endtime)
 	self.time = self.time or pac.RealTime
 	local timeex = pac.RealTime - self.time
 	local start_offset_constant = -starttime * speed
+	local result = 0
 
-	if not endtime then --only a fadein
-		return math.Clamp(start_offset_constant + timeex * speed, 0, 1)
+	if speed < 0 then --if negative, we can use that as a simple fadeout notation
+		speed = -speed
+		endtime = endtime or starttime
+		if endtime == 0 then endtime = 1/speed end
+		local end_offset_constant = endtime * speed
+		result = math.Clamp(end_offset_constant - timeex * speed, 0, 1)
+	elseif endtime == nil then --only a fadein
+		result = math.Clamp(start_offset_constant + timeex * speed, 0, 1)
 	else --fadein fadeout
 		local end_offset_constant = endtime * speed
-		return math.Clamp(start_offset_constant + timeex * speed, 0, 1) * math.Clamp(end_offset_constant - timeex * speed, 0, 1)
+		result = math.Clamp(start_offset_constant + timeex * speed, 0, 1) * math.Clamp(end_offset_constant - timeex * speed, 0, 1)
 	end
+	return result
 end
+
 --four crossing points
 PART.Inputs.ezfade_4pt = function(self, in_starttime, in_endtime, out_starttime, out_endtime)
-	if not in_starttime or not in_endtime then self:SetError("ezfade_4pt needs at least two arguments! (in_starttime, in_endtime, out_starttime, out_endtime)") return 0 end -- needs at least two args. we could assume 0 starting point and first arg is fadein end, but it'll mess up the order and confuse people
+	if not in_starttime or not in_endtime then
+		if not self.errors_override then self:SetError("ezfade_4pt needs at least two arguments! (in_starttime, in_endtime, out_starttime, out_endtime)") end
+		self.error = true return 0
+	end -- needs at least two args. we could assume 0 starting point and first arg is fadein end, but it'll mess up the order and confuse people
+
 	local fadein_result = 0
 	local fadeout_result = 1
 	local in_speed = 1
@@ -484,7 +786,7 @@ PART.Inputs.ezfade_4pt = function(self, in_starttime, in_endtime, out_starttime,
 				fadeout_result = 1
 			end
 		end
-		
+
 	end
 	return fadein_result * fadeout_result
 end
@@ -496,9 +798,7 @@ for i=1,5,1 do
 		elseif self.last_extra_feedbacks[i][uid1] then --a thing to skip part searching when we found the part
 			return self.last_extra_feedbacks[i][uid1]["feedback_extra" .. i] or 0
 		else
-			local owner = self:GetPlayerOwner()
-			local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
-			if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
+			local PartA = self:GetOrFindCachedPart(uid1)
 			if IsValid(PartA) and PartA.ClassName == "proxy" then
 				self.last_extra_feedbacks[i][uid1] = PartA
 			end
@@ -509,8 +809,8 @@ for i=1,5,1 do
 end
 
 PART.Inputs.number_operator_alternative = function(self, comp1, op, comp2, num1, num2)
-	if not (comp1 and op and comp2 and num1 and num2) then return -1 end
-	if not (isnumber(comp1) and isnumber(comp2) and isnumber(num1) and isnumber(num2)) then return -1 end
+	if not (comp1 and op and comp2) then return -1 end
+	if not (isnumber(comp1) and isnumber(comp2) and (isnumber(num1) or isvector(num1)) and (isnumber(num2) or isvector(num2))) then return -1 end
 	local b = true
 	if op == "=" or op == "==" or op == "equal" then
 		b = comp1 == comp2
@@ -522,10 +822,10 @@ PART.Inputs.number_operator_alternative = function(self, comp1, op, comp2, num1,
 		b = comp1 < comp2
 	elseif op == "<=" or op == "below or equal" or op == "less or equal" or op == "less than or equal" then
 		b = comp1 <= comp2
-	elseif op == "~=" or op == "~=" or op == "not equal" then
+	elseif op == "~=" or op == "!=" or op == "not equal" then
 		b = comp1 ~= comp2
 	end
-	if b then return num1 or 0 else return num2 or 0 end
+	if b then return num1 or 1 else return num2 or 0 end
 end
 PART.Inputs.if_else = PART.Inputs.number_operator_alternative
 
@@ -808,7 +1108,7 @@ do -- scale
 	end
 	PART.Inputs.parent_scale_x = function(self) return get_scale(self, "x") end
 	PART.Inputs.parent_scale_y = function(self) return get_scale(self, "y") end
-	PART.Inputs.parent_scale_z = function(self) return get_scale(self, "z") end
+	PART.Inputs.parent_scale_z = function(self) return get_scale(self, "z") end	
 end
 
 PART.Inputs.pose_parameter = function(self, name)
@@ -829,6 +1129,28 @@ PART.Inputs.pose_parameter_true = function(self, name)
 	return 0
 end
 
+PART.Inputs.bodygroup = function(self, name, uid)
+	local owner
+	if not uid then
+		if self:GetParent().Bodygroup then
+			owner = self:GetParent():GetOwner()
+		else
+			owner = get_owner(self)
+		end
+	else
+		owner = self:GetOrFindCachedPart(uid):GetOwner()
+	end
+	local bgs = owner:GetBodyGroups()
+	if bgs then
+		for i,tbl in ipairs(bgs) do
+			if tbl.name == name then return owner:GetBodygroup(tbl.id) end
+		end
+	end
+	return 0
+end
+
+PART.Inputs.model_bodygroup = PART.Inputs.bodygroup
+
 PART.Inputs.command = function(self, name)
 	local ply = self:GetPlayerOwner()
 	if ply.pac_proxy_events then
@@ -847,17 +1169,25 @@ PART.Inputs.command = function(self, name)
 	return 0, 0, 0
 end
 
+PART.Inputs.sequenced_event_number = function(self, name)
+	local ply = self:GetPlayerOwner()
+	if ply.pac_command_event_sequencebases then
+		if ply.pac_command_event_sequencebases[name] then
+			return ply.pac_command_event_sequencebases[name].current
+		end
+	end
+	return 0
+end
+
 PART.Inputs.voice_volume = function(self)
 	local ply = self:GetPlayerOwner()
 	if not IsValid(ply) then return 0 end
 	return ply:VoiceVolume()
 end
-
 PART.Inputs.voice_volume_scale = function(self)
 	local ply = self:GetPlayerOwner()
 	return ply:GetVoiceVolumeScale()
 end
-
 do -- light amount
 	local ColorToHSV = ColorToHSV
 	local render = render
@@ -929,7 +1259,6 @@ do -- health and armor
 
 		return owner:Health() / owner:GetMaxHealth()
 	end
-
 	PART.Inputs.owner_armor = function(self)
 		local owner = self:GetPlayerOwner()
 		if not owner:IsValid() then return 0 end
@@ -1042,7 +1371,6 @@ do -- ammo
 
 		return owner.GetActiveWeapon and owner:GetActiveWeapon() or owner, owner
 	end
-
 	PART.Inputs.owner_total_ammo = function(self, id)
 		local owner = self:GetPlayerOwner()
 		id = id and id:lower()
@@ -1051,7 +1379,6 @@ do -- ammo
 
 		return (owner.GetAmmoCount and id) and owner:GetAmmoCount(id) or 0
 	end
-
 	PART.Inputs.weapon_primary_ammo = function(self)
 		local wep = get_weapon(self)
 
@@ -1107,17 +1434,14 @@ do
 		if not self.feedback then return 0 end
 		return self.feedback[1] or 0
 	end
-
 	PART.Inputs.feedback_x = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[1] or 0
 	end
-
 	PART.Inputs.feedback_y = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[2] or 0
 	end
-
 	PART.Inputs.feedback_z = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[3] or 0
@@ -1156,7 +1480,6 @@ PART.Inputs.flat_dot_right = function(self)
 	return 0
 end
 
-
 PART.Inputs.server_maxplayers = function(self)
 	return game.MaxPlayers()
 end
@@ -1164,7 +1487,6 @@ PART.Inputs.server_playercount = function(self) return #player.GetAll() end
 PART.Inputs.server_population = PART.Inputs.server_playercount
 PART.Inputs.server_botcount = function(self) return #player.GetBots() end
 PART.Inputs.server_humancount = function(self) return #player.GetHumans() end
-
 
 PART.Inputs.pac_healthbars_total = function(self)
 	local ent = self:GetPlayerOwner()
@@ -1188,21 +1510,21 @@ PART.Inputs.healthmod_bar_layertotal = PART.Inputs.pac_healthbars_layertotal
 
 PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
 	local ent = self:GetPlayerOwner()
-	local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
+	local part = self:GetOrFindCachedPart(uid)
 
-	if not IsValid(pac.GetPartFromUniqueID(pac.Hash(ent), uid)) then
+	if not IsValid(part) then
 		self.invalid_parts_in_expression[uid] = "invalid uid : " .. uid .. " in pac_healthbar_uidvalue"
 	elseif part.ClassName ~= "health_modifier" then
 		self.invalid_parts_in_expression[uid] = "invalid class : " .. uid .. " in pac_healthbar_uidvalue"
 	end
 	if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
-		if ent.pac_healthbars_uidtotals[uid] then
+		if ent.pac_healthbars_uidtotals[part.UniqueID] then
 
 			if part:IsValid() then
 				self.valid_parts_in_expression[part] = part
 			end
 		end
-		return ent.pac_healthbars_uidtotals[uid] or 0
+		return ent.pac_healthbars_uidtotals[part.UniqueID] or 0
 	end
 	return 0
 end
@@ -1211,9 +1533,7 @@ PART.Inputs.healthmod_bar_uidvalue = PART.Inputs.pac_healthbar_uidvalue
 
 PART.Inputs.pac_healthbar_remaining_bars = function(self, uid)
 	local ent = self:GetPlayerOwner()
-	local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid) or pac.FindPartByPartialUniqueID(pac.Hash(ent), uid)
-	if not part:IsValid() then part = pac.FindPartByName(pac.Hash(ent), uid, self) end
-
+	local part = self:GetOrFindCachedPart(uid)
 	if not IsValid(part) then
 		self.invalid_parts_in_expression[uid] = "invalid uid or name : " .. uid .. " in pac_healthbar_remaining_bars"
 	elseif part.ClassName ~= "health_modifier" then
@@ -1537,7 +1857,7 @@ function PART:OnThink(to_hide)
 		pace.FlashNotification("An edited proxy still has no variable name! The proxy won't work until it knows where to send the math!")
 		self:SetWarning("You forgot to set a variable name! The proxy won't work until it knows where to send the math!")
 		self.touched = false
-	elseif self.VariableName ~= "" then self:SetWarning() end
+	elseif self.VariableName ~= "" and not self.error and not self.errors_override then self:SetWarning() end
 
 	self:CalcVelocity()
 
@@ -1564,7 +1884,7 @@ function PART:OnThink(to_hide)
 
 		local ok, x,y,z = self:RunExpression(ExpressionFunc)
 
-		if not ok then
+		if not ok then self.error = true
 			if self:GetPlayerOwner() == pac.LocalPlayer and self.Expression ~= self.LastBadExpression then
 				chat.AddText(Color(255,180,180),"============\n[ERR] PAC Proxy error on "..tostring(self)..":\n"..x.."\n============\n")
 				self.LastBadExpression = self.Expression
@@ -1600,11 +1920,23 @@ function PART:OnThink(to_hide)
 		self.feedback[3] = z
 
 		if self.AffectChildren then
-			for _, part in ipairs(self:GetChildren()) do
-				set(self, part, x, y, z, true)
+			if self.MultiTargetPart then
+				for _,part2 in ipairs(self.MultiTargetPart) do
+					set(self, part2, x, y, z, true)
+				end
+			else
+				for _, part in ipairs(self:GetChildren()) do
+					set(self, part, x, y, z, true)
+				end
 			end
 		else
-			set(self, part, x, y, z)
+			if self.MultiTargetPart then
+				for i,v in ipairs(self.MultiTargetPart) do
+					set(self, v, x, y, z)
+				end
+			else
+				set(self, part, x, y, z)
+			end
 		end
 
 		if pace and pace.IsActive() then
@@ -1619,7 +1951,7 @@ function PART:OnThink(to_hide)
 			local T = type(val)
 
 			if T == "boolean" then
-				str = tonumber(x) > 0 and "true" or "false"
+				str = (tonumber(x) or 0) > 0 and "true" or "false"
 			elseif T == "Vector" then
 				str = "Vector(" .. str .. ")"
 			elseif T == "Angle" then
@@ -1658,11 +1990,24 @@ function PART:OnThink(to_hide)
 			end
 
 			if self.AffectChildren then
-				for _, part in ipairs(self:GetChildren()) do
-					set(self, part, num, nil, nil, true)
+				if self.MultiTargetPart then
+					for _,part2 in ipairs(self.MultiTargetPart) do
+						set(self, part2, num, nil, nil, true)
+					end
+				else
+					for _, part in ipairs(self:GetChildren()) do
+						set(self, part, num, nil, nil, true)
+					end
 				end
 			else
-				set(self, part, num)
+				if self.MultiTargetPart then
+					for i,part2 in ipairs(self.MultiTargetPart) do
+						set(self, part2, num)
+					end
+				else
+					set(self, part, num)
+				end
+
 			end
 
 			if pace and pace.IsActive() then
@@ -1680,7 +2025,7 @@ function PART:OnThink(to_hide)
 		for str, message in pairs(self.invalid_parts_in_expression) do
 			error_msg = error_msg .. " " .. message .. "\n"
 		end
-		self:SetError(error_msg)
+		self:SetError(error_msg) self.error = true
 	end
 	if self:GetPlayerOwner() == pac.LocalPlayer then
 		if self.PreviewOutput then
@@ -1689,7 +2034,54 @@ function PART:OnThink(to_hide)
 			pac.RemoveHook("HUDPaint", "proxy" .. self.UniqueID)
 		end
 	end
-	
+
 end
+
+
+function PART:GetActiveFunctions()
+	if self.Expression == "" then return {self.Input, self.Function} end
+	local possible_funcs = {}
+	for kw,_ in pairs(PART.Inputs) do
+		local kw2 = kw .. "("
+		if string.find(self.Expression, kw2, 0, true) ~= nil then
+			table.insert(possible_funcs, kw)
+		end
+	end
+
+	return possible_funcs
+end
+
+function PART:GetTutorial(str)
+	if not str then
+		if pace and pace.TUTORIALS then
+			return pace.TUTORIALS.PartInfos[self.ClassName].popup_tutorial
+		end
+	end
+	return PART.Tutorials[str]
+end
+
+function PART:AttachEditorPopup(str, flash, tbl)
+	if str == nil then
+		local funcs = self:GetActiveFunctions()
+		if #funcs > 0 then
+			str = "active functions"
+			if self.Expression ~= "" then
+				str = self.Expression .. "\n\nactive functions"
+			end
+			for i, kw in ipairs(self:GetActiveFunctions()) do
+				str = str .. "\n\n====================================================================\n\n" .. self:GetTutorial(kw)
+			end
+		end
+	end
+	local pnl = self:SetupEditorPopup(str, flash, tbl)
+	if flash and pnl then
+		pnl:MakePopup()
+	end
+	return pnl
+end
+
+timer.Simple(10, function()
+	pace.TUTORIALS["proxy_functions"] = PART.Tutorials
+end)
 
 BUILDER:Register()

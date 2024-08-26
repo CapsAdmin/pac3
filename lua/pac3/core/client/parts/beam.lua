@@ -91,15 +91,18 @@ BUILDER:StartStorableVars()
 		BUILDER:PropertyOrder("ParentName")
 		BUILDER:GetSet("Material", "cable/rope")
 		BUILDER:GetSetPart("EndPoint")
-		BUILDER:GetSet("Bend", 10)
-		BUILDER:GetSet("Frequency", 1)
-		BUILDER:GetSet("Resolution", 16)
+		BUILDER:GetSet("MultipleEndPoints","")
+	BUILDER:SetPropertyGroup("beam size")
 		BUILDER:GetSet("Width", 1)
 		BUILDER:GetSet("WidthBend", 0)
 		BUILDER:GetSet("WidthBendSize", 1)
 		BUILDER:GetSet("StartWidthMultiplier", 1)
 		BUILDER:GetSet("EndWidthMultiplier", 1)
 		BUILDER:GetSet("WidthMorphPower", 1)
+	BUILDER:SetPropertyGroup("beam detail")
+		BUILDER:GetSet("Bend", 10)
+		BUILDER:GetSet("Frequency", 1)
+		BUILDER:GetSet("Resolution", 16)
 		BUILDER:GetSet("TextureStretch", 1)
 		BUILDER:GetSet("TextureScroll", 0)
 	BUILDER:SetPropertyGroup("orientation")
@@ -122,6 +125,68 @@ function PART:Initialize()
 
 	self.StartColorC = Color(255, 255, 255, 255)
 	self.EndColorC = Color(255, 255, 255, 255)
+end
+
+function PART:GetOrFindCachedPart(uid_or_name)
+	local part = nil
+	self.erroring_cached_parts = {}
+	self.found_cached_parts = self.found_cached_parts or {}
+	if self.found_cached_parts[uid_or_name] then self.erroring_cached_parts[uid_or_name] = nil return self.found_cached_parts[uid_or_name] end
+	if self.erroring_cached_parts[uid_or_name] then return end
+
+	local owner = self:GetPlayerOwner()
+	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
+	if not part:IsValid() then
+		part = pac.FindPartByName(pac.Hash(owner), uid_or_name, self)
+	else
+		self.found_cached_parts[uid_or_name] = part
+		return part
+	end
+	if not part:IsValid() then
+		self.erroring_cached_parts[uid_or_name] = true
+	else
+		self.found_cached_parts[uid_or_name] = part
+		return part
+	end
+	return part
+end
+
+function PART:SetMultipleEndPoints(str)
+	self.MultipleEndPoints = str
+	if str == "" then self.MultiEndPoint = nil self.ExtraHermites = nil return end
+	timer.Simple(0.2, function()
+		if not string.find(str, ";") then
+			local part = self:GetOrFindCachedPart(str)
+			if IsValid(part) then
+				self:SetEndPoint(part)
+				self.MultipleEndPoints = ""
+			else
+				timer.Simple(3, function()
+					local part = self:GetOrFindCachedPart(str)
+					if part then
+						self:SetEndPoint(part)
+						self.MultipleEndPoints = ""
+					end
+				end)
+			end
+			self.MultiEndPoint = nil
+		else
+			self:SetEndPoint()
+			self.MultiEndPoint = {}
+			self.ExtraHermites = {}
+			local uid_splits = string.Split(str, ";")
+			for i,uid2 in ipairs(uid_splits) do
+				local part = self:GetOrFindCachedPart(uid2)
+				if not IsValid(part) then
+					timer.Simple(3, function()
+						local part = self:GetOrFindCachedPart(uid2)
+						if part then table.insert(self.MultiEndPoint, part) table.insert(self.ExtraHermites, part) end
+					end)
+				else table.insert(self.MultiEndPoint, part) table.insert(self.ExtraHermites, part) end
+			end
+			self.ExtraHermites_Property = "MultipleEndPoints"
+		end
+	end)
 end
 
 function PART:SetStartColor(v)
@@ -203,30 +268,56 @@ end
 function PART:OnDraw()
 	local part = self.EndPoint
 
-	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() and part.GetWorldPosition then
+	if self.Materialm and self.StartColorC and self.EndColorC and ((part:IsValid() and part.GetWorldPosition) or self.MultiEndPoint) then
 		local pos, ang = self:GetDrawPosition()
 		render.SetMaterial(self.Materialm)
-		pac.DrawBeam(
-			pos,
-			part:GetWorldPosition(),
+		if self.MultiEndPoint then
+			for _,part in ipairs(self.MultiEndPoint) do
+				pac.DrawBeam(
+					pos,
+					part:GetWorldPosition(),
 
-			ang:Forward(),
-			part:GetWorldAngles():Forward(),
+					ang:Forward(),
+					part:GetWorldAngles():Forward(),
 
-			self.Bend,
-			math.Clamp(self.Resolution, 1, 256),
-			self.Width,
-			self.StartColorC,
-			self.EndColorC,
-			self.Frequency,
-			self.TextureStretch,
-			self.TextureScroll,
-			self.WidthBend,
-			self.WidthBendSize,
-			self.StartWidthMultiplier,
-			self.EndWidthMultiplier,
-			self.WidthMorphPower
-		)
+					self.Bend,
+					math.Clamp(self.Resolution, 1, 256),
+					self.Width,
+					self.StartColorC,
+					self.EndColorC,
+					self.Frequency,
+					self.TextureStretch,
+					self.TextureScroll,
+					self.WidthBend,
+					self.WidthBendSize,
+					self.StartWidthMultiplier,
+					self.EndWidthMultiplier,
+					self.WidthMorphPower
+				)
+			end
+		else
+			pac.DrawBeam(
+				pos,
+				part:GetWorldPosition(),
+
+				ang:Forward(),
+				part:GetWorldAngles():Forward(),
+
+				self.Bend,
+				math.Clamp(self.Resolution, 1, 256),
+				self.Width,
+				self.StartColorC,
+				self.EndColorC,
+				self.Frequency,
+				self.TextureStretch,
+				self.TextureScroll,
+				self.WidthBend,
+				self.WidthBendSize,
+				self.StartWidthMultiplier,
+				self.EndWidthMultiplier,
+				self.WidthMorphPower
+			)
+		end
 	end
 end
 

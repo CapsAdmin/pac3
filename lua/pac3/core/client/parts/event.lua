@@ -37,9 +37,13 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("ZeroEyePitch", false)
 	BUILDER:GetSetPart("TargetPart", {editor_friendly = "ExternalOriginPart"})
 	BUILDER:GetSetPart("DestinationPart", {editor_friendly = "TargetedPart"})
+	BUILDER:GetSet("MultipleTargetParts", "")
 BUILDER:EndStorableVars()
 
+PART.Tutorials = {}
+
 local registered_command_event_series = {}
+local event_series_bounds = {}
 
 function PART:register_command_event(str,b)
 	local ply = self:GetPlayerOwner()
@@ -102,6 +106,15 @@ function PART:GetEventTutorialText()
 	end
 end
 
+function PART:GetTutorial(str)
+	if not str then
+		if pace and pace.TUTORIALS then
+			return pace.TUTORIALS.PartInfos[self.ClassName].popup_tutorial
+		end
+	end
+	return self:GetEventTutorialText()
+end
+
 function PART:AttachEditorPopup(str)
 
 	local info_string = str or "no information available"
@@ -160,6 +173,7 @@ function PART:SetEvent(event)
 end
 
 function PART:Initialize()
+	self.ExtraHermites = {}
 	if self:GetPlayerOwner() == LocalPlayer() then
 		timer.Simple(0.2, function()
 			if self.Event == "command" then
@@ -172,6 +186,64 @@ function PART:Initialize()
 		end)
 	end
 
+end
+
+function PART:GetOrFindCachedPart(uid_or_name)
+	local part = nil
+	self.found_cached_parts = self.found_cached_parts or {}
+	if self.found_cached_parts[uid_or_name] then return self.found_cached_parts[uid_or_name] end
+
+	local owner = self:GetPlayerOwner()
+	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
+	if not part:IsValid() then
+		part = pac.FindPartByName(pac.Hash(owner), uid_or_name, self)
+	else
+		self.found_cached_parts[uid_or_name] = part
+		return part
+	end
+	if part:IsValid() then
+		self.found_cached_parts[uid_or_name] = part
+		return part
+	end
+	return part
+end
+
+function PART:SetMultipleTargetParts(str)
+	self.MultipleTargetParts = str
+	self.MultiTargetPart = {}
+	if str == "" then self.MultiTargetPart = nil self.ExtraHermites = nil return end
+	if not string.find(str, ";") then
+		local part = self:GetOrFindCachedPart(str)
+		if IsValid(part) then
+			self:SetDestinationPart(part)
+			self.MultipleTargetParts = ""
+		else
+			timer.Simple(3, function()
+				local part = self:GetOrFindCachedPart(str)
+				if part then
+					self:SetDestinationPart(part)
+					self.MultipleTargetParts = ""
+				end
+			end)
+		end
+		self.MultiTargetPart = nil
+	else
+		self:SetDestinationPart()
+		self.MultiTargetPart = {}
+		self.ExtraHermites = {}
+		local uid_splits = string.Split(str, ";")
+		for i,uid2 in ipairs(uid_splits) do
+			local part = self:GetOrFindCachedPart(uid2)
+			if not IsValid(part) then
+				timer.Simple(3, function()
+					local part = self:GetOrFindCachedPart(uid2)
+					if part then table.insert(self.MultiTargetPart, part) table.insert(self.ExtraHermites, part) end
+				end)
+			else table.insert(self.MultiTargetPart, part) table.insert(self.ExtraHermites, part) end
+		end
+		self.ExtraHermites_Property = "MultipleTargetParts"
+	end
+	
 end
 
 local function get_default(typ)
@@ -2732,6 +2804,8 @@ do
 		eventObject.preferred_operator = preferred_operator
 		eventObject.tutorial_explanation = tutorial_explanation
 
+		PART.Tutorials[classname] = tutorial_explanation
+
 		function eventObject:Think(event, ent, ...)
 			return think(event, ent, ...)
 		end
@@ -2741,6 +2815,7 @@ do
 
 	timer.Simple(0, function() -- After all addons has loaded
 		hook.Call('PAC3RegisterEvents', nil, pac.CreateEvent, pac.RegisterEvent)
+		pace.TUTORIALS["events"] = PART.Tutorials
 	end)
 end
 
@@ -3119,13 +3194,25 @@ function PART:TriggerEvent(b)
 	self.event_triggered = b -- event_triggered is just used for the editor
 
 	if self.AffectChildrenOnly then
-		for _, child in ipairs(self:GetChildren()) do
-			child:SetEventTrigger(self, b)
+		if self.MultiTargetPart then
+			for _,part2 in ipairs(self.MultiTargetPart) do
+				if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
+			end
+		else
+			for _, child in ipairs(self:GetChildren()) do
+				child:SetEventTrigger(self, b)
+			end
 		end
 	else
-		local parent = self:GetParent()
-		if parent:IsValid() then
-			parent:SetEventTrigger(self, b)
+		if self.MultiTargetPart then
+			for _,part2 in ipairs(self.MultiTargetPart) do
+				if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
+			end
+		else
+			local parent = self:GetParent()
+			if parent:IsValid() then
+				parent:SetEventTrigger(self, b)
+			end
 		end
 	end
 	if IsValid(self.DestinationPart) then --target part. the proper one.
@@ -3134,7 +3221,6 @@ function PART:TriggerEvent(b)
 				self.previousdestinationpart:SetEventTrigger(self, false)
 			end
 		end
-
 		(self.DestinationPart):SetEventTrigger(self, b)
 		self.previousdestinationpart = (self.DestinationPart)
 	elseif IsValid(self.previousdestinationpart) then

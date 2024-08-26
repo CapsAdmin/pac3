@@ -674,7 +674,7 @@ end
 
 vgui.Register( "pace_settings", PANEL, "DPanel" )
 
-function pace.OpenSettings()
+function pace.OpenSettings(tab)
 	if IsValid(pace.settings_panel) then
 		pace.settings_panel:Remove()
 	end
@@ -715,6 +715,9 @@ function pace.OpenSettings()
 	timer.Simple(0.5, function() pace.cvar_changes = nil end)
 	local pnl = vgui.Create("pace_settings", pnl)
 	pnl:Dock(FILL)
+	if tab then
+		pnl.sheet:SwitchToName(tab)
+	end
 end
 
 concommand.Add("pace_settings", function()
@@ -1385,33 +1388,39 @@ function pace.FillEditorSettings(pnl)
 		elseif option_name == "paste" then
 			return pace.MiscIcons.paste
 		elseif option_name == "cut" then
-			return 'icon16/cut.png'
+			return "icon16/cut.png"
 		elseif option_name == "paste_properties" then
 			return pace.MiscIcons.replace
 		elseif option_name == "clone" then
 			return pace.MiscIcons.clone
 		elseif option_name == "partsize_info" then
-			return'icon16/drive.png'
+			return"icon16/drive.png"
 		elseif option_name == "bulk_apply_properties" then
-			return 'icon16/application_form.png'
+			return "icon16/application_form.png"
 		elseif option_name == "bulk_select" then
-			return 'icon16/table_multiple.png'
+			return "icon16/table_multiple.png"
 		elseif option_name == "spacer" then
-			return 'icon16/application_split.png'
+			return "icon16/application_split.png"
 		elseif option_name == "hide_editor" then
-			return 'icon16/application_delete.png'
+			return "icon16/application_delete.png"
 		elseif option_name == "expand_all" then
-			return 'icon16/arrow_down.png'
+			return "icon16/arrow_down.png"
 		elseif option_name == "collapse_all" then
-			return 'icon16/arrow_in.png'
+			return "icon16/arrow_in.png"
 		elseif option_name == "copy_uid" then
 			return pace.MiscIcons.uniqueid
 		elseif option_name == "help_part_info" then
-			return 'icon16/information.png'
+			return "icon16/information.png"
 		elseif option_name == "reorder_movables" then
-			return 'icon16/application_double.png'
+			return "icon16/application_double.png"
+		elseif option_name == "criteria_process" then
+			return "icon16/text_list_numbers.png"
+		elseif option_name == "bulk_morph" then
+			return "icon16/chart_line.png"
+		elseif option_name == "arraying_menu" then
+			return "icon16/shape_group.png"
 		end
-		return 'icon16/world.png'
+		return "icon16/world.png"
 	end
 
 	partmenu_choices:SetY(50)

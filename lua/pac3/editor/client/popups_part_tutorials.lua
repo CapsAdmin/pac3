@@ -5,16 +5,53 @@
 	Tutorials will be written here
 ]]
 
+local default_fonts = {
+	"BudgetLabel",
+	"CenterPrintText",
+	"ChatFont",
+	"CloseCaption_Bold",
+	"CloseCaption_BoldItalic",
+	"CloseCaption_Italic",
+	"CloseCaption_Normal",
+	"CreditsOutroText",
+	"CreditsText",
+	"DebugFixed",
+	"DebugFixedSmall",
+	"DebugOverlay",
+	"Default",
+	"DefaultFixed",
+	"DefaultFixedDropShadow",
+	"DefaultSmall",
+	"DefaultUnderline",
+	"DefaultVerySmall",
+	"HDRDemoText",
+	"HudDefault",
+	"HudHintTextLarge",
+	"HudHintTextSmall",
+	"HudSelectionText",
+	"TargetID",
+	"TargetIDSmall",
+	"Trebuchet18",
+	"Trebuchet24",
+	"DermaDefault",
+	"DermaDefaultBold",
+	"DermaLarge",
+	"GModNotify",
+	"ScoreboardDefault",
+	"ScoreboardDefaultTitle",
 
-CreateConVar("pac_popups_enable", 1, FCVAR_ARCHIVE, "Enables PAC editor popups. They provide some information but can be annoying")
+}
+
+CreateConVar("pac_popups_enable", 1, FCVAR_ARCHIVE, "Enables PAC editor popups. They provide some information but can be annoying if you use autopilot options that make them automatically on certain contexts.")
+CreateConVar("pac_popups_font", "DermaDefaultBold", FCVAR_ARCHIVE, "PAC editor popups font")
 CreateConVar("pac_popups_preserve_on_autofade", 1, FCVAR_ARCHIVE, "If set to 0, PAC editor popups appear only once and don't reappear when hovering over the part label or pressing F1")
-CreateConVar("pac_popups_base_color", "215 230 255", FCVAR_ARCHIVE, "The color of the base filler rectangle for editor popups")
+CreateConVar("pac_popups_base_color", "255 255 255", FCVAR_ARCHIVE, "The color of the base filler rectangle for editor popups")
 CreateConVar("pac_popups_base_color_pulse", "0", FCVAR_ARCHIVE, "Amount of pulse of the base filler rectangle for editor popups")
 
-CreateConVar("pac_popups_base_alpha", "0.5", FCVAR_ARCHIVE, "The alpha opacity of the base filler rectangle for editor popups")
+CreateConVar("pac_popups_base_alpha", "255", FCVAR_ARCHIVE, "The alpha opacity of the base filler rectangle for editor popups")
 CreateConVar("pac_popups_fade_color", "100 220 255", FCVAR_ARCHIVE, "The color of the fading effect for editor popups")
-CreateConVar("pac_popups_fade_alpha", "1", FCVAR_ARCHIVE, "The alpha opacity of the fading effect for editor popups")
-CreateConVar("pac_popups_text_color", "100 220 255", FCVAR_ARCHIVE, "The color of the fading effect for editor popups")
+CreateConVar("pac_popups_fade_alpha", "0", FCVAR_ARCHIVE, "The alpha opacity of the fading effect for editor popups")
+CreateConVar("pac_popups_text_color", "40 40 40", FCVAR_ARCHIVE, "The color of the fading effect for editor popups")
 CreateConVar("pac_popups_verbosity", "beginner tutorial", FCVAR_ARCHIVE, "Sets the amount of information added to PAC editor popups. While in development, there will be limited contextual support. If no special information is defined, it will indicate the part size information. Here are the planned modes: \nbeginner tutorial : Basic tutorials about pac parts, for beginners or casual users looking for a quick reference for what a part does\nReference tutorial : doesn't give part tutorials, but still keeps events' tutorial explanations.\n")
 CreateConVar("pac_popups_preferred_location", "pac tree label", FCVAR_ARCHIVE, "Sets the preferred method of PAC editor popups.\n"..
 	"pac tree label : the part label on the pac tree\n"..
@@ -79,6 +116,20 @@ function pace.OpenPopupConfig()
 		GetConVar("pac_popups_text_color"):SetString(col.r .. " " .. col.g .. " " .. col.b)
 	end
 
+	pace.popups_font = GetConVar("pac_popups_font"):GetString()
+	local font = vgui.Create("DComboBox", master_pnl)
+	font:SetSize(200, 20)
+	font:SetPos(200,26)
+	font:SetText("font")
+	for _,f in ipairs(default_fonts) do
+		font:AddChoice(f,f)
+	end
+	function font:ChooseOption(val,id)
+		self:SetText(val)
+		GetConVar("pac_popups_font"):SetString(val)
+		pace.popups_font = val
+	end
+
 	local invertcolor_btn = vgui.Create("DButton")
 	invertcolor_btn:SetSize(400,30)
 	invertcolor_btn:SetText("Use text invert color (experimental)")
@@ -132,7 +183,7 @@ function pace.OpenPopupConfig()
 			fade = math.pow(fade,2)
 			draw.RoundedBox( 0, band, 1, 1, h-2, Color( r2, g2, b2, fade*a2))
 		end
-		draw.DrawText(label_text, "DermaDefaultBold", 5, 5, Color(r3,g3,b3,255))
+		draw.DrawText(label_text, pace.popups_font, 5, 5, Color(r3,g3,b3,255))
 	end
 
 	list_pnl:Add(Label("Base color"))
@@ -227,7 +278,7 @@ function pac.InfoPopup(str, tbl, x, y)
 	if tbl.pac_part then
 		if verbosity == "reference tutorial" or verbosity == "beginner tutorial" then
 			if pace.TUTORIALS.PartInfos[tbl.pac_part.ClassName] then
-				str = str .. "\n\n" .. pace.TUTORIALS.PartInfos[tbl.pac_part.ClassName].popup_tutorial .. "\n"
+				str = str .. "\n\n====================================================================\n\nPart Class Tutorial for " .. tbl.pac_part.ClassName .. "\n" .. pace.TUTORIALS.PartInfos[tbl.pac_part.ClassName].popup_tutorial .. "\n"
 			end
 		end
 	end
@@ -485,8 +536,8 @@ function pac.InfoPopup(str, tbl, x, y)
 
 	local col = Color(r3,g3,b3,255)
 
-	--txt_zone:SetFont("DermaDefaultBold")
 	function txt_zone:PerformLayout()
+		self:SetFontInternal(pace.popups_font or "DermaDefaultBold")
 		txt_zone:SetBGColor(0,0,0,0)
 		txt_zone:SetFGColor(col)
 	end
@@ -522,9 +573,9 @@ function pac.InfoPopup(str, tbl, x, y)
 		end
 
 		if self.expand then
-			draw.DrawText(self.alternativetitle, "DermaDefaultBold", 5, 5, Color(r3,g3,b3,self.fade_factor * 255))
+			draw.DrawText(self.alternativetitle, pace.popups_font, 5, 5, Color(r3,g3,b3,self.fade_factor * 255))
 		else
-			draw.DrawText(self.titletext, "DermaDefaultBold", 5, 5, Color(r3,g3,b3,self.fade_factor * 255))
+			draw.DrawText(self.titletext, pace.popups_font, 5, 5, Color(r3,g3,b3,self.fade_factor * 255))
 		end
 	end
 
@@ -1049,46 +1100,117 @@ do
 		["interpolated_multibone"] = {
 			tooltip = "morphs position between nodes",
 			popup_tutorial =
-			"A node-based path/morpher. This part allows you to move its contents by blending positions and angles between different points. Obviously enough, the nodes you select need to be base_movable parts.\n"..
-			"The first (Zeroth) node is the interpolated_multibone itself. From then on, the next node is reached when lerp reaches the corresponding number, and when you're at the end, i.e. an invalid or missing node, it morphs back to the origin.\n"..
-			"For example, 0.5 lerp will be halfway between the first node and the origin.\n"..
-			"While this part finally breaks through one of pac3's fundamental limitations (that of base_movables being limited to specific bones as anchoring points), there are still known issues, namely because of how angles are morphed. Roll angles might break.\n\n"..
-			"Suggested use cases: multi-position cutscene camera, returning hitpos pseudo-projectile, joints."
+[[This part repositions its contents according to a path with multiple nodes. It blends the position and angle by mixing those of the current node with those of the next node.
+Obviously enough, the nodes you select need to be base_movable parts.
+
+
+As you may know, like with jiggles, it's like making a container inside a part, the action happens when the container moves in a special way.
+Jiggles and interpolators' "containers" are dynamic. Unlike models', which are just located on the parent model itself.
+Jiggles would be as if the container is attached with springs all around, that's how it jiggles around.
+The interpolator would be as if the container is a cart on a rail, going to different places.
+
+
+The "first" / prime / home / origin (Zeroth) node is the interpolator itself. When lerp value is 0, this is where the container will be.
+It's useful to start near zero if you want to create interpolators dynamically, as with projectiles. Or to simply have a reference point.
+
+The first outside node, part1, will be used if lerp value is more than 0. At 1 the container will be located at part1. at 0.5, it would be halfway between home and part1.
+The second outside node, part2, will be used if lerp value is more than 1. At 2 the container will be located at part2. at 1.5, it would be halfway between part1 and part2.
+and so on.
+
+
+In terms of how it works as a base_movable, it's decent enough but you should still be aware of some things, perhaps as a reminder.
+If you want to adjust the thing inside, think about where it'll end up. Adjustments can be made on the prime node, the subsequent nodes, the contained parts themselves or even on the path itself.
+
+If the angle or position to adjust depends on only one node, it's probably a good idea to make your adjustment on the node in question. As long as your offsets on the contained parts aren't too strong, its angle should be representative enough.
+Why this matters is that you may think it looks good now, but if you offset too much on the contained parts, the offsets will still be there on the other nodes.
+
+Also, with an interpolation very close to one node, try not to overcorrect. If it takes 90 degrees to tweak the appearance just a little bit, maybe it's a good idea to think about the path itself instead of the node.
+If you do this haphazardly, it will mess up other interpolators or parts that rely on that node.
+Maybe your knee should've been more in 0.5 ranges instead of pushing excessive angles on the other end that get reduced by the fact the lerp value is like 0.2.
+Any adjustment you make is only gonna show up as much as the morphing progress allows it.
+
+Now for most users, you can just keep playing around with it and find out that maybe you'd prefer adjusting the nodes instead, or instead tweaking the way your lerp value is set up. Or that a slight offset is fine once it shows on all nodes.
+
+
+There may be some issues with how the angles are calculated, and there's the occasional issue with base_movable lagging but you can hack some temporary fixes by checking translucent on some things.
+
+
+Suggested uses for this part:
+camera with multiple positions for a cutscene
+joints : like a kneepad or some other articulated bit between two moving parts/bones
+returning hitpos pseudo-projectile : like a boomerang
+reposition pets
+crazy position randomizer: position a part on random positions]]
+
 		},
 
 		["proxy"] = {
 			tooltip = "applies math to parts",
 			popup_tutorial =
-			"This part computes math and applies the numbers it gives to a parameter on a part, for number (x), vector (x,y,z) or boolean(true (1) or false (0)) types.  It can send to the parent, to all its children, or to an external target part.\n"..
-			"Easy setup can help you make a rough idea quickly, but writing math yourself in the expression gives supremely superior control over what the math does.\n\n"..
-			"Here's a quick crash course in the syntax with basic examples showing the rules to observe:\n\n"..
-			"Basic numbers /math operators : 4^0.5 - 2*(0.2 / 5) + timeex()%4\n"..
-			"The only basic operators are: + - * / % ^\n"..
-			"Functions:\n"..
-			"\tFunctions are like variables that gather data from the world or that process math.\n"..
-			"\tMost functions are nullary, which means they have no argument: timeex(), time(), owner_health(), owner_armor_fraction()\n"..
-			"\tOthers have arguments, which can be required or optional: clamp(x,min,max), random(), random(min,max), random_once(seed,min,max), etc.\n"..
-			"\tAll Lua functions are declared by a set of parentheses containing arguments, possibly separated by commas.\n"..
-			"Arguments and tokens:\n"..
-			"\tMost arguments\' type is numbers, but some might be strings with some requirements; Most of the time it\'s a name or a part UID, for example:\n"..
-			"\tValid number arguments are numbers, functions or well-formed expressions. It\'s the same type because at the end of the day it gives you a number.\n"..
-			"\t\tNeedless to say, if you compose an expression, you need a coherent link between the tokens (i.e. math operators or functions). 2 + 2 is valid, 2 2 is not.\n"..
-			"\tValid string arguments are text declared by double quotes. Lua\'s string concatenation operator works. command(\"name\"..2) is the same as command(\"name2\")\n"..
-			"\t\tWithout the string declaration, Lua tries to look for a global variable. command(\"name\") is valid, command(name) is not.\n\n"..
-			"Nested functions (composition) : clamp(1 - timeex()^0.5,0,1)\n"..
-			"XYZ / Vectors (comma notation) : 100,0,50\n"..
-			"nil (skipping an axis) : 100,nil,0\n\n"..
-			"You can write pretty much any math using the existing functions as long as you observe the syntax\'s rules: the most common ones being to close your brackets properly, don't misspell your functions\' names and give them all their necessary arguments.\n\n"..
-			"There are lots of technical things to learn, but you can consult my example proxy bank by right clicking the expression field, and go consult our wiki for reference. https://wiki.pac3.info/part/proxy\n\n"..
-			"As a conclusion, I\'m gonna editorialize and give my recommendations:\n"..
-			"\t-Write with purpose. Avoid unnecessary math.\n"..
-			"\t\t->But still, write in a way that lets you understand the concept better.\n"..
-			"\t-More to the point, please have patience and deliberation. Make sure every piece works BEFORE moving on and making it more complex.\n"..
-			"\t-The fundamental mechanism of developing and applying new ideas is composition / compounding.\n"..
-			"\t\t->Multiplying different expression bits together tends to combine the concepts\n"..
-			"\t\t->e.g. clamp(0.2*timeex(),0,1)*sin(10*time()) is a fadein and a sine wave. What do you get? sine wave fading to full power.\n"..
-			"\t-Please read the debug messages in the console or in chat, they help the correction process if we make mistakes."
+[[This part computes math and applies the numbers it gives to a parameter on a part, for number (x), vector (x,y,z) or boolean(true (1) or false (0)) types.  It can send to the parent, to all its children, or to an external target part.
+Easy setup can help you make a rough idea quickly, but writing math yourself in the expression gives supremely superior control over what the math does.
 
+
+Here's a quick crash course in the syntax with basic examples showing the rules to observe:
+
+Basic numbers /math operators : 4^0.5 - 2*(0.2 / 5) + timeex()%4
+The only basic operators are: + - * / % ^
+
+Functions:
+	Functions are like variables that gather data from the world or that process math.
+	Most functions are nullary, which means they have no argument: timeex(), time(), owner_health(), owner_armor_fraction()
+	Others have arguments, which can be required or optional: clamp(x,min,max), random(), random(min,max), random_once(seed,min,max), etc.
+	All Lua functions are declared by a set of parentheses containing arguments, possibly separated by commas.
+
+Arguments and tokens:
+	Most arguments' type is numbers, but some might be strings with some requirements; Most of the time it's a name or a part UID, for example:
+	Valid number arguments are numbers, functions or well-formed expressions. It's the same type because at the end of the day it gives you a number.
+		Needless to say, if you compose an expression, you need a coherent link between the tokens (i.e. math operators or functions). 2 + 2 is valid, 2 2 is not.
+	Valid string arguments are text declared by double quotes. Lua's string concatenation operator works. command("name"..2) is the same as command("name2")
+		Without the string declaration, Lua tries to look for a global variable. command("name") is valid, command(name) is not.
+
+Nested functions (composition) : clamp(1 - timeex()^0.5,0,1)
+	As you can see, you can have functions inside of functions.
+
+XYZ / Vectors (comma notation) : 100,0,50
+	vectors for position, angles, colors etc. are written that way.
+
+nil (skipping an axis) : 100,nil,0
+	if you have an "invalid" variable name like our commonly-used dummy nil, the proxy will leave that axis unchanged, so you can adjust the value manually or with another proxy.
+	you could also set your axis in easy setup.
+
+You can write pretty much any math using the existing functions as long as you observe the syntax's rules: the most common ones being to close your brackets properly, don't misspell your functions' names and give them all their necessary arguments.
+
+There are lots of technical things to learn.  Do not be overwhelmed. Feed your curiosity instead. Documentation is NOT lacking.
+I wrote builtin tutorials for pretty much every last function. It's accessible pretty much everywhere right from the editor.
+
+By right clicking the expression field, you can consult my example proxy bank. You will also see options for tutorials for any active function on that proxy.
+
+Do that, or use the "view specific help or info about this part" option right clicking on the part once you've selected an input or written some functions.
+
+Better yet, opening the inputs list will even have these tutorial entries as tooltips!
+
+Go consult our wiki for reference. https://wiki.pac3.info/part/proxy
+It's not fully up to date on new functions because it reflects the main version, but you're currently on develop. The function tutorials are available in the input list.
+
+
+As a conclusion, I'm gonna editorialize and give my recommendations:
+	Write with purpose. Avoid unnecessary math.
+		->But still, write in a way that lets you understand the concept. It's not bad to have an imperfect expression.
+		->This is why I added support for names for uid-based functions. var1("fade_factor") is more 
+
+	-More to the point, please have patience and deliberation. Make sure every piece works BEFORE moving on and making it more complex.
+		->A very common problem that people do is they add stuff randomly by cobbling stuff together not knowing why. Please don't do things haphazardly.
+		->Blind faith will cause problems for exactly that reason.
+
+	-The fundamental mechanism of developing and applying new ideas is composition / compounding.
+		->Multiplying different expression bits together tends to combine the concepts.
+		->e.g. ezfade(0.2)*sin(10*time()) is a fadein and a sine wave. What do you get? sine wave fading to full power.
+
+	-Please read the debug messages in the console or in chat. They will help the correction process.
+
+	-You know where to look for help. With a good enough topic, we can discuss math at length. Why else would they have whole university courses for real math? Think about it. There's lots of ways to approach it.
+		->But I can't help you if you're not curious. I can only hope that you read through this without skipping to the end. But my faith isn't worth much.]]
 		},
 
 		["sunbeams"] = {
@@ -1115,26 +1237,73 @@ do
 		["damage_zone"] = {
 			tooltip = "deals damage in a zone",
 			popup_tutorial =
-			"This part tries to deal hitbox damage via the server. It may or may not be allowed because of server settings (pac_sv_damage_zone) and client consents (pac_client_damage_zone_consent), etc. Server owners can add or remove entity classes that can be damaged with pac_damage_zone_blacklist_entity_class, pac_damage_zone_whitelist_entity_class commands.\n"..
-			"Among NPCs it should include VJ and DRG base NPCs, but only if they have npc_ or drg_ in their name\n"..
-			"Most shapes should be self-explanatory but you can use the preview function to see what it should cover. There are some settings for raycasts which could come in handy for some niche use cases even if the basic ones you'll use most of the time (box, sphere, cone from spheres, ray) will not really use these."..
-			"There are certain special damage types. the dissolves can disintegrate entities but can be restricted in the server, prevent_physics_force suppresses the corpse force, removenoragdoll removes the corpse.\n"..
-			""
+[[This part can deal hitbox-based damaged via the server. It might not be allowed. There are server settings (e.g. pac_sv_damage_zone) and client consents (pac_client_damage_zone_consent) for protecting the peace.
+Server owners can add or remove entity classes that can be damaged with pac_damage_zone_blacklist_entity_class, pac_damage_zone_whitelist_entity_class commands.
+
+Most hitbox shapeas should be self-explanatory, but you can use the preview function to see what it should cover.
+There are some settings for raycasts which could come in handy for some niche use cases, but you'll probably use one of the basic ones (box, sphere, cone from spheres, ray)
+you can filter by certain types of targets like general classes like NPCs, which should include VJ and DRG base, as well as according to their "friendliness" which are related to dispositions (ally, enemy, neutral).
+
+Damage falloff:
+reduces the damage depending on the distance (according to the hitbox shape), and you can set a power for a bumpier or sharper falloff
+
+Do Not Kill and Reverse Do Not Kill:
+critical health is a point of comparison.
+Do Not Kill prevents the damage zone from taking health below that point. when healing, it prevents from healing above that point. converge to the critical health.
+Reverse Do Not Kill damages only if health is below critical health, heals only if health is above critical health. diverge from the critical health.
+
+Damage Scaling:
+damage scaling applies a maxHP%-type damage, a fraction of max HP. 1 is 100% of HP. if a target has 150 HP and 100 max HP, it will deal 100 damage.
+it doesn't always insta-kill, as damage multipliers can still take effect, but it's there to let you even the playing field with any NPC like nextbots with absurd HP
+
+There are certain "special" damage types. the dissolves can disintegrate entities but can be restricted in the server, prevent_physics_force suppresses the corpse force, removenoragdoll removes the corpse.
+You can define your damage as a damage over time, which repeats the same damage a number of times. DOT time is the delay between ticks, DOT count is the number of ticks.
+
+You can link the damage zone to sounds to use as hit sounds or kill sounds. They should work without much issue.
+You can set hit parts, which are like projectiles. they spawn on targets. It can be unreliable though!]]
 		},
 
 		["health_modifier"] = {
 			tooltip = "modifies your health, armor",
 			popup_tutorial =
-			"This part allows you to quickly change your max health, max armor, damage multiplier taken, and has the possibility to give you extra health bars that absorb damage before the main health gets damaged.\n"..
-			"For the extra bars, you need to set a layer priority to pick which ones get damaged first. Outer ones are higher layer values. But they're still invisible for now... events and proxies will come later...\n"..
-			"The part's usage may or may not be allowed by the server."
-		}
+[[This part lets you change your max health, armor, add a multiplier for damage taken, and create extra health bars that take damage before the main health.
+
+the "follow health" and "follow armor" checkboxes mean the current health will follow your max health or armor on specific conditions.
+It will increase alongside the max IF you're already at the max. And it will be brought down if you lower the max below what you currently have.
+
+For the extra bars, you can set a layer priority to pick which ones get damaged first. higher layer means it gets damaged first.
+View the info bubble to view the part's current extra health.
+available events or proxies for visualization:
+healthmod_bar_hit detects when it gets updated
+healthmod_bar_layertotal gets the total value for one layer
+healthmod_bar_total gets the total value across all layers and parts
+healthmod_bar_uidvalue gets the value of one part as an overall amount
+healthmod_bar_remaining_bars(uid) gets the value of one part as a number of bars.
+
+Absorb Factor is a multiplier to the damage that goes to the main health when the extra bars get damaged.
+1 will make the extra health basically ineffective, 0 is normal, -1 will heal the main health for every damage received.
+
+The part's usage may or may not be allowed by the server.]]
+		},
+
+		["mesh_trail"] = {
+			tooltip = "produces a trail as a model",
+			popup_tutorial =
+[[This part continuously creates a trail of segments linked as a continuous model. You'll see how it differs from beam-based trails.
+
+end position side represents where the trail's end tapers off, 1 is the tip, 0 is the center, and -1 the base
+
+you should know U and V are a vertex/point's texture coordinates, the trail can be customized with these values. U generally stretches out, V results in a shear
+
+This is still a work in progress. Only the rod mode is implemented, and the basis modes aren't implemented except time
+
+if you are using a custom texture, you can try to add "noclamp " before your link]]
+		},
+
 
 	}
-	--print("we have defined the pace.TUTORIALS.PartInfos", pace.TUTORIALS.PartInfos)
 
 	for i,v in pairs(pace.TUTORIALS.PartInfos) do
-		--print(i,v)
 		if pace.PartTemplates then
 			if pace.PartTemplates[i] then
 				pace.PartTemplates[i].TutorialInfo = v

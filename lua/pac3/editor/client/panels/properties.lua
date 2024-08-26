@@ -262,6 +262,12 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 				pnl.list_key = key
 				pnl.list_val = val
 
+				if name == "Input" or name == "Function" then --insert proxy function tutorials as tooltips
+					pnl:SetTooltip(pace.TUTORIALS["proxy_functions"][key] or "")
+				elseif name == "Event" then --insert event tutorials as tooltips
+					pnl:SetTooltip(pace.TUTORIALS["events"][key])
+				end
+
 				if not first:IsValid() then
 					first = pnl
 				end
@@ -610,6 +616,10 @@ do -- list
 		local btn = pace.CreatePanel("properties_label")
 			btn:SetTall(self:GetItemHeight())
 
+			--description tooltips should be on the text label. they are broken on every type except boolean.
+			if udata and udata.description then
+				btn:SetTooltip(udata.description)
+			end
 			do
 				local key = key
 				if key:EndsWith("UID") then
@@ -1075,20 +1085,26 @@ do -- base editable
 			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
 			value = math.Round(value, 7)
 		end
-		local str = tostring(value)
+		local str = tostring(value) --this is the text that will end up on the display
+		local original_str = string.Trim(str,"\n") --this is the minimally-altered text that will remain as the internal value
+		local lines = string.Explode("\n", original_str)
+		if #lines > 1 then
+			str = "<multiple lines>"
+		end
 
 		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
+		if str == "<multiple lines>" then self:SetTextColor(Color(160,0,80)) end
 		self:SetFont(pace.CurrentFont)
-		self:SetText("  " .. str) -- ugh
+		self:SetText("  " .. string.Trim(str,"\n")) -- ugh
 		self:SizeToContents()
 
 		if #str > 10 then
-			self:SetTooltip(str)
+			self:SetTooltip(original_str)
 		else
 			self:SetTooltip()
 		end
 
-		self.original_str = str
+		self.original_str = original_str
 		self.original_var = var
 
 		if self.OnValueSet then
@@ -1166,6 +1182,19 @@ do -- base editable
 				self.OnValueChanged(self:GetValue())
 			end
 		end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(pace.clipboardtooltip)
+
+		if #pace.BulkSelectList > 0 then
+			local uid_tbl = {}
+			local names_tbl = {}
+			for i,part in ipairs(pace.BulkSelectList) do
+				table.insert(uid_tbl, part.UniqueID)
+				table.insert(names_tbl, part:GetName())
+			end
+			local pnl = menu:AddOption(L"paste UID list", function()
+				self:SetValue(table.concat(uid_tbl,";"))
+				self.OnValueChanged(self:GetValue())
+			end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(table.concat(names_tbl,"\n"))
+		end
 
 		--command's String variable
 		if self.CurrentKey == "String" then
@@ -1366,9 +1395,50 @@ do -- base editable
 
 				end
 			end
+
+			local tutorials, pnl2 = menu:AddSubMenu(L"Tutorials for the active functions")
+				for i, kw in ipairs(pace.current_part:GetActiveFunctions()) do
+					pace.current_part.errors_override = true --hack to stop competing SetInfo, SetWarning and SetError buttons
+					local tutorial = pace.current_part:GetTutorial(kw) if tutorial == nil then continue end
+					local pnl3 = tutorials:AddOption(kw, function()
+						pace.alternate_message_prompts = true
+						pace.current_part:SetInfo(tutorial)
+						pace.current_part:AttachEditorPopup(tutorial, true)
+					end) pnl3:SetIcon("icon16/calculator.png")
+					pnl3:SetTooltip(tutorial)
+				end
+			pnl2:SetImage("icon16/information.png")
+		end
+
+		if self.CurrentKey == "Function" or self.CurrentKey == "Input" then
+			local proxy = pace.current_part
+			menu:AddOption("Translate easy setup into an expression", function()
+				proxy:SetExpression(
+					proxy.Min .. " + (" .. proxy.Max .. "-" .. proxy.Min .. ") * (" ..
+					"(" .. proxy.Function .. "(((" .. proxy.Input .. "()/" .. proxy.InputDivider .. ") + " .. proxy.Offset .. ") * " ..
+					proxy.InputMultiplier .. ") + 1) / 2) ^" .. proxy.Pow
+				)
+				pace.PopulateProperties(proxy)
+			end):SetIcon("icon16/calculator.png")
+
+			local tutorials, pnl2 = menu:AddSubMenu(L"Tutorials for the active functions")
+				for i, kw in ipairs(pace.current_part:GetActiveFunctions()) do
+					pace.current_part.errors_override = true --hack to stop competing SetInfo, SetWarning and SetError buttons
+					local tutorial = pace.current_part:GetTutorial(kw) if tutorial == nil then continue end
+					local pnl3 = tutorials:AddOption(kw, function()
+						pace.alternate_message_prompts = true
+						pace.current_part:SetInfo(tutorial)
+						pace.current_part:AttachEditorPopup(tutorial, true)
+					end) pnl3:SetIcon("icon16/calculator.png")
+					pnl3:SetTooltip(tutorial)
+				end
+				pnl2:SetTooltip(pace.current_part:GetTutorial(pace.current_part[self.CurrentKey]))
+			pnl2:SetImage("icon16/information.png")
 		end
 
 		if self.CurrentKey == "LoadVmt" then
+			local inserted_mat_owners = {}
+			
 			local owner = pace.current_part:GetOwner()
 			local name = string.GetFileFromFilename( owner:GetModel() )
 			local mats = owner:GetMaterials()
@@ -1376,11 +1446,32 @@ do -- base editable
 			local pnl, menu2 = menu:AddSubMenu(L"Load " .. name .. "'s material", function()
             end)
 			menu2:SetImage("icon16/paintcan.png")
+			inserted_mat_owners[owner:GetModel()] = true
 
 			for id,mat in ipairs(mats) do
 				pnl:AddOption(string.GetFileFromFilename(mat), function()
 					pace.current_part:SetLoadVmt(mat)
 				end)
+			end
+
+			--add parent owners (including the owner entity at root)
+			for i,part in ipairs(pace.current_part:GetParentList()) do
+				local owner = part:GetOwner()
+				local name = string.GetFileFromFilename( owner:GetModel() )
+				local mats = owner:GetMaterials()
+				if not inserted_mat_owners[owner:GetModel()] then
+					local pnl, menu2 = menu:AddSubMenu(L"Load " .. name .. "'s material", function()
+					end)
+					menu2:SetImage("icon16/paintcan.png")
+					inserted_mat_owners[owner:GetModel()] = true
+
+					for id,mat in ipairs(mats) do
+						pnl:AddOption(string.GetFileFromFilename(mat), function()
+							pace.current_part:SetLoadVmt(mat)
+						end)
+					end
+				end
+
 			end
 		end
 
@@ -1677,8 +1768,10 @@ do -- base editable
 			end
 		end
 
-		--long string menu to bypass the DLabel's limits, only applicable for sound2 for urls and base part's notes
-		if (pace.current_part.ClassName == "sound2" and self.CurrentKey == "Path") or self.CurrentKey == "Notes" or (pace.current_part.ClassName == "text" and self.CurrentKey == "Text") then
+		--long string menu to bypass the DLabel's limits for some fields
+		if (pace.current_part.ClassName == "sound2" and self.CurrentKey == "Path") or self.CurrentKey == "Notes" or (pace.current_part.ClassName == "text" and self.CurrentKey == "Text")
+			or (pace.current_part.ClassName == "command" and self.CurrentKey == "String")
+			or self.CurrentKey == "Expression" or self.CurrentKey == "ExpressionOnHide" or self.CurrentKey == "Extra1" or self.CurrentKey == "Extra2" or self.CurrentKey == "Extra3" or self.CurrentKey == "Extra4" or self.CurrentKey == "Extra5" then
 			menu:AddOption(L"Insert long text", function()
 				local pnl = vgui.Create("DFrame")
 				local DText = vgui.Create("DTextEntry", pnl)
@@ -1701,14 +1794,12 @@ do -- base editable
 
 				DButtonOK.DoClick = function()
 					local str = DText:GetText()
-					if self.CurrentKey == "Notes" then
-						pace.current_part.Notes = str
-					elseif self.CurrentKey == "Text" then
-						pace.current_part.Text = str
-					elseif pace.current_part.ClassName == "sound2" then
+					pace.current_part[self.CurrentKey] = str
+					if pace.current_part.ClassName == "sound2" then
 						pace.current_part.AllPaths = str
 						pace.current_part:UpdateSoundsFromAll()
 					end
+					pace.PopulateProperties(pace.current_part)
 					pnl:Remove()
 				end
 			end):SetImage('icon16/text_letter_omega.png')
@@ -2484,6 +2575,7 @@ function pace.OpenTreeSearch()
 	local base = vgui.Create("DFrame")
 	pace.tree_searcher = base
 	local edit = vgui.Create("DTextEntry", base)
+	local patterns = vgui.Create("DButton", base)
 	local search_button = vgui.Create("DButton", base)
 	local range_label = vgui.Create("DLabel", base)
 	local close_button = vgui.Create("DButton", base)
@@ -2495,7 +2587,24 @@ function pace.OpenTreeSearch()
 	case_box:SetTooltip("case sensitive")
 	case_box:SetColor(Color(150,150,150))
 	case_box:SetFont("DermaDefaultBold")
+
+	patterns:SetText("^[abc]")
+	patterns:SetPos(490,2)
+	patterns:SetSize(40,20)
+	patterns:SetTooltip("use Lua patterns")
+	patterns:SetColor(Color(150,150,150))
+	patterns:SetFont("DermaDefaultBold")
+
 	function case_box:DoClick()
+		self.on = not self.on
+		if self.on then
+			self:SetColor(Color(0,0,0))
+		else
+			self:SetColor(Color(150,150,150))
+		end
+	end
+
+	function patterns:DoClick()
 		self.on = not self.on
 		if self.on then
 			self:SetColor(Color(0,0,0))
@@ -2534,6 +2643,7 @@ function pace.OpenTreeSearch()
 		if not IsValid(pace.Editor) then base:Remove() return end
 		if not pace.Focused then base:Remove() end
 		base:SetX(pace.Editor:GetX())
+		base:SetWide(pace.Editor:GetWide())
 	end
 	function base.Paint(_,w,h)
 		surface.SetDrawColor(Color(255,255,255))
@@ -2558,8 +2668,13 @@ function pace.OpenTreeSearch()
 		matches = {}
 		pace.tree_search_matches = {}
 		search_term = edit:GetText()
+		local nopatterns = patterns.on
 		if not case_sensitive then search_term = string.lower(search_term) end
 		for _,part in pairs(pac.GetLocalParts()) do
+			if (string.find(part.UniqueID, string.sub(search_term,2,#search_term-1)) or string.find(part.UniqueID, search_term)) and (#search_term > 8) then
+				table.insert(matches, #matches + 1, {part_matched = part, key_matched = "UniqueID"})
+				table.insert(pace.tree_search_matches, #matches, {part_matched = part, key_matched = "UniqueID"})
+			end
 
 			for k,v in pairs(part:GetProperties()) do
 				local value = v.get(part)
@@ -2569,19 +2684,24 @@ function pace.OpenTreeSearch()
 				value = tostring(value)
 				if not case_sensitive then value = string.lower(value) end
 
-				if string.find(case_sensitive and v.key or string.lower(v.key), search_term) or (string.find(value, search_term)) then
+
+				if string.find(case_sensitive and v.key or string.lower(v.key), search_term) or (string.find(value, search_term,1, not nopatterns)) then
 					if v.key == "Name" and part.Name == "" then continue end
 					table.insert(matches, #matches + 1, {part_matched = part, key_matched = v.key})
 					table.insert(pace.tree_search_matches, #matches, {part_matched = part, key_matched = v.key})
 				end
 			end
 		end
-		table.sort(pace.tree_search_matches, function(a, b) return select(2, a.part_matched.pace_tree_node:LocalToScreen()) < select(2, b.part_matched.pace_tree_node:LocalToScreen()) end)
+		table.sort(pace.tree_search_matches, function(a, b)
+			if not IsValid(a.part_matched.pace_tree_node) then return false end
+			if not IsValid(b.part_matched.pace_tree_node) then return false end
+			return select(2, a.part_matched.pace_tree_node:LocalToScreen()) < select(2, b.part_matched.pace_tree_node:LocalToScreen())
+		end)
 		if table.IsEmpty(matches) then range_label:SetText("0 / 0") else pace.tree_search_match_index = 1 end
 		range_label:SetText(pace.tree_search_match_index .. " / " .. #pace.tree_search_matches)
 	end
 
-	base:SetSize(492,24)
+	base:SetSize(pace.Editor:GetWide(),24)
 	edit:SetSize(290,20)
 	edit:SetPos(0,2)
 	base:MakePopup()

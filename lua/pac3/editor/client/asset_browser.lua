@@ -984,7 +984,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 						--print(resource_type, base_name, extension)
 
 						local series_results = pace.FindAssetSeriesBounds(resource_type, base_name, extension)
-						PrintTable(series_results)
+						--PrintTable(series_results)
 						if not series_results.start_index then
 							goto CONTINUE
 						end

@@ -373,7 +373,7 @@ pace.AddTool(L"import editor tool from file...", function()
 		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
 			if file.Exists("pac3_editor/tools/" .. toolfile,"DATA") then
 				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
-				local ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
+				local ctoolstr = [[pace.AddTool("]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			else
@@ -391,7 +391,7 @@ pace.AddTool(L"import editor tool from url...", function()
 			local function ToolDLSuccess(body)
 				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
 				local toolstr = body
-				local ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
+				local ctoolstr = [[pace.AddTool("]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			end
@@ -819,6 +819,10 @@ pace.AddTool(L"proxy/event: Engrave targets", function(part)
 			reassign(part2)
 		end
 	end
+end)
+
+pace.AddTool(L"Process by Criteria", function(part)
+	pace.PromptProcessPartsByCriteria(part)
 end)
 
 --aka pace.UltraCleanup

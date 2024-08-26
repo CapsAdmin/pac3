@@ -59,7 +59,10 @@ pace.PACActionShortcut_Dictionary = {
 	"bulk_paste_properties_2",
 	"bulk_hide",
 	"help_info_popup",
-	"ultra_cleanup"
+	"ultra_cleanup",
+	"arraying_menu",
+	"bulk_morph",
+	"criteria_process"
 }
 
 pace.PACActionShortcut_Default = {
@@ -447,7 +450,7 @@ function pace.DoShortcutFunc(action)
 	if action == "redo" then pace.Redo(pace.current_part) pace.delayshortcuts = RealTime() end
 	if action == "undo" then pace.Undo(pace.current_part) pace.delayshortcuts = RealTime() end
 	if action == "delete" then pace.RemovePart(pace.current_part) end
-	if action == "hide" then pace.current_part:SetHide(not pace.current_part:GetHide()) end
+	if action == "hide" then pace.current_part:SetHide(not pace.current_part:GetHide()) pace.PopulateProperties(pace.current_part) end
 
 	if action == "copy" then pace.Copy(pace.current_part) end
 	if action == "cut" then pace.Cut(pace.current_part) end
@@ -649,7 +652,7 @@ function pace.DoShortcutFunc(action)
 			pace.PasteProperties(v)
 		end
 	end
-	if action == "bulk_hide" then pace.BulkHide() end
+	if action == "bulk_hide" then pace.BulkHide() pace.PopulateProperties(pace.current_part) end
 
 	if action == "help_info_popup" then
 		if pace.floating_popup_reserved then
@@ -690,7 +693,7 @@ function pace.DoShortcutFunc(action)
 		elseif popup_prefered_type == "cursor" then
 			pace.floating_popup_reserved = pace.current_part:SetupEditorPopup(nil, true, popup_setup_tbl, input.GetCursorPos())
 
-		elseif popup_prefered_type == "editor bar" then
+		elseif popup_prefered_type == "menu bar" then
 			popup_setup_tbl.obj = pace.Editor
 			pace.floating_popup_reserved = pace.current_part:SetupEditorPopup(nil, true, popup_setup_tbl)
 
@@ -714,6 +717,17 @@ function pace.DoShortcutFunc(action)
 		pace.UltraCleanup(pace.current_part)
 	end
 
+	if action == "arraying_menu" then
+		pace.OpenArrayingMenu(pace.current_part)
+	end
+
+	if action == "bulk_morph" then
+		pace.BulkMorphProperty()
+	end
+
+	if action == "criteria_process" then
+		pace.PromptProcessPartsByCriteria(pace.current_part)
+	end
 
 end
 

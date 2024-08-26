@@ -95,6 +95,83 @@ local function populate_pac(menu)
 	end
 
 	do
+		if cookie.GetNumber("pac3_new_features_review") == nil then cookie.Set("pac3_new_features_review", 1) end
+		if cookie.GetNumber("pac3_new_features_review") ~= 0 then
+			local experimentals, pnl_exp = menu:AddSubMenu(L"Discover new features", function()
+				Derma_Query("Do you wish to remove \"Discover new features\" from the pac tab?", "New feature review",
+					"remove", function() cookie.Set("pac3_new_features_review", 0) pace.CloseEditor() pace.OpenEditor() pace.RefreshTree() end,
+					"cancel", function() end)
+				end)
+			experimentals.GetDeleteSelf = function() return false end
+			pnl_exp:SetImage("icon16/medal_gold_1.png") pnl_exp:SetTooltip("You can hide this menu by clicking it for the prompt.")
+
+			local pnl = experimentals:AddOption("Bookmark favorite assets (models, sounds, materials)") pnl:SetIcon("icon16/cart_go.png") pnl:SetTooltip("Right click on the text fields to access your favorites.\nRight click on asset browser items/lines to set a single favorite\nThe option to favorite a series may pop up if there's a number.\nSelect, then right click on the folder in the directory tree to favorite a folder")
+			pnl = experimentals:AddOption("Customizable editor: reorder menu actions and custom shortcuts", function() pace.OpenSettings("Editor menu Settings") end) pnl:SetIcon("icon16/table_refresh.png") pnl:SetTooltip("You can define your editor actions in any order, leave some out, and there are new actions.\nShortcuts are also configurable.")
+			pnl = experimentals:AddOption("Customizable editor: custom part categories", function() pace.OpenSettings("Editor menu Settings 2") end) pnl:SetIcon("icon16/application_view_list.png") pnl:SetTooltip("categorize parts with custom categories")
+			local popups_tutorials, popups_pnl = experimentals:AddSubMenu("popups and tutorials") popups_pnl:SetImage("icon16/help.png") popups_pnl:SetTooltip("default shortut : F1")
+				popups_tutorials.GetDeleteSelf = function() return false end
+				popups_tutorials:AddOption("part tutorials (F1)", function() pace.current_part:AttachEditorPopup() end):SetIcon("icon16/help.png")
+				popups_tutorials:AddOption("proxy tutorials", function()
+					if pace.current_part.ClassName == "proxy" then
+						pace.current_part:AttachEditorPopup()
+					else
+						local has_proxy = false
+						local proxy_found
+						for i,v in pairs(pac.GetLocalParts()) do
+							if v.ClassName == "proxy" then
+								has_proxy = true
+								proxy_found = v
+							end
+						end
+						if has_proxy then
+							proxy_found:AttachEditorPopup()
+						else
+							pace.FlashNotification("There were no proxy parts found in the outfit.")
+						end
+					end
+				end):SetIcon("icon16/calculator.png")
+				local popup_cfg, popups_pnl2 = popups_tutorials:AddSubMenu("Configure popups", pace.OpenPopupConfig)
+					popups_pnl2:SetImage("icon16/color_wheel.png")
+					popup_cfg.GetDeleteSelf = function() return false end
+					popup_cfg:AddOption("Open popup config", pace.OpenPopupConfig):SetImage("icon16/color_wheel.png")
+					popup_cfg:AddOption("preset: day mode", function()
+						GetConVar("pac_popups_base_alpha"):SetString("255")
+						GetConVar("pac_popups_base_color"):SetString("255 255 255")
+						GetConVar("pac_popups_fade_alpha"):SetString("0")
+						GetConVar("pac_popups_fade_color"):SetString("255 255 255")
+						GetConVar("pac_popups_text_color"):SetString("40 40 40")
+					end):SetImage("icon16/contrast.png")
+					popup_cfg:AddOption("preset: night mode", function()
+						GetConVar("pac_popups_base_alpha"):SetString("255")
+						GetConVar("pac_popups_base_color"):SetString("40 40 40")
+						GetConVar("pac_popups_fade_alpha"):SetString("0")
+						GetConVar("pac_popups_fade_color"):SetString("0 0 0")
+						GetConVar("pac_popups_text_color"):SetString("255 255 255")
+					end):SetImage("icon16/contrast.png")
+					local popup_pref_mode, pnlppm = popup_cfg:AddSubMenu("prefered location", function() end)
+						pnlppm:SetImage("icon16/layout_header.png")
+						popup_pref_mode.GetDeleteSelf = function() return false end
+						popup_pref_mode:AddOption(L"parts on viewport", function() RunConsoleCommand("pac_popups_preferred_location", "part world") end):SetImage('icon16/camera.png')
+						popup_pref_mode:AddOption(L"part label on tree", function() RunConsoleCommand("pac_popups_preferred_location", "pac tree label") end):SetImage('icon16/layout_content.png')
+						popup_pref_mode:AddOption(L"menu bar", function() RunConsoleCommand("pac_popups_preferred_location", "menu bar") end):SetImage('icon16/layout_header.png')
+						popup_pref_mode:AddOption(L"cursor", function() RunConsoleCommand("pac_popups_preferred_location", "cursor") end):SetImage('icon16/mouse.png')
+						popup_pref_mode:AddOption(L"screen", function() RunConsoleCommand("pac_popups_preferred_location", "screen") end):SetImage('icon16/monitor.png')
+					
+
+			pnl = experimentals:AddOption("Bulk Select : " .. GetConVar("pac_bulk_select_key"):GetString() .. " + click to select; operations are in the part menu") pnl:SetIcon("icon16/table_multiple.png") pnl:SetTooltip("Bulk Select selects multiple parts to do operations quickly.\nIt has an order. The order of selection can matter for some operations like Bulk Morph Property.")
+			pnl = experimentals:AddOption("Morph properties on bulk select", pace.BulkMorphProperty) pnl:SetIcon("icon16/chart_line.png") pnl:SetTooltip("Once you have selected parts with Bulk Select, set variables gradually.\nIt can achieve color fades across multiple parts.\nThe order of selection matters.")
+			pnl = experimentals:AddOption("Arraying menu : select a matrix part and a stackable part", function() pace.OpenArrayingMenu(pace.current_part) end) pnl:SetIcon("icon16/shape_group.png") pnl:SetTooltip("Select an origin/matrix part before opening the menu.\nThen select an arrayed part\nThus you can quickly place models in a circle for example.\nBoth the matrix and arrayed part need to be movables.")
+			pnl = experimentals:AddOption("Process by Criteria", function()
+				for i,v in pairs(pace.Tools) do
+					if v.name == (L"Process by Criteria") then
+						v.callback(pace.current_part)
+					end
+				end
+			end) pnl:SetIcon("icon16/text_list_numbers.png") pnl:SetTooltip("Write criteria to process parts.\nThis is only useful if you have lots of parts with a certain number or text you want to replace in bulk.\nFor example you can mass replace events of one type with another, and set arguments to match.")
+		end
+	end
+
+	do
 		menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 	end
 
@@ -114,6 +191,7 @@ end
 
 local function populate_options(menu)
 	menu:AddOption(L"settings", function() pace.OpenSettings() end)
+
 	menu:AddCVar(L"Keyboard shortcuts: Legacy mode", "pac_editor_shortcuts_legacy_mode", "1", "0")
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
@@ -166,7 +244,7 @@ local function populate_options(menu)
 				clr_frame:SetSize(300,200) clr_pnl:Dock(FILL)
 				clr_frame:RequestFocus()
 				function clr_pnl:ValueChanged(col)
-					hover_color:SetString(col.r .. " " .. col.g .. " " .. col.b)
+					GetConVar("pac_hover_color"):SetString(col.r .. " " .. col.g .. " " .. col.b)
 				end
 		end):SetImage('icon16/color_swatch.png')
 		halos_color:AddOption(L"ocean", function() RunConsoleCommand("pac_hover_color", "ocean") end):SetImage('icon16/bullet_blue.png')
@@ -180,6 +258,20 @@ local function populate_options(menu)
 		popups:AddCVar(L"enable editor popups", "pac_popups_enable", "1", "0")
 		popups:AddCVar(L"don't kill popups on autofade", "pac_popups_preserve_on_autofade", "1", "0")
 		popups:AddOption("Configure popups appearance", function() pace.OpenPopupConfig() end):SetImage('icon16/color_wheel.png')
+		popups:AddOption("preset: day mode", function()
+			GetConVar("pac_popups_base_alpha"):SetString("255")
+			GetConVar("pac_popups_base_color"):SetString("255 255 255")
+			GetConVar("pac_popups_fade_alpha"):SetString("0")
+			GetConVar("pac_popups_fade_color"):SetString("255 255 255")
+			GetConVar("pac_popups_text_color"):SetString("40 40 40")
+		end):SetImage("icon16/contrast.png")
+		popups:AddOption("preset: night mode", function()
+			GetConVar("pac_popups_base_alpha"):SetString("255")
+			GetConVar("pac_popups_base_color"):SetString("40 40 40")
+			GetConVar("pac_popups_fade_alpha"):SetString("0")
+			GetConVar("pac_popups_fade_color"):SetString("0 0 0")
+			GetConVar("pac_popups_text_color"):SetString("255 255 255")
+		end):SetImage("icon16/contrast.png")
 		local popup_pref_mode, pnlppm = popups:AddSubMenu("prefered location", function() end)
 			pnlppm:SetImage("icon16/layout_header.png")
 			popup_pref_mode.GetDeleteSelf = function() return false end
@@ -246,6 +338,9 @@ local function populate_options(menu)
 	pace.AddLanguagesToMenu(menu)
 	pace.AddFontsToMenu(menu)
 	menu:AddCVar(L"Use the new PAC4.5 icon", "pac_icon", "1", "0")
+	if cookie.GetNumber("pac3_new_features_review") == 0 then
+		menu:AddOption("re-show new features review", function() cookie.Set("pac3_new_features_review", 1) pace.CloseEditor() pace.OpenEditor() pace.RefreshTree() end):SetIcon("icon16/medal_gold_1.png")
+	end
 
 	menu:AddSpacer()
 
@@ -362,7 +457,7 @@ local function populate_player(menu)
 			end)
 		end
 	end
-	
+
 	if pac.LocalPlayer.pac_command_events then
 		if table.Count(pac.LocalPlayer.pac_command_events) > 0 then
 			rebuild_events_menu()
