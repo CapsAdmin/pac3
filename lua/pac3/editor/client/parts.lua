@@ -1941,15 +1941,84 @@ do -- menu
 				if success then
 					start_value = pace.CreatePanel("properties_" .. property_type, properties_pnl) properties_pnl:AddKeyValue("StartValue",start_value)
 					end_value = pace.CreatePanel("properties_" .. property_type, properties_pnl) properties_pnl:AddKeyValue("EndValue",end_value)
-
+					if property_type == "vector" then
+						function start_value.OnValueChanged(val)
+							if isstring(val) then
+								if val == "" then return end
+								local x,y,z = unpack(string.Split(val, " "))
+								val = Vector(x,y,z)
+							end
+							start_value:SetValue(val)
+						end
+						function end_value.OnValueChanged(val)
+							if isstring(val) then
+								if val == "" then return end
+								local x,y,z = unpack(string.Split(val, " "))
+								val = Vector(x,y,z)
+							end
+							end_value:SetValue(val)
+						end
+					elseif property_type == "angle" then
+						function start_value.OnValueChanged(val)
+							if isstring(val) then
+								if val == "" then return end
+								local x,y,z = unpack(string.Split(val, " "))
+								val = Angle(x,y,z)
+							end
+							start_value:SetValue(val)
+						end
+						function end_value.OnValueChanged(val)
+							if isstring(val) then
+								if val == "" then return end
+								local x,y,z = unpack(string.Split(val, " "))
+								val = Angle(x,y,z)
+							end
+							end_value:SetValue(val)
+						end
+					elseif property_type == "color" then
+						function start_value.OnValueChanged(val)
+							if isstring(val) then
+								if val == "" then return end
+								local x,y,z = unpack(string.Split(val, " "))
+								val = Color(x,y,z)
+							end
+							start_value:SetValue(val)
+						end
+						function end_value.OnValueChanged(val)
+							if isstring(val) then
+								if val == "" then return end
+								local x,y,z = unpack(string.Split(val, " "))
+								val = Color(x,y,z)
+							end
+							end_value:SetValue(val) 
+						end
+					elseif property_type == "number" then
+						function start_value.OnValueChanged(val)
+							start_value:SetValue(tonumber(val) or val)
+						end
+						function end_value.OnValueChanged(val)
+							end_value:SetValue(tonumber(val) or val)
+						end
+					end
+					
 				else
 					start_value = pace.CreatePanel("properties_label", properties_pnl) properties_pnl:AddKeyValue("ERROR",start_value)
 					end_value = pace.CreatePanel("properties_label", properties_pnl) properties_pnl:AddKeyValue("ERROR",end_value)
 				end
 			--end)
 			if start_value.Restart then start_value:Restart() end if end_value.Restart then end_value:Restart() end
-			if start_value.OnValueChanged then start_value.OnValueChanged(start_value:GetValue()) end
-			if start_value.OnValueChanged then end_value.OnValueChanged(end_value:GetValue()) end
+			if start_value.OnValueChanged then
+				local def = start_value:GetValue()
+				if pace.BulkSelectList[1] then def = pace.BulkSelectList[1][property] end
+				start_value.OnValueChanged(def)
+				start_value.OnValueChanged(start_value:GetValue())
+			end
+			if end_value.OnValueChanged then
+				local def = end_value:GetValue()
+				if pace.BulkSelectList[1] then def = pace.BulkSelectList[1][property] end
+				end_value.OnValueChanged(def)
+				end_value.OnValueChanged(end_value:GetValue())
+			end
 		end
 
 		local function setsingle(part, property_name, property_type, frac)

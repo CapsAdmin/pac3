@@ -1922,6 +1922,7 @@ function PART:OnThink(to_hide)
 		if self.AffectChildren then
 			if self.MultiTargetPart then
 				for _,part2 in ipairs(self.MultiTargetPart) do
+					if not part2.GetProperty then continue end
 					set(self, part2, x, y, z, true)
 				end
 			else
@@ -1931,8 +1932,9 @@ function PART:OnThink(to_hide)
 			end
 		else
 			if self.MultiTargetPart then
-				for i,v in ipairs(self.MultiTargetPart) do
-					set(self, v, x, y, z)
+				for _,part2 in ipairs(self.MultiTargetPart) do
+					if not part2.GetProperty then continue end
+					set(self, part2, x, y, z)
 				end
 			else
 				set(self, part, x, y, z)
@@ -1992,6 +1994,7 @@ function PART:OnThink(to_hide)
 			if self.AffectChildren then
 				if self.MultiTargetPart then
 					for _,part2 in ipairs(self.MultiTargetPart) do
+						if not part2.GetProperty then continue end
 						set(self, part2, num, nil, nil, true)
 					end
 				else
@@ -2001,7 +2004,8 @@ function PART:OnThink(to_hide)
 				end
 			else
 				if self.MultiTargetPart then
-					for i,part2 in ipairs(self.MultiTargetPart) do
+					for _,part2 in ipairs(self.MultiTargetPart) do
+						if not part2.GetProperty then continue end
 						set(self, part2, num)
 					end
 				else
