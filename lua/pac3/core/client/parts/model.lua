@@ -97,23 +97,6 @@ function PART:GetDynamicProperties()
 		}
 	end
 
-	for _, info in ipairs(ent:GetBodyGroups()) do
-		if info.num > 1 then
-			tbl[info.name] = {
-				key = info.name,
-				set = function(val)
-					local tbl = self:ModelModifiersToTable(self:GetModelModifiers())
-					tbl[info.name] = val
-					self:SetModelModifiers(self:ModelModifiersToString(tbl))
-				end,
-				get = function()
-					return self:ModelModifiersToTable(self:GetModelModifiers())[info.name] or 0
-				end,
-				udata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
-			}
-		end
-	end
-
 	if ent:GetMaterials() and #ent:GetMaterials() > 1 then
 		for i, name in ipairs(ent:GetMaterials()) do
 			name = name:match(".+/(.+)") or name
@@ -134,6 +117,30 @@ function PART:GetDynamicProperties()
 					self:SetMaterials(table.concat(tbl, ";"))
 				end,
 				udata = {editor_panel = "material", editor_friendly = name, group = "sub materials"},
+			}
+		end
+	end
+
+	for _, info in ipairs(ent:GetBodyGroups()) do
+		if info.num > 1 then
+			local bodygroup_name = info.name
+			local exception = tbl[info.name] ~= nil --trouble! an existing material competes with the bodygroup, we should try renaming it?
+			if exception then
+				bodygroup_name = "_" .. info.name
+				self.bodygroup_exceptions[info.name] = true
+			end
+
+			tbl[bodygroup_name] = {
+				key = bodygroup_name,
+				set = function(val)
+					local tbl = self:ModelModifiersToTable(self:GetModelModifiers())
+					tbl[bodygroup_name] = val
+					self:SetModelModifiers(self:ModelModifiersToString(tbl))
+				end,
+				get = function()
+					return self:ModelModifiersToTable(self:GetModelModifiers())[bodygroup_name] or 0
+				end,
+				udata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
 			}
 		end
 	end
@@ -199,11 +206,18 @@ function PART:SetModelModifiers(str)
 	if not owner:GetBodyGroups() then return end
 
 	self.draw_bodygroups = {}
+	self.bodygroup_exceptions = self.bodygroup_exceptions or {}
+	local dyn_props = self:GetDynamicProperties()
 
 	for i, info in ipairs(owner:GetBodyGroups()) do
 		local val = tbl[info.name]
-		if val then
+		if self.bodygroup_exceptions[info.name] then
+			val = dyn_props["_"..info.name].get()
 			table.insert(self.draw_bodygroups, {info.id, val})
+		else
+			if val then
+				table.insert(self.draw_bodygroups, {info.id, val})
+			end
 		end
 	end
 end
@@ -290,6 +304,7 @@ function PART:Initialize()
 	self.Owner:SetNoDraw(true)
 	self.Owner.PACPart = self
 	self.material_count = 0
+	self.bodygroup_exceptions = {}
 end
 
 function PART:OnShow()
