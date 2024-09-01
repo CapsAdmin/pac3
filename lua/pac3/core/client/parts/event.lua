@@ -4295,31 +4295,69 @@ do
 end
 
 
-net.Receive("pac_update_healthbars", function()
+net.Receive("pac_update_healthbars", function(len)
+	pac.healthmod_part_UID_caches = pac.healthmod_part_UID_caches or {}
 	local ent = net.ReadEntity()
-	local tbl = net.ReadTable()
-
+	if ent:EntIndex() == 0 then return end
+	pac.healthmod_part_UID_caches[ent] = pac.healthmod_part_UID_caches[ent] or {}
 	if not IsValid(ent) then return end
+	local layers = net.ReadUInt(4)
+	--local tbl = net.ReadTable()
+	local tbl = {}
+	for i=0,layers,1 do
+		local skip = net.ReadBool()
+		if skip then continue end
+		tbl[i] = {}
+		local number_parts = net.ReadUInt(4)
+		for j=1,number_parts,1 do
+			local partial_uid = net.ReadString()
+			local value = net.ReadUInt(24)
+
+			local cached_part = pac.healthmod_part_UID_caches[ent][partial_uid]
+			if cached_part then
+				tbl[i][cached_part.UniqueID] = value
+			end
+			
+		end
+	end
+	--PrintTable(tbl)
 
 	ent.pac_healthbars = tbl
 
-	ent.pac_healthbars_layertotals = ent.pac_healthbars_layertotals or {}
-	ent.pac_healthbars_uidtotals = ent.pac_healthbars_uidtotals or {}
+	local previous_total = ent.pac_healthbars_total or 0
+	local previous_totals_layers = ent.pac_healthbars_layertotals or {}
+	local previous_totals_uids = ent.pac_healthbars_uidtotals or {}
+
+	ent.pac_healthbars_layertotals = {}
+	ent.pac_healthbars_uidtotals = {}
 	ent.pac_healthbars_total = 0
+	ent.pac_healthbars_total_updated = {time = CurTime(), delta = 0}
+	ent.pac_healthbars_layers_updated = {time = CurTime(), deltas = {}}
+	ent.pac_healthbars_uids_updated = {time = CurTime(), deltas = {}}
 
 	for layer=15,0,-1 do --go progressively inward in the layers
 		ent.pac_healthbars_layertotals[layer] = 0
 		if tbl[layer] then
 			for uid,value in pairs(tbl[layer]) do --check the healthbars by uid
+				value = math.Round(value) --so apparently some damage sources like dynamite can deal fractional damage
+				--dynamites made a giga ugly mess with decimals ruining my hud display
 				ent.pac_healthbars_uidtotals[uid] = value
 				ent.pac_healthbars_layertotals[layer] = ent.pac_healthbars_layertotals[layer] + value
 				ent.pac_healthbars_total = ent.pac_healthbars_total + value
+
+				ent.pac_healthbars_uids_updated.deltas[uid] = (previous_totals_uids[uid] or 0) - value
+
 				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
 				if IsValid(part) and part.UpdateHPBars then part:UpdateHPBars() end
 			end
+			ent.pac_healthbars_layers_updated.deltas[layer] = (previous_totals_layers[layer] or 0) - (ent.pac_healthbars_layertotals[layer] or 0)
 		else
 			ent.pac_healthbars_layertotals[layer] = nil
 		end
 	end
+
+	--delta is actually -delta but whatever
+	ent.pac_healthbars_total_updated.delta = previous_total - ent.pac_healthbars_total
+
 
 end)
