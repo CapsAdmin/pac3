@@ -1826,7 +1826,7 @@ local function set(self, part, x, y, z, children)
 					container = property_pnl.middle
 					property_pnl.middle.used_by_proxy = true
 					local num = y or x or 0
-					property_pnl.left:SetValue(math.Round(tonumber(num),4))
+					property_pnl.middle:SetValue(math.Round(tonumber(num),4))
 					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
 				end
 				if self.using_z then
