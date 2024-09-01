@@ -2000,7 +2000,6 @@ do -- menu
 							end_value:SetValue(tonumber(val) or val)
 						end
 					end
-					
 				else
 					start_value = pace.CreatePanel("properties_label", properties_pnl) properties_pnl:AddKeyValue("ERROR",start_value)
 					end_value = pace.CreatePanel("properties_label", properties_pnl) properties_pnl:AddKeyValue("ERROR",end_value)
@@ -2909,7 +2908,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			end):SetIcon("icon16/user.png")
 			collapses:AddOption("collapse legs", function()
 				local group = pac.CreatePart("group") group:SetParent(obj)
-				local right = obj
+				local right = pac.CreatePart("bone3") right:SetBone("left thigh")
 				right:SetParent(group) right:SetSize(0) right:SetScaleChildren(true) right:SetBone("right thigh")
 				local left = pac.CreatePart("bone3") left:SetParent(group) left:SetSize(0) left:SetScaleChildren(true) left:SetBone("left thigh")
 			end):SetIcon("icon16/user.png")
@@ -3320,8 +3319,8 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 		end):SetIcon("icon16/text_align_center.png")
 	elseif obj.ClassName == "health_modifier" then
 		main:AddOption("setup HUD display for extra health (total)", function()
-			local cmd_on = pac.CreatePart("command") cmd_on:SetParent(obj) cmd_on:SetUseLua(true) cmd_on:SetName("enable HUD")
-			local cmd_off = pac.CreatePart("command") cmd_off:SetParent(obj) cmd_off:SetUseLua(true) cmd_off:SetName("disable HUD")
+			local cmd_on = pac.CreatePart("command") cmd_on:SetParent(obj) cmd_on:SetUseLua(true) cmd_on:SetName("enable HUD") cmd_on:SetExecuteOnWear(true)
+			local cmd_off = pac.CreatePart("command") cmd_off:SetParent(obj) cmd_off:SetUseLua(true) cmd_off:SetName("disable HUD") cmd_off:SetExecuteOnWear(false)
 			cmd_on:SetString([[surface.CreateFont("HudNumbers_Bigger", {font = "HudNumbers", size = 75})
 surface.CreateFont("HudNumbersGlow_Bigger", {font = "HudNumbersGlow", size = 75, blursize = 4, scanlines = 2, antialias = true})
 local x = 50
@@ -3338,8 +3337,8 @@ end)]])
 
 		main:AddOption("setup HUD display for extra health (this part only)", function()
 			local function setup()
-				local cmd_on = pac.CreatePart("command") cmd_on:SetParent(obj) cmd_on:SetUseLua(true) cmd_on:SetName("enable HUD")
-			local cmd_off = pac.CreatePart("command") cmd_off:SetParent(obj) cmd_off:SetUseLua(true) cmd_off:SetName("disable HUD")
+				local cmd_on = pac.CreatePart("command") cmd_on:SetParent(obj) cmd_on:SetUseLua(true) cmd_on:SetName("enable HUD") cmd_on:SetExecuteOnWear(true)
+			local cmd_off = pac.CreatePart("command") cmd_off:SetParent(obj) cmd_off:SetUseLua(true) cmd_off:SetName("disable HUD") cmd_off:SetExecuteOnWear(false)
 			cmd_on:SetString([[surface.CreateFont("HudNumbers_Bigger", {font = "HudNumbers", size = 75})
 surface.CreateFont("HudNumbersGlow_Bigger", {font = "HudNumbersGlow", size = 75, blursize = 4, scanlines = 2, antialias = true})
 local x = 50
@@ -3360,8 +3359,8 @@ end)]])
 		end):SetIcon("icon16/application_xp_terminal.png")
 
 		main:AddOption("setup HUD display for extra health (this layer)", function()
-			local cmd_on = pac.CreatePart("command") cmd_on:SetParent(obj) cmd_on:SetUseLua(true) cmd_on:SetName("enable HUD")
-			local cmd_off = pac.CreatePart("command") cmd_off:SetParent(obj) cmd_off:SetUseLua(true) cmd_off:SetName("disable HUD")
+			local cmd_on = pac.CreatePart("command") cmd_on:SetParent(obj) cmd_on:SetUseLua(true) cmd_on:SetName("enable HUD") cmd_on:SetExecuteOnWear(true)
+			local cmd_off = pac.CreatePart("command") cmd_off:SetParent(obj) cmd_off:SetUseLua(true) cmd_off:SetName("disable HUD") cmd_off:SetExecuteOnWear(false)
 			cmd_on:SetString([[surface.CreateFont("HudNumbers_Bigger", {font = "HudNumbers", size = 75})
 surface.CreateFont("HudNumbersGlow_Bigger", {font = "HudNumbersGlow", size = 75, blursize = 4, scanlines = 2, antialias = true})
 local x = 50

@@ -559,7 +559,7 @@ if SERVER then
 		--ply.pac_healthbars[layer]
 		--ply.pac_healthbars[layer][part_uid] = healthvalue
 
-	local function UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow)
+	local function UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow, counted_hits, no_overflow)
 		local existing_uidlayer = true
 		local healthvalue = 0
 		if ply.pac_healthbars == nil then
@@ -583,21 +583,33 @@ if SERVER then
 		ply.pac_healtbar_uid_absorbfactor = ply.pac_healtbar_uid_absorbfactor or {}
 		ply.pac_healtbar_uid_absorbfactor[part_uid] = absorbfactor
 
+		ply.pac_healtbar_uid_info = ply.pac_healtbar_uid_info or {}
+		ply.pac_healtbar_uid_info[part_uid] = {
+			absorb_factor = absorbfactor,
+			counted_hits = counted_hits,
+			no_overflow = no_overflow
+		}
+
 		if num == 0 then --remove
 			ply.pac_healthbars[layer] = nil
-			ply.pac_healtbar_uid_absorbfactor[part_uid] = nil
+			ply.pac_healtbar_uid_info[part_uid].absorbfactor = nil
 		elseif num > 0 then --add if follow or created
-			ply.pac_healthbars[layer][part_uid] = healthvalue
-			ply.pac_healtbar_uid_absorbfactor[part_uid] = absorbfactor
-		end
-		for checklayer,tbl in pairs(ply.pac_healthbars) do
-			for uid,value in pairs(tbl) do
-				if layer ~= checklayer and part_uid == uid then
-					ply.pac_healthbars[checklayer][uid] = nil
-				end
+			if follow or not existing_uidlayer then
+				ply.pac_healthbars[layer][part_uid] = healthvalue
+				ply.pac_healtbar_uid_info[part_uid].absorbfactor = absorbfactor
 			end
 		end
-
+		for checklayer,tbl in pairs(ply.pac_healthbars) do
+			local layertotal = 0
+			for uid,value in pairs(tbl) do
+				layertotal = layertotal + value
+				if layer ~= checklayer and part_uid == uid then
+					ply.pac_healthbars[checklayer][uid] = nil
+					if table.IsEmpty(ply.pac_healthbars[checklayer]) then ply.pac_healthbars[checklayer] = nil end
+				end
+			end
+			if layertotal == 0 then ply.pac_healthbars[checklayer] = nil end
+		end
 	end
 
 	local function UpdateHealthBarsFromCMD(ply, action, num, part_uid)
@@ -678,7 +690,7 @@ if SERVER then
 							BARS_COPY[layer][uid] = math.max(0, value - remaining_dmg)
 						end
 
-						local absorbfactor = ply.pac_healtbar_uid_absorbfactor[uid]
+						local absorbfactor = ply.pac_healtbar_uid_info[uid].absorbfactor
 						side_effect_dmg = side_effect_dmg + breakthrough_dmg * absorbfactor
 
 						remaining_dmg = math.max(0,remaining_dmg - value)
@@ -707,36 +719,75 @@ if SERVER then
 				for uid,value in pairs(ply.pac_healthbars[layer]) do --check the healthbars by uid
 
 					if value > 0 then --skip 0 HP healthbars
+						local counted_hits_mode = ply.pac_healtbar_uid_info[uid].counted_hits
 
-						local remainder = math.max(0,remaining_dmg - ply.pac_healthbars[layer][uid])
+						local absorbfactor = ply.pac_healtbar_uid_info[uid].absorbfactor
+						local breakthrough_dmg
 
-						local breakthrough_dmg = math.min(remaining_dmg, value)
-
-						if remaining_dmg > value then --break through one of the uid clusters
-							surviving_layer = layer - 1
-							ply.pac_healthbars[layer][uid] = 0
+						if counted_hits_mode then
+							ply.pac_healthbars[layer][uid] = ply.pac_healthbars[layer][uid] - 1
+							breakthrough_dmg = remaining_dmg
+							remaining_dmg = 0
 						else
-							ply.pac_healthbars[layer][uid] = math.max(0, value - remaining_dmg)
+							--local remainder = math.max(0,remaining_dmg - ply.pac_healthbars[layer][uid])
+
+							--if the dmg is more than health value, we will have a breakthrough damage
+							breakthrough_dmg = math.min(remaining_dmg, value)
+
+							if remaining_dmg > value then --break through one of the uid clusters
+								surviving_layer = layer - 1
+								ply.pac_healthbars[layer][uid] = 0
+							else --subtracting the health now
+								ply.pac_healthbars[layer][uid] = math.max(0, value - remaining_dmg)
+							end
+							if ply.pac_healtbar_uid_info[uid].no_overflow then
+								remaining_dmg = 0
+								breakthrough_dmg = 0
+							else
+								remaining_dmg = math.max(0,remaining_dmg - value)
+							end
 						end
-
-						local absorbfactor = ply.pac_healtbar_uid_absorbfactor[uid]
 						side_effect_dmg = side_effect_dmg + breakthrough_dmg * absorbfactor
-
-						remaining_dmg = math.max(0,remaining_dmg - value)
 					end
 
 				end
 			end
 		end
-
 		return remaining_dmg,surviving_layer,side_effect_dmg
 	end
 
 	local function SendUpdateHealthBars(target)
 		if not target:IsPlayer() or not target.pac_healthbars then return end
+		local table_copy = {}
+		local layers = 0
+
+		for layer=0,15,1 do --ok so we're gonna compress it
+			if not target.pac_healthbars[layer] then continue end
+			local tbl = target.pac_healthbars[layer]
+			layers = layer
+			table_copy[layer] = {}
+			for uid, value in pairs(tbl) do
+				table_copy[layer][string.sub(uid, 1, 8)] = math.Round(value)
+			end
+		end
+		--PrintTable(table_copy)
 		net.Start("pac_update_healthbars")
 		net.WriteEntity(target)
-		net.WriteTable(target.pac_healthbars)
+		net.WriteUInt(layers, 4)
+		for i=0,layers,1 do
+			--PrintTable(table_copy)
+			if not table_copy[i] then
+				net.WriteBool(true)--skip
+				continue
+			elseif not table.IsEmpty(table_copy[i]) then
+				net.WriteBool(false)--data exists
+			end
+			net.WriteUInt(math.Clamp(table.Count(table_copy[i]),0,15), 4)
+			for uid, value in pairs(table_copy[i]) do
+				net.WriteString(uid) --partial UID was written before
+				net.WriteUInt(value,24)
+			end
+		end
 		net.Broadcast()
 	end
 
@@ -757,6 +808,7 @@ if SERVER then
 			local cumulative_mult = GatherDamageScales(target)
 
 			dmginfo:ScaleDamage(cumulative_mult)
+			local pretotal_hp_value,prebuilt_tbl = GatherExtraHPBars(target)
 			local remaining_dmg,surviving_layer,side_effect_dmg = GetHPBarDamage(target, dmginfo:GetDamage())
 
 			if IsValid(dmginfo:GetInflictor()) then
@@ -766,20 +818,21 @@ if SERVER then
 			end
 
 			local total_hp_value,built_tbl = GatherExtraHPBars(target)
-			if surviving_layer == nil or total_hp_value == 0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
+			if surviving_layer == nil or (total_hp_value == 0 and pretotal_hp_value == total_hp_value) or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
 
 				if cumulative_mult < 0 then
 					target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(dmginfo:GetDamage()),0,target:GetMaxHealth())))
 					return true
 				else
 					dmginfo:SetDamage(remaining_dmg)
-					if target.pac_healthbars then SendUpdateHealthBars(target) end
+					--if target.pac_healthbars then SendUpdateHealthBars(target) end
 				end
 
 			else --shields = use the calculated cumulative side effect damage from each uid's related absorbfactor
 
 				if side_effect_dmg < 0 then
 					target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(side_effect_dmg),0,target:GetMaxHealth())))
+					SendUpdateHealthBars(target)
 					return true
 				else
 					dmginfo:SetDamage(side_effect_dmg + remaining_dmg)
@@ -787,6 +840,7 @@ if SERVER then
 				end
 
 			end
+			
 		end
 	end)
 
@@ -826,8 +880,8 @@ if SERVER then
 		local pac_sv_damage_zone_allow_dissolve = GetConVar("pac_sv_damage_zone_allow_dissolve"):GetBool()
 		local pac_sv_prop_protection = global_combat_prop_protection:GetBool()
 
-		local inflictor = dmg_info:GetInflictor()
-		local attacker = dmg_info:GetAttacker()
+		local inflictor = dmg_info:GetInflictor() or ply
+		local attacker = dmg_info:GetAttacker() or ply
 
 		local kill = false --whether a kill was done
 		local hit = false --whether a hit was done
@@ -1097,9 +1151,9 @@ if SERVER then
 						dmg_info2:IsBulletDamage(tbl.Bullet)
 						dmg_info2:SetDamageForce(Vector(0,0,0))
 
-						dmg_info2:SetAttacker(attacker)
+						if IsValid(attacker) then dmg_info2:SetAttacker(attacker) end
 
-						dmg_info2:SetInflictor(inflictor)
+						if IsValid(inflictor) then dmg_info2:SetInflictor(inflictor) end
 
 						ent:TakeDamageInfo(dmg_info2)
 						max_dmg = math.max(max_dmg, dmg_info2:GetDamage())
@@ -2491,8 +2545,10 @@ if SERVER then
 				local layer = net.ReadUInt(4)
 				local absorbfactor = net.ReadFloat()
 				local follow = net.ReadBool()
+				local counted_hits = net.ReadBool()
+				local no_overflow = net.ReadBool()
 
-				UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow)
+				UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow, counted_hits, no_overflow)
 
 			elseif action == "OnRemove" then
 				if ply.pac_damage_scalings then
