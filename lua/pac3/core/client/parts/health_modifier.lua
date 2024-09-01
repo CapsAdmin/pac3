@@ -205,10 +205,10 @@ function PART:OnRemove()
 end
 
 function PART:OnShow()
-	if self.ExecuteOnShow then self:SendModifier("all") end
+	if self.ActivateOnShow then self:SendModifier("all") end
 end
 function PART:OnWorn()
-	if self.ExecuteOnWear then self:SendModifier("all") end
+	if self.ActivateOnWear then self:SendModifier("all") end
 end
 
 function PART:OnHide()
