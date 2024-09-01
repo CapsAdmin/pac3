@@ -2,7 +2,26 @@ local L = pace.LanguageString
 
 local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
 local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_asset_series", "0", true, false)
+local extra_dynamic = CreateClientConVar("pac_update_properties_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
+local special_property_text_color = CreateClientConVar("pac_special_property_text_color", "160 0 80", true, false, "R G B color of special property text\npac_special_property_text_color \"\" will make it not change the color\nSpecial contexts like proxies and hidden parts can show a different color to show that changes are happening in real time.")
 
+pace.special_property_text_color = Color(160,0,80)
+if special_property_text_color:GetString() ~= "" then
+	local r,g,b = unpack(string.Split(special_property_text_color:GetString(), " "))
+	r = tonumber(r) or 0 g = tonumber(g) or 0 b = tonumber(b) or 0
+	pace.special_property_text_color = Color(r,g,b)
+else
+	pace.special_property_text_color = nil
+end
+cvars.AddChangeCallback("pac_special_property_text_color", function(cvar, old, new)
+	if new ~= "" then
+		local r,g,b = unpack(string.Split(special_property_text_color:GetString(), " "))
+		r = tonumber(r) or 0 g = tonumber(g) or 0 b = tonumber(b) or 0
+		pace.special_property_text_color = Color(r,g,b)
+	else
+		pace.special_property_text_color = nil
+	end
+end, "pac_change_special_property_text_color")
 
 local searched_cache_series_results = {}
 
@@ -395,6 +414,24 @@ do -- container
 		end
 	end
 
+	function PANEL:CreateAlternateLabel(str)
+		if not str then
+			if self.alt_label then
+				if IsValid(self.alt_label) then
+					self.alt_label:Remove()
+				end
+			end
+			return
+		end
+		if str == "" then return end
+		self.alt_label = vgui.Create("DLabel", self)
+		self.alt_label:SetText("<" .. L(str) .. ">")
+		if pace.special_property_text_color then self.alt_label:SetTextColor(pace.special_property_text_color) end
+		self.alt_label:SetPos(60,-1)
+		self.alt_label:SetSize(200,20)
+		self.alt_label:SetFont(pace.CurrentFont)
+	end
+
 	pace.RegisterPanel(PANEL)
 end
 
@@ -644,6 +681,16 @@ do -- list
 
 		if ispanel(var) then
 			pnl:SetContent(var)
+			pace.current_part["pac_property_panel_"..key] = var
+
+			if key == "Hide" then
+				local reasons_hidden = pace.current_part:GetReasonsHidden()
+				if not table.IsEmpty(reasons_hidden) then
+					pnl:SetTooltip("Hidden by:" .. table.ToString(reasons_hidden, "", true))
+					pnl:CreateAlternateLabel("hidden")
+				end
+				pace.current_part.hide_property_pnl = var
+			end
 		end
 
 		self.left:AddItem(btn)
@@ -1057,6 +1104,7 @@ do -- base editable
 	end
 
 	function PANEL:Init(...)
+		self.pac_property_panel = self
 		if DLabel and DLabel.Init then
 			local status = DLabel.Init(self, ...)
 			self:SetText('')
@@ -1093,7 +1141,12 @@ do -- base editable
 		end
 
 		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
-		if str == "<multiple lines>" then self:SetTextColor(Color(160,0,80)) end
+		if str == "<multiple lines>" or self.used_by_proxy then
+			if pace.special_property_text_color then
+				self:SetTextColor(pace.special_property_text_color)
+			end
+		end
+
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. string.Trim(str,"\n")) -- ugh
 		self:SizeToContents()
@@ -2094,6 +2147,11 @@ do -- vector
 			self.middle = middle
 			self.right = right
 
+			self.pac_property_panel = self
+			left.pac_property_panel = self
+			middle.pac_property_panel = self
+			right.pac_property_panel = self
+
 			if self.MoreOptionsLeftClick then
 				local btn = vgui.Create("DButton", self)
 				btn:SetSize(16, 16)
@@ -2411,6 +2469,7 @@ do -- number
 	end
 
 	function PANEL:OnCursorMoved()
+		if self.used_by_proxy then self:SetCursor("no") return end
 		self:SetCursor("sizens")
 	end
 
@@ -2528,6 +2587,11 @@ do -- boolean
 		self.chck:Toggle()
 		self.chck:Toggle()
 		self.lbl:SetText(L(tostring(b)))
+		if self.used_by_proxy then
+			if pace.special_property_text_color then
+				self.lbl:SetTextColor(pace.special_property_text_color)
+			end
+		end
 		self.during_change = false
 	end
 

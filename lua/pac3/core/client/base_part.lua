@@ -143,6 +143,18 @@ function PART:SetUniqueID(id)
 	end
 end
 
+function PART:SetNotes(str)
+	self.Notes = str
+	if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
+	if self.pace_tree_node and self.pace_tree_node.Label then
+		if str ~= "" then
+			self.pace_tree_node.Label:SetTooltip(str)
+		else
+			self.pace_tree_node.Label:SetTooltip()
+		end
+	end
+end
+
 local function set_info(msg, info_type)
 	if not msg then return nil end
 	local msg = tostring(msg)
@@ -770,6 +782,7 @@ do -- hidden / events
 		return found
 	end
 
+	local extra_dynamic = CreateClientConVar("pac_special_property_update_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
 	function PART:CalcShowHide(from_rendering)
 		local b = self:IsHidden()
 
@@ -782,6 +795,24 @@ do -- hidden / events
 		end
 
 		self.last_hidden = b
+		if pace.IsActive() then
+			if self == pace.current_part then --update the hide property (show reasons why it's hidden)
+				if IsValid(self.hide_property_pnl) then
+					local reasons_hidden = self:GetReasonsHidden()
+					local pnl = self.hide_property_pnl:GetParent()
+					if not table.IsEmpty(reasons_hidden) and not self.reasons_hidden then
+						self.reasons_hidden = reasons_hidden
+						pnl:SetTooltip("Hidden by:" .. table.ToString(reasons_hidden, "", true))
+						if not extra_dynamic:GetBool() then return end
+						pnl:CreateAlternateLabel("hidden")
+					else
+						pnl:CreateAlternateLabel(nil) --remove it
+						self.reasons_hidden = nil
+						pnl:SetTooltip()
+					end
+				end
+			end
+		end
 	end
 
 	function PART:IsHiddenCached()
@@ -1221,8 +1252,14 @@ do
 	function PART:AlwaysOnThink() end
 end
 
+function PART:GetTutorial()
+	if pace and pace.TUTORIALS and pace.TUTORIALS[self.ClassName] then
+		return pace.TUTORIALS.PartInfos[self.ClassName].popup_tutorial or ""
+	end
+end
+
 --the popup system
-function PART:SetupEditorPopup(str, force_open, tbl)
+function PART:SetupEditorPopup(str, force_open, tbl, x, y)
 	if pace.Editor == nil then return end
 	if self.pace_tree_node == nil then return end
 	local legacy_help_popup_hack = false
@@ -1262,8 +1299,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	local pnl
 
 	--local pace = pace or {}
-	if tree_node then
-		tree_node.Label:SetTooltip(self.ClassName)
+	if tree_node and tree_node.Label then
 		local part = self
 
 		function tree_node:Think()
@@ -1286,7 +1322,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 		tree_node:Think()
 	end
 	if not pnl then
-		pnl = pac.InfoPopup(info_string,popup_config_table)
+		pnl = pac.InfoPopup(info_string,popup_config_table, x, y)
 		self.pace_tree_node.popupinfopnl = pnl
 	end
 	if pace then
@@ -1296,11 +1332,12 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	return pnl
 end
 
-function PART:AttachEditorPopup(str, flash, tbl)
-	local pnl = self:SetupEditorPopup(str, flash, tbl)
+function PART:AttachEditorPopup(str, flash, tbl, x, y)
+	local pnl = self:SetupEditorPopup(str, flash, tbl, x, y)
 	if flash and pnl then
 		pnl:MakePopup()
 	end
+	return pnl
 end
 
 function PART:DetachEditorPopup()

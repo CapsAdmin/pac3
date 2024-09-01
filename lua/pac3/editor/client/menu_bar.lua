@@ -155,6 +155,7 @@ local function populate_pac(menu)
 						popup_pref_mode:AddOption(L"part label on tree", function() RunConsoleCommand("pac_popups_preferred_location", "pac tree label") end):SetImage('icon16/layout_content.png')
 						popup_pref_mode:AddOption(L"menu bar", function() RunConsoleCommand("pac_popups_preferred_location", "menu bar") end):SetImage('icon16/layout_header.png')
 						popup_pref_mode:AddOption(L"cursor", function() RunConsoleCommand("pac_popups_preferred_location", "cursor") end):SetImage('icon16/mouse.png')
+						popup_pref_mode:AddOption(L"tracking cursor", function() RunConsoleCommand("pac_popups_preferred_location", "tracking cursor") end):SetImage('icon16/mouse_add.png')
 						popup_pref_mode:AddOption(L"screen", function() RunConsoleCommand("pac_popups_preferred_location", "screen") end):SetImage('icon16/monitor.png')
 					
 

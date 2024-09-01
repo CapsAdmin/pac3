@@ -24,19 +24,19 @@ BUILDER:StartStorableVars()
 			end
 
 			return tbl
-		end})
+		end, description = "What property of the target part should be changed.\nYou don't need to follow the list builder if you know what you're doing with target parts."})
 
 		BUILDER:GetSet("RootOwner", false)
-		BUILDER:GetSetPart("TargetPart")
-		BUILDER:GetSet("MultipleTargetParts", "")
+		BUILDER:GetSetPart("TargetPart", {description = "send output to an external part. supports name and uid"})
+		BUILDER:GetSet("MultipleTargetParts", "", {description = "send output to multiple external partss.\npaste multiple UIDs or names here, separated by semicolons. With bulk select, you can select parts and right click to get that done quickly.."})
 		BUILDER:GetSetPart("OutputTargetPart", {hide_in_editor = true})
 		BUILDER:GetSet("AffectChildren", false)
-		BUILDER:GetSet("Expression", "")
+		BUILDER:GetSet("Expression", "", {description = "write math here. hit F1 for a tutorial or right click for examples.", editor_panel = "code_proxy"})
 
 	BUILDER:SetPropertyGroup("easy setup")
-		BUILDER:GetSet("Input", "time", {enums = function(part) return part.Inputs end})
-		BUILDER:GetSet("Function", "sin", {enums = function(part) return part.Functions end})
-		BUILDER:GetSet("Axis", "")
+		BUILDER:GetSet("Input", "time", {enums = function(part) return part.Inputs end, description = "base (inner) function for easy setup\nin sin(time()) it is time"})
+		BUILDER:GetSet("Function", "sin", {enums = function(part) return part.Functions end, description = "processing (outer) function for easy setup.\nin sin(time()) it is sin"})
+		BUILDER:GetSet("Axis", "", {description = "The direction where the output ends up.\nx,y,z for vectors, p,y,r or r,g,b for colors\nIf you provide an expression with vector notation content, it will expand to the next axes. for example \"0,1,2\" on y will put 0 on y and 1 on z, 2 will overflow to nowhere."})
 		BUILDER:GetSet("Min", 0)
 		BUILDER:GetSet("Max", 1)
 		BUILDER:GetSet("Offset", 0)
@@ -53,12 +53,12 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("PreviewOutput", false, {description = "Previews the proxy's output (for yourself) next to the nearest owner entity in the game"})
 
 	BUILDER:SetPropertyGroup("extra expressions")
-		BUILDER:GetSet("ExpressionOnHide", "")
-		BUILDER:GetSet("Extra1", "")
-		BUILDER:GetSet("Extra2", "")
-		BUILDER:GetSet("Extra3", "")
-		BUILDER:GetSet("Extra4", "")
-		BUILDER:GetSet("Extra5", "")
+		BUILDER:GetSet("ExpressionOnHide", "", {description = "Math to apply once, when the proxy is hidden. It computes once, so it will not move."})
+		BUILDER:GetSet("Extra1", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra1() or var1() to save space, or by another proxy as extra1(\"uid or name\") or var1(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra2", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra2() or var2() to save space, or by another proxy as extra2(\"uid or name\") or var2(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra3", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra3() or var3() to save space, or by another proxy as extra3(\"uid or name\") or var3(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra4", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra4() or var4() to save space, or by another proxy as extra4(\"uid or name\") or var4(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra5", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra5() or var5() to save space, or by another proxy as extra5(\"uid or name\") or var5(\"uid or name\")", editor_panel = "code_proxy"})
 BUILDER:EndStorableVars()
 
 -- redirect
@@ -1554,6 +1554,7 @@ end
 PART.Inputs.healthmod_bar_remaining_bars = PART.Inputs.pac_healthbar_remaining_bars
 
 
+local proxy_verbosity = CreateConVar("pac_proxy_verbosity", 1, FCVAR_ARCHIVE, "whether to print info when running pac_proxy")
 net.Receive("pac_proxy", function()
 	local ply = net.ReadEntity()
 	local str = net.ReadString()
@@ -1565,7 +1566,7 @@ net.Receive("pac_proxy", function()
 	if ply:IsValid() then
 		ply.pac_proxy_events = ply.pac_proxy_events or {}
 		ply.pac_proxy_events[str] = {name = str, x = x, y = y, z = z}
-		if LocalPlayer() == ply then
+		if proxy_verbosity:GetBool() and pac.LocalPlayer == ply then
 			pac.Message("pac_proxy -> command(\""..str.."\") is " .. x .. "," .. y .. "," .. z)
 		end
 	end
@@ -1720,15 +1721,17 @@ function PART:OnShow()
 	self.vec_additive = Vector()
 end
 
+local extra_dynamic = CreateClientConVar("pac_special_property_update_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
 local function set(self, part, x, y, z, children)
 	local val = part:GetProperty(self.VariableName)
+	local original_x
 	local T = type(val)
+	local vector_type = false
 
 	if allowed[T] then
 		if T == "boolean" then
 			x = x or val == true and 1 or 0
 			local b = tonumber(x) > 0
-
 
 			-- special case for hide to make it behave like events
 			if self.VariableName == "Hide" then
@@ -1754,13 +1757,28 @@ local function set(self, part, x, y, z, children)
 				part:SetProperty(self.VariableName, b)
 			end
 		elseif T == "number" then
+			original_x = x
 			x = x or val
 			part:SetProperty(self.VariableName, tonumber(x) or 0)
+			self.using_x = true
 		else
+			vector_type = true
 			if self.Axis ~= "" and val[self.Axis] then
 				val = val * 1
-				val[self.Axis] = x
+				val[self.Axis] = x or 0
+				if T == "Angle" then
+					self.using_x = self.Axis == "p" or self.Axis == "x" or self.Axis == "pitch"
+					self.using_y = self.Axis == "y" or self.Axis == "y" or self.Axis == "yaw"
+					self.using_z = self.Axis == "r" or self.Axis == "z" or self.Axis == "roll"
+				elseif T == "Vector" then
+					self.using_x = self.Axis == "x"
+					self.using_y = self.Axis == "y"
+					self.using_z = self.Axis == "z"
+				end
 			else
+				self.using_x = x ~= nil
+				self.using_y = y ~= nil
+				self.using_z = z ~= nil
 				if T == "Angle" then
 					val = val * 1
 					val.p = x or val.p
@@ -1781,6 +1799,57 @@ local function set(self, part, x, y, z, children)
 	if children then
 		for _, part in ipairs(part:GetChildren()) do
 			set(self, part, x, y, z, true)
+		end
+	end
+
+	--update the property if this is the current part
+	if not extra_dynamic:GetBool() then return end
+	if pace:IsActive() then
+		if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
+		if part ~= pace.current_part then return end
+		local property_pnl = part["pac_property_panel_"..self.VariableName]
+		if IsValid(property_pnl) then
+			local container = property_pnl:GetParent()
+			local math_description = "expression:\n"..self.Expression
+			if self.Expression == "" then math_description = "using " .. self.Function .. " and " .. self.Input end
+			if vector_type then
+				if self.using_x then
+					property_pnl.used_by_proxy = true
+					container = property_pnl.left
+					property_pnl.left.used_by_proxy = true
+					local num = x or 0
+					property_pnl.left:SetValue(math.Round(tonumber(num),4))
+					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
+				end
+				if self.using_y then
+					property_pnl.used_by_proxy = true
+					container = property_pnl.middle
+					property_pnl.middle.used_by_proxy = true
+					local num = y or x or 0
+					property_pnl.left:SetValue(math.Round(tonumber(num),4))
+					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
+				end
+				if self.using_z then
+					property_pnl.used_by_proxy = true
+					container = property_pnl.right
+					property_pnl.right.used_by_proxy = true
+					local num = z or x or 0
+					property_pnl.right:SetValue(math.Round(tonumber(num),4))
+					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
+				end
+			elseif T == "boolean" then
+				if x ~= nil then
+					property_pnl.used_by_proxy = true
+					property_pnl:SetValue(tonumber(x) > 0)
+					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
+				end
+			elseif original_x ~= nil then
+				property_pnl.used_by_proxy = true
+				property_pnl:SetValue(math.Round(tonumber(x) or 0,4))
+				container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
+			end
+			
+			
 		end
 	end
 end

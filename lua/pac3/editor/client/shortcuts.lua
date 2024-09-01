@@ -693,6 +693,9 @@ function pace.DoShortcutFunc(action)
 		elseif popup_prefered_type == "cursor" then
 			pace.floating_popup_reserved = pace.current_part:SetupEditorPopup(nil, true, popup_setup_tbl, input.GetCursorPos())
 
+		elseif popup_prefered_type == "tracking cursor" then
+			pace.floating_popup_reserved = pace.current_part:SetupEditorPopup(nil, true, popup_setup_tbl, input.GetCursorPos())
+
 		elseif popup_prefered_type == "menu bar" then
 			popup_setup_tbl.obj = pace.Editor
 			pace.floating_popup_reserved = pace.current_part:SetupEditorPopup(nil, true, popup_setup_tbl)

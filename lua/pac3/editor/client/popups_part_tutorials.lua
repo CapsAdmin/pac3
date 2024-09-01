@@ -339,7 +339,10 @@ function pac.InfoPopup(str, tbl, x, y)
 		elseif tbl.obj_type == "screen" then
 			self:SetPos(x,y)
 
-		elseif tbl.obj_type == "cursor" then
+		--[[elseif tbl.obj_type == "cursor" then
+			self:SetPos(input.GetCursorPos())]]
+		
+		elseif tbl.obj_type == "tracking cursor" then
 			self:SetPos(input.GetCursorPos())
 
 		elseif tbl.obj_type == "menu bar" then
@@ -352,6 +355,9 @@ function pac.InfoPopup(str, tbl, x, y)
 
 	end
 
+	if tbl.obj_type == "cursor" then
+		pnl:SetPos(input.GetCursorPos())
+	end
 
 	if tbl then
 		pnl.tbl = tbl
