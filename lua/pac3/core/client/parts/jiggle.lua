@@ -12,6 +12,9 @@ PART.Group = 'model'
 PART.Icon = 'icon16/chart_line.png'
 
 BUILDER:StartStorableVars()
+
+	BUILDER:SetPropertyGroup("orientation")
+	BUILDER:SetPropertyGroup("dynamics")
 	BUILDER:GetSet("Strain", 0.5, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
@@ -19,22 +22,27 @@ BUILDER:StartStorableVars()
 	end})
 	BUILDER:GetSet("Speed", 1)
 	BUILDER:GetSet("ConstantVelocity", Vector(0, 0, 0))
-	BUILDER:GetSet("LocalVelocity", true)
+	BUILDER:GetSet("InitialVelocity", Vector(0, 0, 0))
+	BUILDER:GetSet("LocalVelocity", true, {description = "Whether Constant Velocity and Initial Velocity should use the jiggle part's angles instead of being applied by world coordinates"})
+	BUILDER:GetSet("ResetOnHide", false, {description = "Reinitializes the container's position to the base part position, and its speeds to 0, when the part is shown."})
+	BUILDER:GetSet("Ground", false)
+
+	BUILDER:SetPropertyGroup("angles")
 	BUILDER:GetSet("JiggleAngle", true)
+	BUILDER:GetSet("ClampAngles", false, {description = "Restrict the angles so it can't go beyond a certain amount too far from the jiggle's base angle. Components are below"})
+	BUILDER:GetSet("AngleClampAmount", Vector(180,180,180))
+	BUILDER:GetSet("ConstrainPitch", false, {description = "Do not jiggle the angles on the pitch component\nThe pitch that will remain is the jiggle's current or initial global pitch.\nThat only resets when the part is created, or if reset on hide, when shown; Or, it starts moving again when you turn this off."})
+	BUILDER:GetSet("ConstrainYaw", false, {description = "Do not jiggle the angles on the yaw component\nThe yaw that will remain is the jiggle's current or initial global yaw.\nThat only resets when the part is created, or if reset on hide, when shown; Or, it starts moving again when you turn this off."})
+	BUILDER:GetSet("ConstrainRoll", false, {description = "Do not jiggle the angles on the roll component\nThe roll that will remain is the jiggle's current or initial global roll.\nThat only resets when the part is created, or if reset on hide, when shown; Or, it starts moving again when you turn this off."})
+
+	BUILDER:SetPropertyGroup("position")
 	BUILDER:GetSet("JigglePosition", true)
-
-	BUILDER:GetSet("ConstrainPitch", false)
-	BUILDER:GetSet("ConstrainYaw", false)
-	BUILDER:GetSet("ConstrainRoll", false)
-
-	BUILDER:GetSet("ConstrainX", false)
-	BUILDER:GetSet("ConstrainY", false)
-	BUILDER:GetSet("ConstrainZ", false)
-
 	BUILDER:GetSet("ConstrainSphere", 0)
 	BUILDER:GetSet("StopRadius", 0)
-	BUILDER:GetSet("Ground", false)
-	BUILDER:GetSet("ResetOnHide", false)
+	BUILDER:GetSet("ConstrainX", false, {description = "Do not jiggle on X position coordinates"})
+	BUILDER:GetSet("ConstrainY", false, {description = "Do not jiggle on Y position coordinates"})
+	BUILDER:GetSet("ConstrainZ", false, {description = "Do not jiggle on Z position coordinates"})
+
 BUILDER:EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
@@ -63,6 +71,15 @@ function PART:OnShow()
 	if self.ResetOnHide then
 		self:Reset()
 	end
+
+	if not self.InitialVelocity then return end
+	local ang = self:GetWorldAngles()
+	if self.LocalVelocity then
+		self.vel = self.InitialVelocity.x * ang:Forward() + self.InitialVelocity.y * ang:Right() + self.InitialVelocity.z * ang:Up()
+	else
+		self.vel = self.InitialVelocity
+	end
+	
 end
 
 local inf, ninf = math.huge, -math.huge
@@ -89,7 +106,7 @@ function PART:OnDraw()
 	self.vel = self.vel or VectorRand()
 	self.pos = self.pos or pos * 1
 
-	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then
+	if self.StopRadius ~= 0 and self.pos and self.pos:DistToSqr(pos) < (self.StopRadius * self.StopRadius) then
 		self.vel = Vector()
 		return
 	end
@@ -160,18 +177,36 @@ function PART:OnDraw()
 		if not self.ConstrainPitch then
 			self.angvel.p = self.angvel.p + math_AngleDifference(ang.p, self.ang.p)
 			self.ang.p = math_AngleDifference(self.ang.p, self.angvel.p * -speed)
+			if self.ClampAngles then
+				local p_angdiff = math_AngleDifference(self.ang.p, ang.p)
+				if p_angdiff > self.AngleClampAmount.x or p_angdiff < -self.AngleClampAmount.x then
+					self.ang.p = ang.p + math.Clamp(p_angdiff,-self.AngleClampAmount.x,self.AngleClampAmount.x)
+				end
+			end
 			self.angvel.p = self.angvel.p * self.Strain
 		end
 
 		if not self.ConstrainYaw then
 			self.angvel.y = self.angvel.y + math_AngleDifference(ang.y, self.ang.y)
-			self.ang.y = math_AngleDifference(self.ang.y, self.angvel.y * -speed)
+			self.ang.y =  math_AngleDifference(self.ang.y, self.angvel.y * -speed)
+			if self.ClampAngles then
+				local y_angdiff = math_AngleDifference(self.ang.y, ang.y)
+				if y_angdiff > self.AngleClampAmount.y or y_angdiff < -self.AngleClampAmount.y then
+					self.ang.y = ang.y + math.Clamp(y_angdiff,-self.AngleClampAmount.y,self.AngleClampAmount.y)
+				end
+			end
 			self.angvel.y = self.angvel.y * self.Strain
 		end
 
 		if not self.ConstrainRoll then
 			self.angvel.r = self.angvel.r + math_AngleDifference(ang.r, self.ang.r)
-			self.ang.r = math_AngleDifference(self.ang.r, self.angvel.r * -speed)
+			self.ang.r =  math_AngleDifference(self.ang.r, self.angvel.r * -speed)
+			if self.ClampAngles then
+				local r_angdiff = math_AngleDifference(self.ang.r, ang.r)
+				if r_angdiff > self.AngleClampAmount.x or r_angdiff < -self.AngleClampAmount.z then
+					self.ang.r = ang.r + math.Clamp(r_angdiff,-self.AngleClampAmount.z,self.AngleClampAmount.z)
+				end
+			end
 			self.angvel.r = self.angvel.r * self.Strain
 		end
 	else

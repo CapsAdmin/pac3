@@ -3392,6 +3392,9 @@ end)]])
 			particle:SetGravity(Vector(0,0,0))
 		end):SetIcon("icon16/water.png")
 	elseif obj.ClassName == "jiggle" then
+		main:AddOption("Limit Angles", function()
+			obj:SetClampAngles(true) obj:SetAngleClampAmount(Vector(50,50,50))
+		end):SetIcon("icon16/compress.png")
 		local named_part = obj.Parent
 		if pace.recently_substituted_movable_part then
 			if pace.recently_substituted_movable_part.Parent == obj then
