@@ -2536,7 +2536,7 @@ local part_classes_with_quicksetups = {
 	health_modifier = true,
 	hitscan = true,
 	jiggle = true,
-
+	interpolated_multibone = true,
 }
 
 --those are more to configure a part into common setups, might involve creating other parts
@@ -3395,7 +3395,8 @@ end)]])
 		main:AddOption("Limit Angles", function()
 			obj:SetClampAngles(true) obj:SetAngleClampAmount(Vector(50,50,50))
 		end):SetIcon("icon16/compress.png")
-		local named_part = obj.Parent
+		local named_part = obj.Parent or obj
+		if not IsValid(named_part) then named_part = obj end
 		if pace.recently_substituted_movable_part then
 			if pace.recently_substituted_movable_part.Parent == obj then
 				named_part = pace.recently_substituted_movable_part
@@ -3415,6 +3416,88 @@ end)]])
 			local event = pac.CreatePart("event") event:SetParent(proxy)
 			event:SetEvent("command") event:SetArguments("jiggle_anchor_"..str)
 		end):SetIcon("icon16/anchor.png")
+	elseif obj.ClassName == "interpolated_multibone" then
+		main:AddOption("rough demo: create random nodes", function()
+			local group = pac.CreatePart("group")
+			group:SetParent(obj.Parent)
+			obj:SetParent(group)
+			local axismodel = pac.CreatePart("model2") axismodel:SetParent(obj) newnode:SetModel("models/editor/axis_helper_thick.mdl") newnode:SetSize(5)
+			for i=1,5,1 do
+				local newnode = pac.CreatePart("model2") newnode:SetParent(obj.Parent) newnode:SetModel("models/empty.mdl")
+				newnode:SetName("test_node_"..i)
+				obj["SetNode"..i](obj,newnode)
+				newnode:SetPosition(VectorRand()*100) newnode:SetAngles(AngleRand()) newnode:SetBone(obj.Bone)
+			end
+			local proxy = pac.CreatePart("proxy")
+			proxy:SetParent(obj) proxy:SetVariableName("LerpValue") proxy:SetExpression("time()%6")
+		end):SetIcon("icon16/anchor.png")
+		main:AddOption("add node at camera (local head)", function()
+			if obj.Parent.ClassName == "group" and obj.Parent ~= obj:GetRootPart() then
+				obj.recent_parent = obj.Parent
+			end
+			if not obj.recent_parent then
+				local group = pac.CreatePart("group")
+				group:SetParent(obj.Parent)
+				obj:SetParent(group)
+				obj.recent_parent = group
+			end
+			local index = 1
+			for i=1,20,1 do
+				if not IsValid(obj["Node"..i]) then --free slot?
+					index = i
+					break
+				end
+			end
+			local newnode = pac.CreatePart("model2") newnode:SetParent(obj.Parent) newnode:SetModel("models/empty.mdl")
+			local localpos, localang = WorldToLocal(pace.ViewPos, pace.ViewAngles, newnode:GetWorldPosition(), newnode:GetWorldAngles())
+			newnode:SetNotes("recorded FOV : " .. math.Round(pace.ViewFOV))
+			newnode:SetName("cam_node_"..index)
+			obj["SetNode"..index](obj,newnode)
+			newnode:SetPosition(localpos) newnode:SetAngles(localang)
+		end):SetIcon("icon16/camera.png")
+		main:AddOption("add node at camera (entity invalidbone)", function()
+			local index = 1
+			for i=1,20,1 do
+				if not IsValid(obj["Node"..i]) then --free slot?
+					index = i
+					break
+				end
+			end
+			local newnode = pac.CreatePart("model2")
+			newnode:SetParent(obj:GetRootPart())
+
+			newnode:SetModel("models/empty.mdl")
+			newnode:SetBone("invalidbone")
+			local localpos, localang = WorldToLocal(pace.ViewPos, pace.ViewAngles, newnode:GetWorldPosition(), newnode:GetWorldAngles())
+			newnode:SetNotes("recorded FOV : " .. math.Round(pace.ViewFOV))
+			newnode:SetName("cam_node_"..index) newnode:SetBone("invalidbone")
+			obj["SetNode"..index](obj,newnode)
+			newnode:SetPosition(localpos) newnode:SetAngles(localang)
+		end):SetIcon("icon16/camera.png")
+		if #pace.BulkSelectList > 0 then
+			main:AddOption("(" .. #pace.BulkSelectList .. " parts in Bulk select) Set nodes (overwrite)", function()
+				for i=1,20,1 do
+					if pace.BulkSelectList[i] then
+						obj["SetNode"..i](obj,pace.BulkSelectList[i])
+					else
+						obj["SetNode"..i](obj,nil)
+					end
+				end
+				pace.PopulateProperties(obj)
+			end):SetIcon("icon16/pencil_delete.png")
+			main:AddOption("(" .. #pace.BulkSelectList .. " parts in Bulk select) Set nodes (append)", function()
+				for i=1,20,1 do
+					if not IsValid(obj["Node"..i]) then --free slot?
+						index = i
+						break
+					end
+				end
+				for i,part in ipairs(pace.BulkSelectList) do
+					obj["SetNode"..(index + i - 1)](obj,part)
+				end
+				pace.PopulateProperties(obj)
+			end):SetIcon("icon16/pencil_add.png")
+		end
 	end
 end
 

@@ -212,8 +212,12 @@ function PART:SetModelModifiers(str)
 	for i, info in ipairs(owner:GetBodyGroups()) do
 		local val = tbl[info.name]
 		if self.bodygroup_exceptions[info.name] then
-			val = dyn_props["_"..info.name].get()
-			table.insert(self.draw_bodygroups, {info.id, val})
+			if dyn_props["_"..info.name] then
+				val = dyn_props["_"..info.name].get()
+			end
+			if val then
+				table.insert(self.draw_bodygroups, {info.id, val})
+			end
 		else
 			if val then
 				table.insert(self.draw_bodygroups, {info.id, val})

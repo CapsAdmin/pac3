@@ -580,7 +580,7 @@ local function encode_table_to_file(str)
 		file.Write("pac3_config/" .. str..".txt", util.TableToKeyValues(data))
 	elseif str == "pac_editor_partmenu_layouts" then
 		data = pace.operations_order
-		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data))
+		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data, true))
 	elseif str == "pac_part_categories" then
 		data = pace.partgroups
 		file.Write("pac3_config/" .. str..".txt", util.TableToKeyValues(data))
@@ -593,7 +593,7 @@ local function encode_table_to_file(str)
 		end
 	elseif str == "eventwheel_colors" then
 		data = pace.command_colors or {}
-		file.Write("pac3_config/" .. str..".txt", util.TableToKeyValues(data))
+		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data, true))
 	end
 
 end
@@ -619,10 +619,16 @@ local function decode_table_from_file(str)
 		pace.operations_order = util.JSONToTable(data)
 
 	elseif str == "pac_part_categories" then
-		pace.partgroups = util.KeyValuesToTable(data)
-
+		pace.partgroups = util.KeyValuesToTable(data, false, true)
+ 
 	elseif str == "eventwheel_colors" then
-		pace.command_colors = util.KeyValuesToTable(data)
+		if not util.JSONToTable(data) then
+			if not table.IsEmpty(util.KeyValuesToTable(data)) then
+				pace.command_colors = util.KeyValuesToTable(data)
+			end
+		else
+			pace.command_colors = util.JSONToTable(data)
+		end
 	end
 
 
@@ -1992,7 +1998,7 @@ function pace.ConfigureEventWheelMenu()
 	mid_panel:Dock(FILL)
 
 	local scr_pnl = vgui.Create("DScrollPanel", mid_panel)
-	scr_pnl:SetSize(490,800)
+	scr_pnl:Dock(FILL)
 	scr_pnl:SetPos(0,45)
 	local list = vgui.Create("DListLayout", scr_pnl) list:Dock(FILL)
 

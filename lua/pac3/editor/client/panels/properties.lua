@@ -2,7 +2,7 @@ local L = pace.LanguageString
 
 local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
 local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_asset_series", "0", true, false)
-local extra_dynamic = CreateClientConVar("pac_update_properties_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
+local extra_dynamic = CreateClientConVar("pac_special_property_update_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
 local special_property_text_color = CreateClientConVar("pac_special_property_text_color", "160 0 80", true, false, "R G B color of special property text\npac_special_property_text_color \"\" will make it not change the color\nSpecial contexts like proxies and hidden parts can show a different color to show that changes are happening in real time.")
 
 pace.special_property_text_color = Color(160,0,80)
@@ -426,7 +426,8 @@ do -- container
 		if str == "" then return end
 		self.alt_label = vgui.Create("DLabel", self)
 		self.alt_label:SetText("<" .. L(str) .. ">")
-		if pace.special_property_text_color then self.alt_label:SetTextColor(pace.special_property_text_color) end
+		if pace.special_property_text_color then self.alt_label:SetTextColor(pace.special_property_text_color)
+		else self.alt_label:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text) end
 		self.alt_label:SetPos(60,-1)
 		self.alt_label:SetSize(200,20)
 		self.alt_label:SetFont(pace.CurrentFont)
@@ -664,8 +665,15 @@ do -- list
 				end
 
 				btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
+				if udata then
+					if udata.group == "bodygroups" then
+						if key[1] == "_" then --bodygroup exceptions
+							btn.lbl:SetText(key:sub(2,-1))
+						end
+					end
+				end
 			end
-
+			
 			if obj then
 				btn.key_name = key
 				btn.part_namepart_name = obj.ClassName
