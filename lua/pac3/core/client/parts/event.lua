@@ -3192,6 +3192,7 @@ end
 
 function PART:TriggerEvent(b)
 	self.event_triggered = b -- event_triggered is just used for the editor
+	local override = IsValid(self.DestinationPart)
 
 	if self.AffectChildrenOnly then
 		if self.MultiTargetPart then
@@ -3203,29 +3204,32 @@ function PART:TriggerEvent(b)
 				child:SetEventTrigger(self, b)
 			end
 		end
+		if override then self:SetWarning("The Affect Children Only checkbox should perhaps be turned off, because you have chosen a targeted part") end
 	else
-		if self.MultiTargetPart then
-			for _,part2 in ipairs(self.MultiTargetPart) do
-				if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
+		if override then --single target part mode
+			if IsValid(self.previousdestinationpart) then
+				if self.DestinationPart ~= self.previousdestinationpart then --when editing, if we change the destination part we need to reset the old one
+					self.previousdestinationpart:SetEventTrigger(self, false)
+				end
 			end
-		else
-			local parent = self:GetParent()
-			if parent:IsValid() then
-				parent:SetEventTrigger(self, b)
+			self.DestinationPart:SetEventTrigger(self, b)
+			self.previousdestinationpart = self.DestinationPart
+		else --normal parent mode
+			if IsValid(self.previousdestinationpart) then
+				if self.DestinationPart ~= self.previousdestinationpart then --when editing, if we change the destination part we need to reset the old one
+					self.previousdestinationpart:SetEventTrigger(self, false)
+				end
 			end
-		end
-	end
-	if IsValid(self.DestinationPart) then --target part. the proper one.
-		if IsValid(self.previousdestinationpart) then
-			if self.DestinationPart ~= self.previousdestinationpart then --once we change the destination part we need to reset the old one
-				self.previousdestinationpart:SetEventTrigger(self, false)
+			if self.MultiTargetPart then
+				for _,part2 in ipairs(self.MultiTargetPart) do
+					if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
+				end
+			else
+				local parent = self:GetParent()
+				if parent:IsValid() then
+					parent:SetEventTrigger(self, b)
+				end
 			end
-		end
-		(self.DestinationPart):SetEventTrigger(self, b)
-		self.previousdestinationpart = (self.DestinationPart)
-	elseif IsValid(self.previousdestinationpart) then
-		if self.DestinationPart ~= self.previousdestinationpart then --once we change the destination part we need to reset the old one
-			self.previousdestinationpart:SetEventTrigger(self, false)
 		end
 	end
 end

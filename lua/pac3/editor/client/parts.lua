@@ -3634,7 +3634,7 @@ function pace.AddClassSpecificPartMenuComponents(menu, obj)
 			end):SetIcon("icon16/star.png")
 		end
 		if not IsValid(obj.DestinationPart) then
-			menu:AddOption("engrave / quick-link to parent", function() obj:SetTargetedPart(obj:GetParent()) end):SetIcon("icon16/star.png")
+			menu:AddOption("engrave / quick-link to parent", function() obj:SetDestinationPart(obj:GetParent()) end):SetIcon("icon16/star.png")
 		end
 	end
 
