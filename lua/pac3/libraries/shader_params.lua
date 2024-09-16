@@ -624,6 +624,12 @@ return {
 					default = false,
 					description = "flag",
 				},
+				allowdiffusemodulation = {
+					type = "bool",
+					default = true,
+					friendly = "AllowDiffuseModulation",
+					description = "Prevents the material from being tinted.",
+				}
 			},
 			["bump map"] = {
 				bumpmap = {
