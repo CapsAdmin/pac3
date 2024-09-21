@@ -2782,12 +2782,12 @@ if CLIENT then
 	concommand.Add( "pac_stop_lock", function()
 		net.Start("pac_signal_stop_lock")
 		net.SendToServer()
-	end, "asks the server to breakup any lockpart hold on your player")
+	end, nil, "asks the server to breakup any lockpart hold on your player")
 
 	concommand.Add( "pac_break_lock", function()
 		net.Start("pac_signal_stop_lock")
 		net.SendToServer()
-	end, "asks the server to breakup any lockpart hold on your player")
+	end, nil, "asks the server to breakup any lockpart hold on your player")
 
 	net.Receive("pac_lock_imposecalcview", function()
 		local authority_to_calcview = net.ReadBool() and GetConVar("pac_client_lock_camera_consent"):GetBool()
