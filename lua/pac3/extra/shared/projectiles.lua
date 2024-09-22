@@ -579,13 +579,13 @@ if SERVER then
 		part.Speed = math.Clamp(net.ReadInt(18) / 1000, -pac_sv_projectile_max_speed:GetFloat(), pac_sv_projectile_max_speed:GetFloat())
 		part.Maximum = net.ReadUInt(7)
 		part.LifeTime = net.ReadUInt(14) / 100
-		part.Delay = net.ReadUInt(9) / 100
+		part.Delay = net.ReadUInt(13) / 100
 		part.Mass = net.ReadUInt(16)
 		part.Spread = net.ReadInt(10) / 100
 		part.Damping = net.ReadInt(20) / 100
 		part.Attract = net.ReadInt(14)
 		part.AttractRadius = net.ReadUInt(10)
-		part.Bounce = net.ReadInt(8) / 100
+		part.Bounce = net.ReadInt(15) / 100
 
 		local radius_limit = 2000
 

@@ -24,7 +24,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("AddOwnerSpeed", false)
 		BUILDER:GetSet("Spread", 0)
 		BUILDER:GetSet("NumberProjectiles", 1)
-		BUILDER:GetSet("Delay", 0)
+		BUILDER:GetSet("Delay", 0, {editor_clamp = {0,80}})
 		BUILDER:GetSet("Maximum", 0)
 		BUILDER:GetSet("RandomAngleVelocity", Vector(0,0,0))
 		BUILDER:GetSet("LocalAngleVelocity", Vector(0,0,0))
@@ -41,7 +41,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Collisions", true)
 		BUILDER:GetSet("Sphere", false)
 		BUILDER:GetSet("Radius", 1, {editor_panel = "projectile_radii"})
-		BUILDER:GetSet("Bounce", 0)
+		BUILDER:GetSet("Bounce", 0, {editor_clamp = {-160,160}})
 		BUILDER:GetSet("Sticky", false)
 		BUILDER:GetSet("CollideWithOwner", false)
 		BUILDER:GetSet("CollideWithSelf", false)
@@ -294,13 +294,13 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			net.WriteInt(1000*self.Speed,18)
 			net.WriteUInt(self.Maximum,7)
 			net.WriteUInt(100*self.LifeTime,14) --might need decimals
-			net.WriteUInt(100*self.Delay,9) --might need decimals
+			net.WriteUInt(100*self.Delay,13) --might need decimals
 			net.WriteUInt(self.Mass,16)
 			net.WriteInt(100*self.Spread,10)
 			net.WriteInt(100*self.Damping,20) --might need decimals
 			net.WriteInt(self.Attract,14)
 			net.WriteUInt(self.AttractRadius,10)
-			net.WriteInt(100*self.Bounce,8) --might need decimals
+			net.WriteInt(100*self.Bounce,15) --might need decimals
 
 		net.SendToServer()
 	else
