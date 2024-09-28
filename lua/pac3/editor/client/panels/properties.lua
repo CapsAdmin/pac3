@@ -2180,6 +2180,95 @@ do -- vector
 						surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
 						surface.DrawOutlinedRect(0,0,w,h)
 					end
+
+					--screen color picker
+					local btn2 = vgui.Create("DImageButton", self)
+					btn2:SetSize(16, 16)
+					btn2:Dock(RIGHT) btn2:DockPadding(0,0,16,0)
+					btn2:SetTooltip("Color picker")
+					btn2:SetImage("icon16/sitemap_color.png")
+					btn2.DoClick = function()
+						pace.FlashNotification("Hold Left Shift to open a circle to average nearby pixels")
+						local averaging_radius = 0
+						local lock_x
+						local lock_y
+						pac.AddHook("DrawOverlay", "colorpicker", function()
+							render.CapturePixels()
+							local mx, my = input.GetCursorPos()
+							local cx = mx
+							local cy = my
+							
+							local r,g,b,a = render.ReadPixel(mx,my)
+
+							--we may average on nearby pixels
+							if input.IsKeyDown(KEY_LSHIFT) then
+								lock_x = lock_x or mx
+								lock_y = lock_y or my
+								local dx = mx-lock_x
+								local dy = my-lock_y
+
+								averaging_radius = math.floor(math.sqrt(dx^2 + dy^2))
+							else
+								lock_x = nil
+								lock_y = nil
+								averaging_radius = 0
+							end
+							if lock_x and lock_y then
+								cx = lock_x
+								cy = lock_y
+							end
+							local r_sum = 0
+							local g_sum = 0
+							local b_sum = 0
+
+							if averaging_radius > 0 then
+								local counted_pixels = 0
+								for x=cx-averaging_radius,mx+averaging_radius,1 do
+									for y=cy-averaging_radius,my+averaging_radius,1 do
+										if x^2 + y^2 > averaging_radius^2 then
+											counted_pixels = counted_pixels + 1
+											local r,g,b,a = render.ReadPixel(x,y)
+											r_sum = r_sum + r
+											g_sum = g_sum + g
+											b_sum = b_sum + b
+										end
+									end
+								end
+								if counted_pixels ~= 0 then
+									r = math.floor(r_sum / counted_pixels)
+									g = math.floor(g_sum / counted_pixels)
+									b = math.floor(b_sum / counted_pixels)
+								end
+
+								if RealTime() % 0.2 > 0.1 then
+									surface.DrawCircle(cx, cy, averaging_radius, 0,0,0,255)
+								else
+									surface.DrawCircle(cx, cy, averaging_radius, 255,255,255,255)
+								end
+								draw.DrawText("(average color) radius = "..averaging_radius, "TargetID", cx + 15, cy + 15, picked_color, TEXT_ALIGN_LEFT)
+							end
+							
+							local color = Color(0,0,0)
+							if r + g + a < 400 then
+								color = Color(255,255,255)
+							end
+
+							local picked_color = Color(r,g,b)
+							draw.RoundedBox(0,cx + 15,cy,120,18,color)
+							draw.DrawText(r .. " " .. g .. " " .. " " .. b, "TargetID", cx + 15, cy, picked_color, TEXT_ALIGN_LEFT)
+							if input.IsMouseDown(MOUSE_LEFT) then
+								pac.CopyValue(picked_color)
+								if pace.current_part.ProperColorRange then
+									self.OnValueChanged(Vector(picked_color.r/255,picked_color.g/255,picked_color.b/255))
+								else
+									self.OnValueChanged(Vector(picked_color.r,picked_color.g,picked_color.b))
+								end
+								
+								pac.RemoveHook("DrawOverlay", "colorpicker")
+							end
+							if input.IsKeyDown(KEY_ESCAPE) then pac.RemoveHook("DrawOverlay", "colorpicker") end
+						end)
+					end
 				end
 			end
 
