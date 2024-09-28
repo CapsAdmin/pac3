@@ -3867,6 +3867,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				str = string.gsub(str, " ", "")
 				for i,v in ipairs(pace.BulkSelectList) do
 					part = pac.CreatePart("event")
+					part:SetOperator("equal")
 					part:SetParent(v)
 					part.Event = "command"
 					part.Arguments = str..i.."@@0@@0"
