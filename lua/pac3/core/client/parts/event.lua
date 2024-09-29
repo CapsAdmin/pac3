@@ -795,6 +795,20 @@ PART.OldEvents = {
 		end,
 	},
 
+	is_no_draw = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:GetNoDraw()
+		end,
+	},
+
+	is_no_target = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:IsFlagSet( FL_NOTARGET )
+		end,
+	},
+
 	client_spawned = {
 		operator_type = "number", preferred_operator = "below",
 		tutorial_explanation = "client_spawned supposedly activates for some time after you spawn",
@@ -3005,6 +3019,149 @@ do
 
 		pac.RegisterEvent(eventObject)
 	end
+end
+
+--spicy events
+do
+	
+	local spicy_events = {
+
+		-- This is a function to grab any and all network variables and try to run them with the correct type, as it's possible to have GetNWInt("Pac", 1) and "GetNWString("Pac" ValueHere") 
+		-- This code is designed to try and run things correctly and detect specific types of Network Variables, Since GetNWVar does not have the varable display in the table, but GetNW2var does.
+		-- It's also useful if a player doesn't know what the displayed function is as a Networked Variable.
+
+		get_networked = {
+			arguments = {{name = "string"}, {result = "string"}},
+			userdata = {{enums = function()
+				local base_tbl = LocalPlayer():GetNWVarTable()
+				local enum_tbl = {}
+				for k,v in pairs(base_tbl) do
+					enum_tbl[k] = k
+				end
+				return enum_tbl
+			end}},
+			
+			callback = function(self, ent, name, result)
+				print(ent)
+				ent = try_viewmodel(ent)
+				print(ent)
+				local anyvar = ent:GetNWVarTable()[name]
+						
+				if isstring(anyvar) then
+					return self:StringOperator(anyvar, result)
+				elseif isnumber(anyvar) then
+					return self:NumberOperator(anyvar, tonumber(result) or 0)
+				elseif isbool(anyvar) then
+					return anyvar == tobool(result)
+				end
+			end,
+		},
+		--These are left in so that if a player knows what a variable is as a network, they can manually and directly get it
+		--In the rare event the operation above has two of the same named variabels (which is rare and stupid, but can happen, so it's better to nip it in the butt instead of trying to argue over it.)
+				
+		get_networked_string = {
+			arguments = {{name = "string"}, {result = "string"}},
+			userdata = {{enums = function()
+				local base_tbl = LocalPlayer():GetNWVarTable()
+				local enum_tbl = {}
+				for k,v in pairs(base_tbl) do
+					if isstring(v) then
+						enum_tbl[k] = k
+					end
+				end
+				return enum_tbl
+			end}},
+			callback = function(self, ent, name, result)
+					ent = try_viewmodel(ent)
+					return self:StringOperator(ent:GetNWString(tostring(name)), tostring(result))
+			end,
+		},
+		
+		get_networked_int = {
+			arguments = {{name = "string"}, {num = "number"}},		
+			userdata = {{enums = function()
+				local base_tbl = LocalPlayer():GetNWVarTable()
+				local enum_tbl = {}
+				for k,v in pairs(base_tbl) do
+					if isnumber(v) then
+						enum_tbl[k] = k
+					end
+				end
+				return enum_tbl
+			end}},
+			callback = function(self, ent, name, num)
+					ent = try_viewmodel(ent)
+					return self:NumberOperator(ent:GetNWInt(tostring(name)), tonumber(num))
+			end,
+		},
+	
+		get_networked_bool = {
+			arguments = {{name = "string"}, {bool = "string"}},
+			userdata = {{enums = function()
+				local base_tbl = LocalPlayer():GetNWVarTable()
+				local enum_tbl = {}
+				for k,v in pairs(base_tbl) do
+					if isbool(v) then
+						enum_tbl[k] = k
+					end
+				end
+				return enum_tbl
+			end}},
+			callback = function(self, ent, name, bool)
+					ent = try_viewmodel(ent)
+					return ent:GetNWBool(tostring(name)) == tobool(bool)
+			end,
+		},
+		
+		get_networked_float = {
+			arguments = {{name = "string"}, {float = "number"}},
+			userdata = {{enums = function()
+			local base_tbl = LocalPlayer():GetNWVarTable()
+			local enum_tbl = {}
+				for k,v in pairs(base_tbl) do
+					if isnumber(v) then
+						enum_tbl[k] = k
+					end
+				end
+				return enum_tbl
+			end}},
+			callback = function(self, ent, name, float)
+					ent = try_viewmodel(ent)
+					return self:NumberOperator(ent:GetNWFloat(tostring(name)), tonumber(float))
+			end,
+		},
+	}
+
+	if GetConVar("pac_sv_danger_mode"):GetBool() then
+		for classname, data in pairs(spicy_events) do
+			local arguments = data.arguments
+			local think = data.callback
+			local eventObject = pac.CreateEvent(classname)
+
+			if arguments then
+				for i, data2 in ipairs(arguments) do
+					local key, Type = next(data2)
+					eventObject:AppendArgument(key, Type, data.userdata and data.userdata[i] or nil)
+				end
+			end
+
+			eventObject.extra_nice_name = data.nice
+
+			local operator_type = data.operator_type
+			local preferred_operator = data.preferred_operator
+			local tutorial_explanation = data.tutorial_explanation
+			eventObject.operator_type = operator_type
+			eventObject.preferred_operator = preferred_operator
+			eventObject.tutorial_explanation = tutorial_explanation
+
+			function eventObject:Think(event, ent, ...)
+				return think(event, ent, ...)
+			end
+
+			pac.RegisterEvent(eventObject)
+		end
+	end
+
 end
 
 function PART:GetParentEx()
