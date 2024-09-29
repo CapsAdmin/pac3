@@ -159,6 +159,13 @@ return {
 			}
 		},
 		vertexlitgeneric = {
+			["environment map"] = {
+				envmapfresnel = {
+					type = "float",
+					friendly = "Fresnel",
+					description = "like $fresnelreflection. requires phong.",
+				},
+			},
 			wrinkle = {
 				compress = {
 					type = "texture",
