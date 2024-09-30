@@ -645,16 +645,47 @@ function pac.EnablePartsByClass(classname, enable)
 	end
 end
 
+function pac.LinkSpecialTrackedPartsForEvent(part, ply)
+	part.erroring_cached_parts = {}
+	part.found_cached_parts = {}
+	
+	part.specialtrackedparts = {}
+	local tracked_classes = {
+		["damage_zone"] = true,
+		["lock"] = true
+	}
+	for _,part2 in pairs(all_parts) do
+		if ply == part2:GetPlayerOwner() and tracked_classes[part.ClassName] then
+			table.insert(part.specialtrackedparts,part2)
+		end
+	end
+end
+
+--a centralized function to cache a part in a prebuilt list so we can access relevant parts already narrowed down instead of searching through all parts / localparts
+function pac.RegisterPartToCache(ply, name, part, remove)
+	ply["pac_part_cache_"..name] = ply["pac_part_cache_"..name] or {}
+	if remove then
+		ply["pac_part_cache_"..name][part] = nil
+	else
+		ply["pac_part_cache_"..name][part] = part
+	end
+end
+
 function pac.UpdateButtonEvents(ply, key, down)
-	for _,part in pairs(all_parts) do
-		if part:GetPlayerOwner() == ply and part.ClassName == "event" and part.Event == "button" then
-			part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
-			part.holdtime = part.holdtime or 0
-			part.toggleimpulsekey = part.toggleimpulsekey or {}
-			part.toggleimpulsekey[key] = down
-			part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
-			ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
-			part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
+	local button_events = ply.pac_part_cache_button_events or {}
+	for _,part in pairs(button_events) do
+		if key ~= string.Split(part.Arguments, "@@")[1]:lower() then continue end
+		part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
+		part.toggleimpulsekey = part.toggleimpulsekey or {}
+		part.toggleimpulsekey[key] = down
+		part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
+		ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
+		part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
+
+		if part.togglestate == nil then part.togglestate = false end
+
+		if part.toggleimpulsekey[key] then
+			part.togglestate = not part.togglestate
 		end
 	end
 end

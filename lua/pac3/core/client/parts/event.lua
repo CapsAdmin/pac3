@@ -51,7 +51,7 @@ function PART:register_command_event(str,b)
 	local event = str
 	local flush = b
 
-	local num = tonumber(string.sub(event, string.find(event,"[%d]+$") or 0)) or 0
+	local num = tonumber(string.sub(event, string.find(event,"[%d]+$") or 0))
 
 	if string.find(event,"[%d]+$") then
 		event = string.gsub(event,"[%d]+$","")
@@ -62,13 +62,34 @@ function PART:register_command_event(str,b)
 		ply.pac_command_event_sequencebases[event] = nil
 		return
 	end
-
-	if ply.pac_command_event_sequencebases[event] and string.find(str,"[%d]+$") then
-		ply.pac_command_event_sequencebases[event].max = math.max(ply.pac_command_event_sequencebases[event].max,num)
-	else
-		ply.pac_command_event_sequencebases[event] = {name = event, min = 1, max = num}
+	local data = ply.pac_command_event_sequencebases[event] or {name = event}
+	local min = data.min or 1
+	local max = data.max or 1
+	if num then
+		if num < min then min = num end
+		if num > max then max = num end
 	end
 
+	if min then data.min = min end
+	if max then data.max = max end
+
+	if data and string.find(str,"[%d]+$") then
+		event_series_bounds[event] = event_series_bounds[event] or {}
+		event_series_bounds[event][1] = event_series_bounds[event][1] or min
+		event_series_bounds[event][1] = math.min(event_series_bounds[event][1], min)
+		event_series_bounds[event][2] = event_series_bounds[event][2] or max
+		event_series_bounds[event][2] = math.max(event_series_bounds[event][2], max)
+	else
+		data = {name = event}
+	end
+	timer.Simple(0.3, function()
+		if stop_timer then return end
+		stop_timer = true
+		net.Start("pac_event_define_sequence_bounds")
+		net.WriteTable(event_series_bounds)
+		net.SendToServer()
+	end)
+	timer.Simple(0.5, function() stop_timer = false end)
 end
 
 function PART:fix_event_operator()
@@ -128,26 +149,44 @@ function PART:AttachEditorPopup(str)
 	self:SetupEditorPopup(str, true)
 end
 
+local tracked_events = {
+	damage_zone_hit = true,
+	damagezone_kill = true,
+	lockpart_grabbing = true
+}
 function PART:SetEvent(event)
 	local reset = (self.Arguments == "") or
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 
 	local owner = self:GetPlayerOwner()
 
-	if owner == pac.LocalPlayer then
+	if (owner == pac.LocalPlayer) and (not pace.processing) then
 		if event == "command" then owner.pac_command_events = owner.pac_command_events or {} end
-		if not self.Events[event] then --invalid event? try a command event
-			if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
+		if not self.Events[event] then --invalid event? try a command event or button event
+			if pac.key_enums_reverse[event] then
 				timer.Simple(0.2, function()
 					if not self.pace_properties or self ~= pace.current_part then return end
 					--now we'll use event as a command name
-					self:SetEvent("command")
-					self.pace_properties["Event"]:SetValue("command")
+					self:SetEvent("button")
+					self.pace_properties["Event"]:SetValue("button")
 					self:SetArguments(event .. "@@0")
 					self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
 					pace.PopulateProperties(self)
 				end)
 				return
+			else
+				if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
+					timer.Simple(0.2, function()
+						if not self.pace_properties or self ~= pace.current_part then return end
+						--now we'll use event as a command name
+						self:SetEvent("command")
+						self.pace_properties["Event"]:SetValue("command")
+						self:SetArguments(event .. "@@0")
+						self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
+						pace.PopulateProperties(self)
+					end)
+					return
+				end
 			end
 		end
 	end
@@ -169,6 +208,11 @@ function PART:SetEvent(event)
 		self:GetDynamicProperties(reset)
 		if not GetConVar("pac_editor_remember_divider_height"):GetBool() and IsValid(pace.Editor) then pace.Editor.div:SetTopHeight(ScrH() - 520) end
 
+	end
+	--caching for some events
+	pac.RegisterPartToCache(owner, "button_events", self, event ~= "button")
+	if tracked_events[event] then
+		timer.Simple(1, function() pac.LinkSpecialTrackedPartsForEvent(self, owner) end)
 	end
 end
 
@@ -2218,9 +2262,9 @@ PART.OldEvents = {
 		callback = function(self, ent, time, damage, uid)
 			uid = uid or ""
 			uid = string.gsub(uid, "\"", "")
-			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
-				for _,part in pairs(pac.GetLocalParts()) do
+				--for _,part in pairs(pac.GetLocalParts()) do
+				for _,part in ipairs(self.specialtrackedparts) do
 					if part.ClassName == "damage_zone" then
 						if part.dmgzone_hit_done and self:NumberOperator(part.Damage, damage) then
 							if part.dmgzone_hit_done + time > CurTime() then
@@ -2229,19 +2273,21 @@ PART.OldEvents = {
 						end
 					end
 				end
-			elseif not valid_uid and err then
-				self:SetError("invalid part Unique ID\n"..err)
-			elseif valid_uid then
-				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
-				if part.ClassName == "damage_zone" then
-					if part.dmgzone_hit_done and self:NumberOperator(part.Damage, damage) then
-						if part.dmgzone_hit_done + time > CurTime() then
-							return true
-						end
-					end
-					self:SetError()
+			else
+				local part = self:GetOrFindCachedPart(uid)
+				if not IsValid(part) then
+					self:SetError("invalid part Unique ID\n"..uid)
 				else
-					self:SetError("You set a UID that's not a damage zone!")
+					if part.ClassName == "damage_zone" then
+						if part.dmgzone_hit_done and self:NumberOperator(part.Damage, damage) then
+							if part.dmgzone_hit_done + time > CurTime() then
+								return true
+							end
+						end
+						self:SetError()
+					else
+						self:SetError("You set a UID that's not a damage zone!")
+					end
 				end
 			end
 			return false
@@ -2266,9 +2312,9 @@ PART.OldEvents = {
 		callback = function(self, ent, time, uid)
 			uid = uid or ""
 			uid = string.gsub(uid, "\"", "")
-			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
-				for _,part in pairs(pac.GetLocalParts()) do
+				--for _,part in pairs(pac.GetLocalParts()) do
+				for _,part in ipairs(self.specialtrackedparts) do
 					if part.ClassName == "damage_zone" then
 						if part.dmgzone_kill_done then
 							if part.dmgzone_kill_done + time > CurTime() then
@@ -2277,19 +2323,21 @@ PART.OldEvents = {
 						end
 					end
 				end
-			elseif not valid_uid and err then
-				self:SetError("invalid part Unique ID\n"..err)
-			elseif valid_uid then
-				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
-				if part.ClassName == "damage_zone" then
-					if part.dmgzone_kill_done then
-						if part.dmgzone_kill_done + time > CurTime() then
-							return true
-						end
-					end
-					self:SetError()
+			else
+				local part = self:GetOrFindCachedPart(uid)
+				if not IsValid(part) then
+					self:SetError("invalid part Unique ID\n"..uid)
 				else
-					self:SetError("You set a UID that's not a damage zone!")
+					if part.ClassName == "damage_zone" then
+						if part.dmgzone_kill_done then
+							if part.dmgzone_kill_done + time > CurTime() then
+								return true
+							end
+						end
+						self:SetError()
+					else
+						self:SetError("You set a UID that's not a damage zone!")
+					end
 				end
 			end
 			return false
@@ -2323,24 +2371,27 @@ PART.OldEvents = {
 			uid = string.gsub(uid, "\"", "")
 			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
-				for _,part in pairs(pac.GetLocalParts()) do
+				--for _,part in pairs(pac.GetLocalParts()) do
+				for _,part in ipairs(self.specialtrackedparts) do
 					if part.ClassName == "lock" then
 						if part.grabbing then
 							return IsValid(part.target_ent)
 						end
 					end
 				end
-			elseif not valid_uid and err then
-				self:SetError("invalid part Unique ID\n"..err)
-			elseif valid_uid then
-				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
-				if part.ClassName == "lock" then
-					if part.grabbing then
-						return IsValid(part.target_ent)
-					end
-					self:SetError()
+			else
+				local part = self:GetOrFindCachedPart(uid)
+				if not IsValid(part) then
+					self:SetError("invalid part Unique ID\n"..uid)
 				else
-					self:SetError("You set a UID that's not a lock part!")
+					if part.ClassName == "lock" then
+						if part.grabbing then
+							return IsValid(part.target_ent)
+						end
+						self:SetError()
+					else
+						self:SetError("You set a UID that's not a lock part!")
+					end
 				end
 			end
 			return false
@@ -2440,6 +2491,68 @@ PART.OldEvents = {
 		end
 	},
 
+	healthmod_bar_hit = {
+		operator_type = "number", preferred_operator = "above",
+		arguments = {{amount = "number"}, {layer = "string"}, {uid = "string"}, {time = "number"}},
+		userdata = {{default = 0}, {default = ""}, {default = ""}, {default = 1}},
+		callback = function(self, ent, amount, layer, uid, time)
+			if not ent.pac_healthbars or not ent.pac_healthbars_total_updated then return false end
+			local check_layer = layer ~= ""
+			layer = tonumber(layer)
+			local check_uid = uid ~= ""
+			--[[
+				ent.pac_healthbars_total_updated = {time = CurTime(), delta = 0}
+				ent.pac_healthbars_layers_updated = {time = CurTime(), deltas = {}}
+				ent.pac_healthbars_uids_updated = {time = CurTime(), deltas = {}}
+			]]
+			if not check_layer and not check_uid then
+				if ent.pac_healthbars_total_updated.time + time > CurTime() then
+					return self:NumberOperator(ent.pac_healthbars_total_updated.delta, amount)
+				end
+			elseif check_layer and (layer ~= nil) and ent.pac_healthbars_layers_updated.deltas[layer] then
+				if ent.pac_healthbars_layers_updated.time + time > CurTime() then
+					return self:NumberOperator(ent.pac_healthbars_layers_updated.deltas[layer], amount)
+				end
+			elseif check_uid and ent.pac_healthbars_uids_updated.deltas[uid] then
+				if ent.pac_healthbars_uids_updated.time + time > CurTime() then
+					return self:NumberOperator(ent.pac_healthbars_uids_updated.deltas[uid], amount)
+				end
+			end
+			return false
+		end
+	},
+
+	or_gate = {
+		operator_type = "none", preferred_operator = "find simple",
+		tutorial_explanation = "combines multiple events into an OR gate, the event will activate as soon as one of the events listed is activated (taking inverts into account)",
+		arguments = {{uids = "string"}},
+		userdata = {{enums = function(part)
+			local output = {}
+			local parts = pac.GetLocalParts()
+			for i, part in pairs(parts) do
+				if part.ClassName == "event" then
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
+				end
+			end
+			return output
+		end}},
+		callback = function(self, ent, uids)
+			if uids == "" then return false end
+			local uid_splits = string.Split(uids, ";")
+			for i,uid in ipairs(uid_splits) do
+				local part = self:GetOrFindCachedPart(uid)
+				if part then
+					local b = part.event_triggered
+					if part.Invert then b = not b end
+					if b then
+						return true
+					end
+				end
+			end
+			return false
+		end,
+	}
+
 }
 
 
@@ -2500,6 +2613,7 @@ do
 	end
 
 	pac.key_enums = enums
+	pac.key_enums_reverse = enums2
 
 --@note button broadcast
 
@@ -2528,8 +2642,8 @@ do
 					end
 				end
 			end
-
 			pac.key_enums = enums
+			pac.key_enums_reverse = enums2
 		end
 
 		key = pac.key_enums[key] or key
@@ -2575,30 +2689,15 @@ do
 			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
 		end,
 		callback = function(self, ent, button, holdtime, toggle)
-
-			local holdtime = holdtime or 0
+			self.holdtime = holdtime or 0
 			local toggle = toggle or false
-
 			self.togglestate = self.togglestate or false
-			self.holdtime = holdtime
-			self.toggle = toggle
 
-			self.toggleimpulsekey = self.toggleimpulsekey or {}
-
-			if self.toggleimpulsekey[button] then
-				self.togglestate = not self.togglestate
-				self.toggleimpulsekey[button] = false
-			end
-
-			--print(button, "hold" ,self.holdtime)
 			local ply = self:GetPlayerOwner()
 			self.pac_broadcasted_buttons_holduntil = self.pac_broadcasted_buttons_holduntil or {}
 
-
 			if ply == pac.LocalPlayer then
-
 				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
-
 				if not ply.pac_broadcast_buttons[button] then
 					local val = enums2[button:lower()]
 					if val then
@@ -2608,20 +2707,14 @@ do
 					end
 					ply.pac_broadcast_buttons[button] = true
 				end
-
-				--print(button, ply.pac_broadcasted_buttons_holduntil[button], ply.pac_broadcast_buttons[button])
-				--PrintTable(ply.pac_broadcast_buttons)
-				--PrintTable(self.pac_broadcasted_buttons_holduntil)
 			end
 
 			local buttons = ply.pac_buttons
 
 			self.pac_broadcasted_buttons_holduntil[button] = self.pac_broadcasted_buttons_holduntil[button] or SysTime()
-			--print(button, self.toggle, self.togglestate)
-			--print(button,"until",self.pac_broadcasted_buttons_holduntil[button])
+
 			if buttons then
-				--print("trying to compare " .. SysTime() .. " > " .. self.pac_broadcasted_buttons_holduntil[button] - 0.05)
-				if self.toggle then
+				if toggle then
 					return self.togglestate
 				elseif self.holdtime > 0 then
 					return SysTime() < self.pac_broadcasted_buttons_holduntil[button]
@@ -3188,6 +3281,7 @@ function PART:OnRemove()
 		self.DestinationPart.active_events_ref_count = self.DestinationPart.active_events_ref_count - 1
 		self.DestinationPart:CalcShowHide()
 	end
+	pac.RegisterPartToCache(self:GetPlayerOwner(), "button_events", self, true)
 end
 
 function PART:TriggerEvent(b)
@@ -3519,82 +3613,47 @@ concommand.Add("pac_print_events", function(ply)
 	PrintTable(ply.pac_command_events)
 end)
 
-concommand.Add("pac_event_sequenced", function(ply, cmd, args)
-
-	if not args[1] then return end
-
-	local event = args[1]
-	local action = args[2] or "+"
-	local sequence_number = 0
-	local set_target = args[3] or 1
-	local found = false
-
+local sequence_verbosity = CreateConVar("pac_event_sequenced_verbosity", 1, FCVAR_ARCHIVE, "whether to print info when running pac_event_sequenced")
+net.Receive("pac_event_set_sequence", function(len)
+	local ply = net.ReadEntity()
+	local event = net.ReadString()
+	local num = net.ReadUInt(8)
 	ply.pac_command_events = ply.pac_command_events or {}
-	ply.pac_command_events[event..1] = ply.pac_command_events[event..1] or {name = event..1, time = 0, on = 1}
-
 	ply.pac_command_event_sequencebases = ply.pac_command_event_sequencebases or {}
+	ply.pac_command_event_sequencebases[event] = ply.pac_command_event_sequencebases[event] or {name = event}
+	data = ply.pac_command_event_sequencebases[event]
+	local previous_sequencenumber = data.current or 0
 
-	if not ply.pac_command_event_sequencebases[event] then
-		ply.pac_command_event_sequencebases[event] = {name = event, min = 1, max = 1}
+	--assuming we don't know which parts of the series are active, nil out all of them before setting one
+	for i=0,100,1 do
+		ply.pac_command_events[event..i] = nil
 	end
 
-	local target_number = 1
-	local min = 1
-	local max = ply.pac_command_event_sequencebases[event].max
+	if data.min then
+		if num < data.min then data.min = num end
+	else data.min = num end
+	if data.max then
+		if num > data.max then data.max = num end
+	else data.max = num end
 
-	for i=1,100,1 do
-		if ply.pac_command_events[event..i] then
-			if ply.pac_command_events[event..i].on == 1 then
-				if sequence_number == 0 then sequence_number = i end
-				found = true
-			end
-		--elseif ply.pac_command_events[event..i] == nil then
-			ply.pac_command_events[event..i] = {name = event..i, time = 0, on = 0}
+	if ply.pac_command_event_sequencebases then
+		if ply.pac_command_event_sequencebases[event] then
+			ply.pac_command_events[event..num] = {name = event..num, time = pac.RealTime, on = 1}
+			ply.pac_command_event_sequencebases[event].current = num
 		end
 	end
+	if sequence_verbosity:GetBool() and (ply == pac.LocalPlayer) then pac.Message("sequencing event series: " .. event .. "\n\t" .. previous_sequencenumber .. "->" .. num .. " / " .. data.max) end
+end)
 
-	if found then
-		if action == "+" or action == "forward" or action == "add" or action == "sequence+" or action == "advance" then
-
-			ply.pac_command_events[event..sequence_number] = {name = event..sequence_number, time = pac.RealTime, on = 0}
-			if sequence_number == max then
-				target_number = min
-			else target_number = sequence_number + 1 end
-
-			pac.Message("sequencing event series: " .. event .. "\n\t" .. sequence_number .. "->" .. target_number .. " / " .. max, "action: "..action)
-			ply.pac_command_events[event..target_number] = {name = event..target_number, time = pac.RealTime, on = 1}
-
-			RunConsoleCommand("pac_event", event..sequence_number, "0")
-			RunConsoleCommand("pac_event", event..target_number, "1")
-
-
-		elseif action == "-" or action == "backward" or action == "sub" or action == "sequence-" then
-
-			ply.pac_command_events[event..sequence_number] = {name = event..sequence_number, time = pac.RealTime, on = 0}
-			if sequence_number == min then
-				target_number = max
-			else target_number = sequence_number - 1 end
-
-			print("sequencing event series: " .. event .. "\n\t" .. sequence_number .. "->" .. target_number .. " / " .. max, "action: "..action)
-			ply.pac_command_events[event..target_number] = {name = event..target_number, time = pac.RealTime, on = 1}
-
-			RunConsoleCommand("pac_event", event..sequence_number, "0")
-			RunConsoleCommand("pac_event", event..target_number, "1")
-
-		elseif action == "set" then
-			print("sequencing event series: " .. event .. "\n\t" .. sequence_number .. "->" .. set_target .. " / " .. max)
-
-			sequence_number = set_target or 1
-			for i=1,100,1 do
-				ply.pac_command_events[event..i] = nil
-			end
-			ply.pac_command_events[event..sequence_number] = {name = event..sequence_number, time = pac.RealTime, on = 1}
-			target_number = set_target
-			net.Start("pac_event_set_sequence")
-			net.WriteString(event)
-			net.WriteUInt(sequence_number,8)
-			net.SendToServer()
+net.Receive("pac_event_update_sequence_bounds", function(len)
+	local ply = net.ReadEntity()
+	local tbl = net.ReadTable()
+	for cmd, bounds in pairs(tbl) do
+		local current = 0
+		if ply.pac_command_event_sequencebases[cmd] then
+			current = ply.pac_command_event_sequencebases[cmd].current
 		end
+		ply.pac_command_event_sequencebases[cmd] = {min = bounds[1], max = bounds[2], current = current}
 	end
 end)
 
@@ -4362,6 +4421,4 @@ net.Receive("pac_update_healthbars", function(len)
 
 	--delta is actually -delta but whatever
 	ent.pac_healthbars_total_updated.delta = previous_total - ent.pac_healthbars_total
-
-
 end)
