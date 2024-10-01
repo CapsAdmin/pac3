@@ -680,6 +680,8 @@ function pac.UpdateButtonEvents(ply, key, down)
 		part.toggleimpulsekey[key] = down
 		part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
 		ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
+
+		if part.holdtime == nil then part.holdtime = 0 end
 		part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
 
 		if part.togglestate == nil then part.togglestate = false end
