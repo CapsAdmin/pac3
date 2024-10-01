@@ -3648,6 +3648,8 @@ end)
 net.Receive("pac_event_update_sequence_bounds", function(len)
 	local ply = net.ReadEntity()
 	local tbl = net.ReadTable()
+	if not ply:IsPlayer() then return end
+	ply.pac_command_event_sequencebases = ply.pac_command_event_sequencebases or {}
 	for cmd, bounds in pairs(tbl) do
 		local current = 0
 		if ply.pac_command_event_sequencebases[cmd] then

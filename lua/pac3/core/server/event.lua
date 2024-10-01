@@ -70,11 +70,13 @@ net.Receive("pac_event_define_sequence_bounds", function(len, ply)
 end)
 
 concommand.Add("pac_event_sequenced_force_set_bounds", function(ply, cmd, args)
+	if args[1] == nil then return end
 	local event = args[1]
 	local min = args[2]
 	local max = args[3]
+	ply.pac_command_event_sequencebases = ply.pac_command_event_sequencebases or {}
 	ply.pac_command_event_sequencebases[event] = {name = event, min = tonumber(min), max = tonumber(max), current = 0}
-	net.Start("pac_event_update_sequence_bounds") net.WriteEntity(ply) net.WriteTable(bounds) net.Broadcast()
+	net.Start("pac_event_update_sequence_bounds") net.WriteEntity(ply) net.WriteTable(ply.pac_command_event_sequencebases) net.Broadcast()
 end)
 
 concommand.Add("pac_event_sequenced", function(ply, cmd, args)
