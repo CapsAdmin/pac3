@@ -1454,6 +1454,7 @@ if SERVER then
 				if is_player then
 					if  tbl.Players or (ent == ply and tbl.AffectSelf) then
 						if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
+							oldvel = ent:GetVelocity()
 							phys_ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
 							ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
 						end
