@@ -217,6 +217,7 @@ function PART:SetEvent(event)
 end
 
 function PART:Initialize()
+	self.specialtrackedparts = {}
 	self.ExtraHermites = {}
 	if self:GetPlayerOwner() == LocalPlayer() then
 		timer.Simple(0.2, function()
