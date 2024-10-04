@@ -663,6 +663,7 @@ end
 
 --a centralized function to cache a part in a prebuilt list so we can access relevant parts already narrowed down instead of searching through all parts / localparts
 function pac.RegisterPartToCache(ply, name, part, remove)
+	if not IsValid(ply) then return end
 	ply["pac_part_cache_"..name] = ply["pac_part_cache_"..name] or {}
 	if remove then
 		ply["pac_part_cache_"..name][part] = nil
