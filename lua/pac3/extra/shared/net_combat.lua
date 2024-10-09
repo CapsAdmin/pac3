@@ -233,6 +233,17 @@ if SERVER then
 		heal = -1,
 		armor = -1,
 	}
+	local special_damagetypes = {
+		fire = true, -- ent:Ignite(5)
+		-- env_entity_dissolver
+		dissolve_energy = 0,
+		dissolve_heavy_electrical = 1,
+		dissolve_light_electrical = 2,
+		dissolve_core_effect = 3,
+
+		heal = true,
+		armor = true,
+	}
 
 	local when_to_print_messages = {}
 	local can_print = {}
@@ -1920,7 +1931,15 @@ if SERVER then
 			local kill = false
 			local hit = false
 
-			dmg_info:SetDamageType(damage_types[tbl.DamageType])
+			if damage_types[tbl.DamageType] then
+				if special_damagetypes[tbl.DamageType] then
+					dmg_info:SetDamageType(0)
+				else
+					dmg_info:SetDamageType(damage_types[tbl.DamageType])
+				end
+			else
+				dmg_info:SetDamageType(0)
+			end
 
 			local ratio
 			if tbl.Radius == 0 then ratio = tbl.Length
