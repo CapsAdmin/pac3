@@ -2050,13 +2050,9 @@ PART.OldEvents = {
 
 			if IsValid(vehicle) then --vehicle entity exists
 				if IsValid(vehicle:GetParent()) then --some vehicle seats have a parent
-					--print(vehicle:GetParent().PassengerSeats)
-
 					if vehicle:GetParent():GetClass() == "gmod_sent_vehicle_fphysics_base" and ent.IsDrivingSimfphys then --try simfphys
 						return ent:IsDrivingSimfphys() and ent:GetVehicle() == ent:GetSimfphys():GetDriverSeat() --in simfphys vehicle and seat is the driver seat
-					elseif vehicle:GetParent().BaseClass.ClassName == "wac_hc_base" then --try with WAC aircraft too
-						--print(vehicle:GetParent().BaseClass.ClassName, #vehicle:GetParent().Seats)
-						--PrintTable(vehicle:GetParent().Seats[1])
+					elseif vehicle:GetParent().BaseClass and vehicle:GetParent().BaseClass.ClassName == "wac_hc_base" then --try with WAC aircraft too
 						return vehicle == vehicle.wac_seatswitcher.seats[1] --first seat
 					end
 				elseif vehicle:GetClass() == "prop_vehicle_prisoner_pod" then --we don't want bare seats or prisoner pod
@@ -2082,7 +2078,7 @@ PART.OldEvents = {
 				if IsValid(vehicle:GetParent()) then --some vehicle seats have a parent
 					if vehicle:GetParent():GetClass() == "gmod_sent_vehicle_fphysics_base" and ent.IsDrivingSimfphys then --try simfphys
 						return ent:IsDrivingSimfphys() and ent:GetVehicle() ~= ent:GetSimfphys():GetDriverSeat() --in simfphys vehicle and seat is the driver seat
-					elseif vehicle:GetParent().BaseClass.ClassName == "wac_hc_base" then --try with WAC aircraft too
+					elseif vehicle:GetParent().BaseClass and vehicle:GetParent().BaseClass.ClassName == "wac_hc_base" then --try with WAC aircraft too
 						return vehicle ~= vehicle.wac_seatswitcher.seats[1] --first seat
 					end
 				elseif vehicle:GetClass() == "prop_vehicle_prisoner_pod" then --we can count bare seats and prisoner pods as passengers
