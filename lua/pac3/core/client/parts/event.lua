@@ -151,7 +151,7 @@ end
 
 local tracked_events = {
 	damage_zone_hit = true,
-	damagezone_kill = true,
+	damage_zone_kill = true,
 	lockpart_grabbing = true
 }
 function PART:SetEvent(event)
