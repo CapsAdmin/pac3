@@ -28,16 +28,16 @@ BUILDER:StartStorableVars()
 		end
 
 		return output
-	end})
-	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
-	BUILDER:GetSet("Arguments", "", {hidden = false})
-	BUILDER:GetSet("Invert", true)
+	end, description = "The type of condition used to determine whether to hide or show parts.\nCommon events are button, command, timer, timerx, is_on_ground, health_lost, is_touching"})
+	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end, description = "How the event will compare its source data with your reference value. PAC will try automatically pick an appropriate operator based on the event.\n\nfind and find simple searches for a keyword match (applies to text only).\nequal looks for an exact match (applies for text and numbers)\nabove, below etc are number comparators and should be self-explanatory.\nmaybe does a coin flip ignoring everything"})
+	BUILDER:GetSet("Arguments", "", {hidden = false, description = "The internal text representation of the event's arguments, how it gets saved.\nThe dynamic fields access that very same thing, but a text field is useful to review and copy all the arguments at once."})
+	BUILDER:GetSet("Invert", true, {description = "invert: show when condition is met\nuninverted: hide when condition is met"})
 	BUILDER:GetSet("RootOwner", true)
-	BUILDER:GetSet("AffectChildrenOnly", false)
+	BUILDER:GetSet("AffectChildrenOnly", false, {description = "Instead of the parent, the event's children will be affected instead"})
 	BUILDER:GetSet("ZeroEyePitch", false)
-	BUILDER:GetSetPart("TargetPart", {editor_friendly = "ExternalOriginPart"})
-	BUILDER:GetSetPart("DestinationPart", {editor_friendly = "TargetedPart"})
-	BUILDER:GetSet("MultipleTargetParts", "")
+	BUILDER:GetSetPart("TargetPart", {editor_friendly = "ExternalOriginPart", description = "Only applies to some scale or velocity-related events, picks a different point as a reference for measurement.\nFormerly known as target part. If you remember it, forget this misnomer."})
+	BUILDER:GetSetPart("DestinationPart", {editor_friendly = "TargetedPart", description = "Instead of the parent, targets a single part to show/hide."})
+	BUILDER:GetSet("MultipleTargetParts", "", {description = "Instead of the parent, targets a list of parts to show/hide.\nThe list takes the form of UIDs or names separated by semicolons. You can use bulk select to quickly build the list."})
 BUILDER:EndStorableVars()
 
 PART.Tutorials = {}
@@ -162,27 +162,29 @@ function PART:SetEvent(event)
 
 	if (owner == pac.LocalPlayer) and (not pace.processing) then
 		if event == "command" then owner.pac_command_events = owner.pac_command_events or {} end
-		if not self.Events[event] then --invalid event? try a command event or button event
-			if pac.key_enums_reverse[event] then
+		if not self.Events[event] then --invalid event? try another event
+			if isnumber(tonumber(event)) then --timerx
 				timer.Simple(0.2, function()
 					if not self.pace_properties or self ~= pace.current_part then return end
-					--now we'll use event as a command name
-					self:SetEvent("button")
-					self.pace_properties["Event"]:SetValue("button")
-					self:SetArguments(event .. "@@0")
-					self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
+					self:SetEvent("timerx")
+					self:SetArguments(event .. "@@1@@0")
 					pace.PopulateProperties(self)
 				end)
 				return
-			else
+			elseif pac.key_enums_reverse[event] then --button
+				timer.Simple(0.2, function()
+					if not self.pace_properties or self ~= pace.current_part then return end
+					self:SetEvent("button")
+					self:SetArguments(event .. "@@0")
+					pace.PopulateProperties(self)
+				end)
+				return
+			else --command
 				if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
 					timer.Simple(0.2, function()
 						if not self.pace_properties or self ~= pace.current_part then return end
-						--now we'll use event as a command name
 						self:SetEvent("command")
-						self.pace_properties["Event"]:SetValue("command")
 						self:SetArguments(event .. "@@0")
-						self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
 						pace.PopulateProperties(self)
 					end)
 					return
@@ -255,25 +257,35 @@ end
 
 function PART:SetMultipleTargetParts(str)
 	self.MultipleTargetParts = str
+	if str == "" then
+		if self.MultiTargetPart then
+			for _,part2 in ipairs(self.MultiTargetPart) do
+				if part2.SetEventTrigger then part2:SetEventTrigger(self, false) end
+			end
+		end
+		self.MultiTargetPart = nil self.ExtraHermites = nil
+		return
+	end
 	self.MultiTargetPart = {}
-	if str == "" then self.MultiTargetPart = nil self.ExtraHermites = nil return end
 	if not string.find(str, ";") then
 		local part = self:GetOrFindCachedPart(str)
 		if IsValid(part) then
 			self:SetDestinationPart(part)
 			self.MultipleTargetParts = ""
+			pace.PopulateProperties(self)
 		else
 			timer.Simple(3, function()
 				local part = self:GetOrFindCachedPart(str)
 				if part then
 					self:SetDestinationPart(part)
 					self.MultipleTargetParts = ""
+					pace.PopulateProperties(self)
 				end
 			end)
 		end
 		self.MultiTargetPart = nil
 	else
-		self:SetDestinationPart()
+		--self:SetDestinationPart()
 		self.MultiTargetPart = {}
 		self.ExtraHermites = {}
 		local uid_splits = string.Split(str, ";")
@@ -3261,7 +3273,6 @@ function PART:SetAffectChildrenOnly(b)
 		end
 	end
 	self.AffectChildrenOnly = b
-
 end
 
 function PART:OnRemove()
@@ -3283,43 +3294,34 @@ end
 
 function PART:TriggerEvent(b)
 	self.event_triggered = b -- event_triggered is just used for the editor
-	local override = IsValid(self.DestinationPart)
+	local single_targetpart = IsValid(self.DestinationPart)
 
-	if self.AffectChildrenOnly then
-		if self.MultiTargetPart then
-			for _,part2 in ipairs(self.MultiTargetPart) do
-				if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
-			end
-		else
-			for _, child in ipairs(self:GetChildren()) do
-				child:SetEventTrigger(self, b)
+	if single_targetpart then
+		self.DestinationPart:SetEventTrigger(self, b)
+		self.previousdestinationpart = self.DestinationPart
+	else
+		if IsValid(self.previousdestinationpart) then
+			if self.DestinationPart ~= self.previousdestinationpart then --when editing, if we change the destination part we need to reset the old one
+				self.previousdestinationpart:SetEventTrigger(self, false)
 			end
 		end
-		if override then self:SetWarning("The Affect Children Only checkbox should perhaps be turned off, because you have chosen a targeted part") end
+	end
+
+	if self.MultiTargetPart then
+		for _,part2 in ipairs(self.MultiTargetPart) do
+			if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
+		end
+	end
+
+	if self.AffectChildrenOnly then
+		for _, child in ipairs(self:GetChildren()) do
+			child:SetEventTrigger(self, b)
+		end
 	else
-		if override then --single target part mode
-			if IsValid(self.previousdestinationpart) then
-				if self.DestinationPart ~= self.previousdestinationpart then --when editing, if we change the destination part we need to reset the old one
-					self.previousdestinationpart:SetEventTrigger(self, false)
-				end
-			end
-			self.DestinationPart:SetEventTrigger(self, b)
-			self.previousdestinationpart = self.DestinationPart
-		else --normal parent mode
-			if IsValid(self.previousdestinationpart) then
-				if self.DestinationPart ~= self.previousdestinationpart then --when editing, if we change the destination part we need to reset the old one
-					self.previousdestinationpart:SetEventTrigger(self, false)
-				end
-			end
-			if self.MultiTargetPart then
-				for _,part2 in ipairs(self.MultiTargetPart) do
-					if part2.SetEventTrigger then part2:SetEventTrigger(self, b) end
-				end
-			else
-				local parent = self:GetParent()
-				if parent:IsValid() then
-					parent:SetEventTrigger(self, b)
-				end
+		if not single_targetpart and not self.MultiTargetPart then --normal parent mode should only happen if nothing is set
+			local parent = self:GetParent()
+			if parent:IsValid() then
+				parent:SetEventTrigger(self, b)
 			end
 		end
 	end
