@@ -117,6 +117,10 @@ function pace.IsBanned(ply)
 end
 
 net.Receive("pac.BanUpdate", function(len, ply)
+	if not ply:IsAdmin() then
+		return
+	end
+
 	pac.Message("Received ban list update operation from : ", ply)
 	pac.Message("Time : ", os.date( "%a %X %x", os.time() ))
 	local playerlist = net.ReadTable()
@@ -131,6 +135,10 @@ net.Receive("pac.BanUpdate", function(len, ply)
 end)
 
 net.Receive("pac.RequestBanStates", function(len,ply)
+	if not ply:IsAdmin() then
+		return
+	end
+
 	local archive = net.ReadBool()
 	pac.Message("Received ban list request from : ", ply)
 	pac.Message("Time : ", os.date( "%a %X %x", os.time() ))
