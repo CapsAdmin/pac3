@@ -79,6 +79,7 @@ if SERVER then
 		["npc_satchel"] = true,
 		["func_breakable_surf"] = true,
 		["func_breakable"] = true,
+		["func_physbox"] = true,
 		["physics_cannister"] = true
 	}
 
@@ -1068,7 +1069,7 @@ if SERVER then
 			end
 
 			--this may benefit from some flattening treatment, lotta pyramids over here
-			if tbl.DamageType == "heal" then
+			if tbl.DamageType == "heal" and ent.Health then
 				if ent:Health() < ent:GetMaxHealth() then
 					if tbl.ReverseDoNotKill then --don't heal if health is below critical
 						if ent:Health() > tbl.CriticalHealth then --default behavior
@@ -1084,7 +1085,7 @@ if SERVER then
 						end
 					end
 				end
-			elseif tbl.DamageType == "armor" then
+			elseif tbl.DamageType == "armor" and ent.Armor then
 				if ent:Armor() < ent:GetMaxArmor() then
 					if tbl.ReverseDoNotKill then --don't heal if armor is below critical
 						if ent:Armor() > tbl.CriticalHealth then --default behavior
@@ -2166,6 +2167,7 @@ if SERVER then
 			local prop_protected, reason = IsPropProtected(targ_ent, ply)
 
 			local owner = Try_CPPIGetOwner(targ_ent)
+			if not IsValid(owner) then return end
 
 
 			local unconsenting_owner = owner ~= ply and (grab_consents[owner] == false or (targ_ent:IsPlayer() and grab_consents[targ_ent] == false))
@@ -2467,7 +2469,7 @@ if SERVER then
 					local fraction = math.Clamp(1 - (1-bulletinfo.DamageFalloffFraction)*(distance / bulletinfo.DamageFalloffDistance),bulletinfo.DamageFalloffFraction,1)
 					local ent = trc.Entity
 
-					if bulletinfo.dmgtype_str == "heal" then
+					if bulletinfo.dmgtype_str == "heal" and ent.Health then
 						dmg:SetDamageType(0)
 
 						if ent:Health() < ent:GetMaxHealth() then
@@ -2476,7 +2478,7 @@ if SERVER then
 
 						dmg:SetDamage(0)
 						return
-					elseif bulletinfo.dmgtype_str == "armor" then
+					elseif bulletinfo.dmgtype_str == "armor" and ent.Armor then
 						dmg:SetDamageType(0)
 
 						if ent:Armor() < ent:GetMaxArmor() then

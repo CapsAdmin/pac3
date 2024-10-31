@@ -21,6 +21,8 @@ local renderhooks = {
 	"PreDrawViewModel"
 }
 
+local recycle_hitmark = CreateConVar("pac_damage_zone_recycle_hitmarkers", "0", FCVAR_ARCHIVE, "Whether to use the experimental recycling system to save performance on spawning already created hit markers.\nIf this is 0, it will be more reliable but more costly because it creates new parts every time.")
+
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("Targets")
@@ -121,9 +123,10 @@ BUILDER:StartStorableVars()
 		:GetSet("CriticalHealth",1, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,65535)) end})
 		:GetSet("MaxHpScaling", 0, {editor_clamp = {0,1}})
 	:SetPropertyGroup("DamageOverTime")
-		:GetSet("DOTMode", false, {description = "Repeats your damage a few times. Subject to serverside convar."})
-		:GetSet("DOTTime", 0, {editor_clamp = {0,32}})
-		:GetSet("DOTCount", 0, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,127)) end})
+		:GetSet("DOTMode", false, {editor_friendly = "DoT mode",
+		description = "Repeats your damage a few times. Subject to serverside convar."})
+		:GetSet("DOTTime", 0, {editor_friendly = "DoT time", editor_clamp = {0,32}, description = "delay between each repeated damage"})
+		:GetSet("DOTCount", 0, {editor_friendly = "DoT count", editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,127)) end, description = "number of repeated damage instances"})
 		:GetSet("NoInitialDOT", false, {description = "Skips the first instance (the instant one) of damage to achieve a delayed damage for example."})
 	:SetPropertyGroup("HitOutcome")
 		:GetSetPart("HitSoundPart")
@@ -649,7 +652,7 @@ function PART:SendNetMessage()
 	net.WriteUInt(self.DOTCount, 7)
 	net.WriteUInt(math.ceil(math.Clamp(64*self.DOTTime, 0, 2047)), 11)
 	net.WriteString(string.sub(self.UniqueID,0,6))
-	local using_hit_feedback = self.HitMarkerPart ~= nil or self.KillMarkerPart ~= nil
+	local using_hit_feedback = IsValid(self.HitMarkerPart) or IsValid(self.KillMarkerPart)
 	net.WriteBool(using_hit_feedback)
 	net.SendToServer()
 end
@@ -699,6 +702,40 @@ function PART:SetAttachPartsToTargetEntity(b)
 	end
 end
 
+--revertable to projectile part's version which wastes time creating new parts but has less issues
+local_hitmarks = {}
+function PART:LegacyAttachToEntity(part, ent)
+	if not part:IsValid() then return false end
+
+	ent.pac_draw_distance = 0
+
+	local tbl = part:ToTable()
+
+	local group = pac.CreatePart("group", self:GetPlayerOwner())
+	group:SetShowInEditor(false)
+
+	local part_clone = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
+	group:AddChild(part_clone)
+
+	group:SetOwner(ent)
+	group.SetOwner = function(s) s.Owner = ent end
+	part_clone:SetHide(false)
+
+	local id = group.Id
+	local owner_id = self:GetPlayerOwnerId()
+	if owner_id then
+		id = id .. owner_id
+	end
+
+	ent:CallOnRemove("pac_hitmarker_" .. id, function() group:Remove() end)
+	group:CallRecursive("Think")
+
+	ent.pac_hitmark_part = group
+	ent.pac_hitmark = self --that's just the launcher though
+
+	return true
+end
+
 net.Receive("pac_hit_results", function(len)
 	local uid = net.ReadString() or ""
 	local self = part_partialUID_caches[uid]
@@ -745,6 +782,30 @@ net.Receive("pac_hit_results", function(len)
 		if not IsValid(owner) then return end
 		if part == self then return end --stop infinite feedback loops of using the damagezone as a hitmarker
 		--what if people employ a more roundabout method? CRACKDOWN!
+
+
+		if not recycle_hitmark:GetBool() then
+			local ent = parent_ent
+			if not self.AttachPartsToTargetEntity then
+				ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
+				ent:SetNoDraw(true)
+				ent:SetPos(pos)
+			end
+			self:LegacyAttachToEntity(killing and self.KillMarkerPart or self.HitMarkerPart, ent)
+
+			timer.Simple(math.Clamp(killing and self.KillMarkerLifetime or self.HitMarkerLifetime, 0, 30), function()
+				if IsValid(ent) then
+					if ent.pac_hitmark_part and ent.pac_hitmark_part:IsValid() then
+						ent.pac_hitmark_part:Remove()
+					end
+
+					timer.Simple(0.5, function()
+						SafeRemoveEntity(ent)
+					end)
+				end
+			end)
+			return
+		end
 
 		if not owner.hitparts then owner.hitparts = {} end
 
