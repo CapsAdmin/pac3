@@ -388,7 +388,7 @@ function PART:OnHide()
 	pac.RemoveHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
 	self.teleported = false
 	self.grabbing = false
-	if self.target_ent == nil then return
+	if not IsValid(self.target_ent) then return
 	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedID = nil end
 	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	self:reset_ent_ang()

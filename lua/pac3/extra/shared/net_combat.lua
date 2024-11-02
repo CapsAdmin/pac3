@@ -2166,7 +2166,7 @@ if SERVER then
 
 			local prop_protected, reason = IsPropProtected(targ_ent, ply)
 
-			local owner = Try_CPPIGetOwner(targ_ent)
+			local owner = Try_CPPIGetOwner(targ_ent) or targ_ent
 			if not IsValid(owner) then return end
 
 
