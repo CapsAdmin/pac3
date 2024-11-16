@@ -417,6 +417,8 @@ PART.Inputs.lerp = function(self, m, a, b)
 	return (b - a) * m + a
 end
 
+--I'll be reusing these on sample and hold / drift
+local ease_aliases = {}
 for ease,f in pairs(math.ease) do
 	if string.find(ease,"In") or string.find(ease,"Out") then
 		local f2 = function(self, frac, min, max)
@@ -427,6 +429,9 @@ for ease,f in pairs(math.ease) do
 		PART.Inputs["ease"..ease] = f2
 		PART.Inputs["ease_"..ease] = f2
 		PART.Inputs[ease] = f2
+		ease_aliases[ease] = ease
+		ease_aliases["ease"..ease] = ease
+		ease_aliases["ease_"..ease] = ease
 	end
 end
 
