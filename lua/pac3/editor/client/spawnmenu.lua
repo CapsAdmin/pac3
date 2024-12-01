@@ -198,7 +198,7 @@ function pace.AdminSettingsMenu(self)
 		self:NumSlider(L"Max radius", "pac_sv_force_max_radius", 0, 32767, 0)
 		self:NumSlider(L"Max length", "pac_sv_force_max_length", 0, 32767, 0)
 		
-		self:Help(L"Force part"):SetFont("DermaDefaultBold")
+		self:Help(L"Health Modifier part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable health modifier", "pac_sv_health_modifier")
 		self:CheckBox(L"Allow changing max health or armor", "pac_sv_health_modifier_allow_maxhp")
 		self:NumSlider(L"Minimum combined damage scaling", "pac_sv_health_modifier_min_damagescaling", -10, 1, 2)
