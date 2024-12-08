@@ -39,6 +39,27 @@ function pace.FixMenu(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
+
+function pace.GoToPart(part)
+	pace.OnPartSelected(part, true)
+	local delay = 0
+	if not IsValid(part.pace_tree_node) then --possible de-loaded node
+		delay = 0.5
+	end
+	local parent = part:GetParent()
+	while IsValid(parent) and (parent:GetParent() ~= parent) do
+		parent:SetEditorExpand(true)
+		parent = parent:GetParent()
+		if parent:IsValid() then
+			parent:SetEditorExpand(true)
+		end
+	end
+	pace.RefreshTree(true)
+
+	timer.Simple(delay, function() if IsValid(part.pace_tree_node) then
+		pace.tree:ScrollToChild(part.pace_tree_node)
+	end end)
+end
 ---returns table
 --start_index is the first known index
 --continuous is whether it's continuous (some series have holes)
@@ -214,6 +235,7 @@ local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	btn:Dock(RIGHT)
 	btn:SetText("...")
 	btn.DoClick = function() callFuncLeft(self, self.CurrentKey) end
+	btn.PerformLayout = function() btn:SetWide(self:GetTall()) end
 
 	if callFuncRight then
 		btn.DoRightClick = function() callFuncRight(self, self.CurrentKey) end
@@ -414,7 +436,7 @@ do -- container
 		end
 	end
 
-	function PANEL:CreateAlternateLabel(str)
+	function PANEL:CreateAlternateLabel(str, no_offset)
 		if not str then
 			if self.alt_label then
 				if IsValid(self.alt_label) then
@@ -428,9 +450,10 @@ do -- container
 		self.alt_label:SetText("<" .. L(str) .. ">")
 		if pace.special_property_text_color then self.alt_label:SetTextColor(pace.special_property_text_color)
 		else self.alt_label:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text) end
-		self.alt_label:SetPos(60,-1)
+		self.alt_label:SetPos(no_offset and 0 or 60,-1)
 		self.alt_label:SetSize(200,20)
 		self.alt_label:SetFont(pace.CurrentFont)
+		return self.alt_label
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -665,6 +688,7 @@ do -- list
 				end
 
 				btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
+				pace.current_part["pac_property_label_"..key] = btn
 				if udata then
 					if udata.group == "bodygroups" then
 						if key[1] == "_" then --bodygroup exceptions
@@ -695,7 +719,19 @@ do -- list
 				local reasons_hidden = pace.current_part:GetReasonsHidden()
 				if not table.IsEmpty(reasons_hidden) then
 					pnl:SetTooltip("Hidden by:" .. table.ToString(reasons_hidden, "", true))
-					pnl:CreateAlternateLabel("hidden")
+					local label = pnl:CreateAlternateLabel("hidden")
+					label.DoRightClick = function()
+						local menu = DermaMenu()
+						menu:SetPos(input.GetCursorPos())
+						for part,reason in pairs(tbl) do
+							if part ~= pace.current_part then
+								menu:AddOption("jump to " .. tostring(part), function()
+									pace.GoToPart(part)
+								end):SetImage("icon16/arrow_turn_right.png")
+							end
+						end
+						menu:MakePopup()
+					end
 				end
 				pace.current_part.hide_property_pnl = var
 			end
@@ -1224,6 +1260,24 @@ do -- base editable
 		pace.multicopy_source = part
 	end
 	function PANEL:PopulateContextMenu(menu)
+		if self.user_proxies then
+			for _,part in pairs(self.user_proxies) do
+				menu:AddOption("jump to " .. tostring(part), function()
+					pace.GoToPart(part)
+				end):SetImage("icon16/arrow_turn_right.png")
+			end
+		end
+
+		if self.udata and self.udata.editor_panel == "part" then
+			if self:GetValue() ~= "" then
+				local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), self:GetValue())
+				if IsValid(part) then
+					menu:AddOption("jump to " .. tostring(part), function()
+						pace.GoToPart(part)
+					end):SetImage("icon16/arrow_turn_right.png")
+				end
+			end
+		end
 
 		pace.clipboardtooltip = pace.clipboardtooltip or ""
 		local copymenu, copypnl = menu:AddSubMenu(L"copy", function()
@@ -1904,6 +1958,27 @@ do -- base editable
 				self:SetValue(-val)
 				self.OnValueChanged(self:GetValue())
 			end):SetImage("icon16/arrow_switch.png")
+
+			if self.CurrentKey == "Size" then
+				if pace.current_part.ClassName == "sprite" then
+					menu:AddOption(L"apply size to scales", function()
+						local val = self:GetValue()
+						pace.current_part.SizeX = pace.current_part.SizeX * val
+						pace.current_part.SizeY = pace.current_part.SizeX * val
+						self:SetValue(1)
+						self.OnValueChanged(self:GetValue())
+						pace.PopulateProperties(pace.current_part)
+					end):SetImage("icon16/arrow_down.png")
+				elseif pace.current_part.SetScale and pace.current_part.GetScale then
+					menu:AddOption(L"apply size to scales", function()
+						local val = self:GetValue()
+						pace.current_part:SetScale(val * pace.current_part:GetScale())
+						self:SetValue(1)
+						self.OnValueChanged(self:GetValue())
+						pace.PopulateProperties(pace.current_part)
+					end):SetImage("icon16/arrow_down.png")
+				end
+			end
 		end
 
 		menu:AddSpacer()
@@ -2292,6 +2367,13 @@ do -- vector
 		end
 
 		function PANEL:PopulateContextMenu(menu)
+			if self.user_proxies then
+				for _,part in pairs(self.user_proxies) do
+					menu:AddOption("jump to " .. tostring(part), function()
+						pace.GoToPart(part)
+					end):SetImage("icon16/arrow_turn_right.png")
+				end
+			end
 			pace.clipboardtooltip = pace.clipboardtooltip or ""
 			local copymenu, copypnl = menu:AddSubMenu(L"copy", function()
 				pace.clipboard = pac.CopyValue(self.vector)
@@ -2668,6 +2750,25 @@ do -- boolean
 			self.OnValueChanged(b)
 			self.lbl:SetText(L(tostring(b)))
 		end
+		chck.DoRightClick = function()
+			local menu = DermaMenu()
+			menu:SetPos(input.GetCursorPos())
+			if self.user_proxies then
+				for _,part in pairs(self.user_proxies) do
+					menu:AddOption("jump to " .. tostring(part), function()
+						pace.GoToPart(part)
+					end):SetImage("icon16/arrow_turn_right.png")
+				end
+			end
+			menu:AddOption(L"reset", function()
+				if pace.current_part and (pace.current_part.DefaultVars[self.CurrentKey] ~= nil) then
+					local val = pac.CopyValue(pace.current_part.DefaultVars[self.CurrentKey])
+					self:SetValue(val)
+					self.OnValueChanged(val)
+				end
+			end):SetImage(pace.MiscIcons.clear)
+			menu:MakePopup()
+		end
 		self.chck = chck
 
 		local lbl = vgui.Create("DLabel", self)
@@ -2708,6 +2809,7 @@ do -- boolean
 		self.lbl:CenterVertical()
 		local w,h = self:GetParent():GetSize()
 		self:SetSize(w-2,h)
+		self.lbl:SetSize(w-h-2,h)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -2723,6 +2825,15 @@ local tree_search_excluded_vars = {
 }
 
 function pace.OpenTreeSearch()
+	--[[if GetConVar("pac_tree_lazymode"):GetBool() then
+		timer.Simple(0, function()
+			for i,v in pairs(pac.GetLocalParts()) do
+				v.no_populate = false
+				v.dormant_node = false
+			end
+			pace.RefreshTree(true)
+		end)
+	end]]
 	if pace.tree_search_open then return end
 	pace.Editor.y_offset = 24
 	pace.tree_search_open = true

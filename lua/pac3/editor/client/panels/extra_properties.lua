@@ -604,6 +604,93 @@ do -- sound
 	pace.RegisterPanel(PANEL)
 end
 
+do --generic multiline text
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_generic_multiline"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:MoreOptionsLeftClick()
+		local pnl = vgui.Create("DFrame")
+		local DText = vgui.Create("DTextEntry", pnl)
+		local DButtonOK = vgui.Create("DButton", pnl)
+		DText:SetMaximumCharCount(50000)
+
+		pnl:SetSize(1200,800)
+		pnl:SetTitle("Long text with newline support for " .. self.CurrentKey .. ". If the text is too long, do not touch the label after this!")
+		pnl:SetPos(200, 100)
+		DButtonOK:SetText("OK")
+		DButtonOK:SetSize(80,20)
+		DButtonOK:SetPos(500, 775)
+		DText:SetPos(5,25)
+		DText:SetSize(1190,700)
+		DText:SetMultiline(true)
+		DText:SetContentAlignment(7)
+		pnl:MakePopup()
+		DText:RequestFocus()
+		DText:SetText(pace.current_part[self.CurrentKey])
+
+		DButtonOK.DoClick = function()
+			local str = DText:GetText()
+			pace.current_part[self.CurrentKey] = str
+			if pace.current_part.ClassName == "sound2" then
+				pace.current_part.AllPaths = str
+				pace.current_part:UpdateSoundsFromAll()
+			end
+			pace.PopulateProperties(pace.current_part)
+			pnl:Remove()
+		end
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+local lua_editor_fontsize = 16
+local function install_fontsize_buttons(frame, editor, add_execute)
+	local btn_fontplus = vgui.Create("DButton", frame) btn_fontplus:SetSize(20, 18) btn_fontplus:SetText("+")
+	local btn_fontminus = vgui.Create("DButton", frame) btn_fontminus:SetSize(20, 18) btn_fontminus:SetText("-")
+	function btn_fontplus:DoClick()
+		lua_editor_fontsize = math.Clamp(lua_editor_fontsize + 1, 6, 80)
+		surface.CreateFont("LuapadEditor", {font = "roboto mono", size = lua_editor_fontsize, weight = 400 } )
+		surface.CreateFont("LuapadEditor_Bold", {font = "roboto mono", size = lua_editor_fontsize, weight = 800})
+		surface.SetFont("LuapadEditor");
+		editor.FontWidth, editor.FontHeight = surface.GetTextSize(" ")
+	end
+	function btn_fontminus:DoClick()
+		lua_editor_fontsize = math.Clamp(lua_editor_fontsize - 1, 6, 80)
+		surface.CreateFont("LuapadEditor", {font = "roboto mono", size = lua_editor_fontsize, weight = 400 } )
+		surface.CreateFont("LuapadEditor_Bold", {font = "roboto mono", size = lua_editor_fontsize, weight = 800})
+		surface.SetFont("LuapadEditor");
+		editor.FontWidth, editor.FontHeight = surface.GetTextSize(" ")
+	end
+	local perflayout = frame.PerformLayout
+	local fthink = frame.Think
+	btn_fontplus:SetY(3)
+	btn_fontminus:SetY(3)
+
+	if add_execute then
+		local btn_run = vgui.Create("DButton", frame) btn_run:SetSize(50, 18) btn_run:SetY(3)
+		btn_run:SetImage("icon16/bullet_go.png") btn_run:SetText(" run")
+		function btn_run:DoClick()
+			pace.current_part:Execute()
+		end
+		function frame:Think()
+			btn_run:SetX(self:GetWide() - 190 + 4)
+			btn_fontplus:SetX(self:GetWide() - 120 + 4)
+			btn_fontminus:SetX(self:GetWide() - 140 + 4)
+			fthink(self)
+		end
+		frame:RequestFocus()
+	else
+		function frame:PerformLayout()
+			btn_fontplus:SetX(self:GetWide() - 120 + 4)
+			btn_fontminus:SetX(self:GetWide() - 140 + 4)
+			perflayout(self)
+		end
+	end
+	
+end
+
 do -- script
 	local PANEL = {}
 
@@ -668,7 +755,384 @@ do -- script
 			frame:SetTitle(title)
 		end
 
+		add_fontsize_buttons(frame, editor)
+
 		pace.ActiveSpecialPanel = frame
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+local function install_edge_resizes(frame)
+	local function more_or_less(n1,n2)
+		return math.abs(n1-n2) < 10
+	end
+	pac.AddHook("Think", frame, function()
+		local w,h = frame:GetSize()
+		local px,py = frame:GetPos()
+		local mx,my = input.GetCursorPos()
+		if not input.IsMouseDown(MOUSE_LEFT) then
+			frame.resizing = false
+			frame.resizing_down = false
+			frame.resizing_left = false
+			frame.resizing_right = false
+		elseif frame.resizing then
+			if frame.resizing_down then
+				frame:SetHeight(my-py)
+			elseif frame.resizing_left then
+				frame:SetWide(frame.target_edge - mx)
+				frame:SetX(mx)
+			elseif frame.resizing_right then
+				frame:SetWide(mx-px)
+			end
+		end
+		if more_or_less(px+w,mx) then --EDGE RIGHT
+			frame:SetCursor("sizewe")
+			if input.IsMouseDown(MOUSE_LEFT) then
+				frame.resizing = true
+				frame.resizing_right = true
+			end
+		end
+		if more_or_less(px,mx) then --EDGE LEFT
+			frame:SetCursor("sizewe")
+			frame.target_edge = px+w
+			if input.IsMouseDown(MOUSE_LEFT) then
+				frame.resizing = true
+				frame.resizing_left = true
+			end
+		end
+		if more_or_less(py+h,my) then --EDGE DOWN
+			frame:SetCursor("sizens")
+			if input.IsMouseDown(MOUSE_LEFT) then
+				frame.resizing = true
+				frame.resizing_down = true
+			end
+		end
+	end)
+end
+
+do -- script command
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_code_script"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SetValue(var, skip_encode)
+		if self.editing then return end
+
+		local value = skip_encode and var or self:Encode(var)
+		if isnumber(value) then
+			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
+			value = math.Round(value, 7)
+		end
+		local str = tostring(value)
+		local original_str = string.Trim(str,"\n")
+		local lines = string.Explode("\n", original_str)
+		if #lines > 1 then
+			if lines[#lines] ~= "" then
+				str = "<multiple lines>"
+			elseif #lines > 2 then
+				str = "<multiple lines>"
+			end
+		end
+
+		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
+		if str == "<multiple lines>" then self:SetTextColor(Color(160,0,80)) end
+		self:SetFont(pace.CurrentFont)
+		self:SetText("  " .. str) -- ugh
+		self:SizeToContents()
+
+		if #str > 10 then
+			self:SetTooltip(value)
+		else
+			self:SetTooltip()
+		end
+
+		self.original_text = original_str
+		self.original_str = original_str
+		self.original_var = var
+
+		if self.OnValueSet then
+			self:OnValueSet(var)
+		end
+	end
+
+	function PANEL:MoreOptionsLeftClick()
+		local part = pace.current_part
+		pace.SafeRemoveSpecialPanel()
+
+		local frame = vgui.Create("DFrame")
+		install_edge_resizes(frame)
+		frame:SetTitle(L"script")
+		pace.ShowSpecial(frame, self, 0)
+		frame:SetSizable(true)
+
+		local editor = vgui.Create("pace_luapad", frame)
+		frame.luapad = editor
+		install_fontsize_buttons(frame, editor, true)
+		editor:Dock(FILL)
+		if pace.Editor:IsLeft() then
+			frame:SetSize(ScrW() - pace.Editor:GetX() - pace.Editor:GetWide(),200)
+			frame:SetPos(pace.Editor:GetWide() + pace.Editor:GetX(), select(2, self:LocalToScreen()))
+		else
+			frame:SetSize(pace.Editor:GetX(),200)
+			frame:SetPos(0, select(2, self:LocalToScreen()))
+		end
+		
+
+		editor:SetText(pace.current_part:GetCode())
+		editor.OnTextChanged = function(self)
+			pace.current_part:SetString(self:GetValue())
+		end
+
+		editor.last_error = ""
+
+		function editor:CheckGlobal(str)
+			if not part:IsValid() then frame:Remove() return end
+
+			return part:ShouldHighlight(str)
+		end
+
+		function editor:Think()
+			if not part:IsValid() then frame:Remove() return end
+
+			local title = L"script editor"
+			if part.UseLua then
+				title = L"command" ..  " (lua)"
+			else
+				title = L"command" ..  " (console)"
+			end
+
+			if part.Error then
+				title = part.Error
+
+				local line = tonumber(title:match("SCRIPT_ENV:(%d-):"))
+
+				if line then
+					title = title:match("SCRIPT_ENV:(.+)")
+					if self.last_error ~= title then
+						editor:SetScrollPosition(line)
+						editor:SetErrorLine(line)
+						self.last_error = title
+					end
+				end
+			else
+				editor:SetErrorLine(nil)
+
+				if part.script_printing then
+					title = part.script_printing
+					part.script_printing = nil
+				end
+			end
+
+			frame:SetTitle(title)
+		end
+
+
+
+		editor.FontWidth, editor.FontHeight = surface.GetTextSize(" ")
+
+		pace.ActiveSpecialPanel = frame
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+do -- script proxy
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_code_proxy"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SetValue(var, skip_encode)
+		if self.editing then return end
+
+		local value = skip_encode and var or self:Encode(var)
+		if isnumber(value) then
+			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
+			value = math.Round(value, 7)
+		end
+		local str = tostring(value)
+		local original_str = string.Trim(str,"\n")
+		local lines = string.Explode("\n", str)
+		if #lines > 1 then
+			if lines[#lines] ~= "" then
+				str = "<multiple lines>"
+			elseif #lines > 2 then
+				str = "<multiple lines>"
+			end
+		end
+		str = string.gsub(str, "\n", "")
+		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
+		if str == "<multiple lines>" then self:SetTextColor(Color(160,0,80)) end
+		self:SetFont(pace.CurrentFont)
+		self:SetText("  " .. str) -- ugh
+		self:SizeToContents()
+
+		if #str > 10 then
+			self:SetTooltip(str)
+		else
+			self:SetTooltip()
+		end
+
+		self.original_text = original_str
+		self.original_str = original_str
+		self.original_var = var
+
+		if self.OnValueSet then
+			self:OnValueSet(var)
+		end
+	end
+
+	function PANEL:MoreOptionsLeftClick()
+		local key = self.CurrentKey
+		local part = pace.current_part
+		local prop = self
+		pace.SafeRemoveSpecialPanel()
+
+		local frame = vgui.Create("DFrame")
+		install_edge_resizes(frame)
+		frame:SetTitle(L"proxy")
+		pace.ShowSpecial(frame, self, 0)
+		frame:SetSizable(true)
+
+		local editor = vgui.Create("pace_luapad", frame)
+		frame.luapad = editor
+		install_fontsize_buttons(frame, editor)
+		editor:Dock(FILL)
+		if pace.Editor:IsLeft() then
+			frame:SetSize(ScrW() - pace.Editor:GetX() - pace.Editor:GetWide(),200)
+			frame:SetPos(pace.Editor:GetWide() + pace.Editor:GetX(), select(2, self:LocalToScreen()))
+		else
+			frame:SetSize(pace.Editor:GetX(),200)
+			frame:SetPos(0, select(2, self:LocalToScreen()))
+		end
+
+		editor:SetText(part["Get"..key](part))
+		editor.OnTextChanged = function(self)
+			part["Set"..key](part, self:GetValue())
+			prop:SetValue(self:GetValue())
+		end
+
+		editor.last_error = ""
+
+		function editor:ShouldHighlight(str)
+			return part.lib and part.lib[str]
+		end
+
+		function editor:CheckGlobal(str)
+			if not part:IsValid() then frame:Remove() return end
+
+			return self:ShouldHighlight(str)
+		end
+
+		function editor:Think()
+			if not part:IsValid() then frame:Remove() return end
+
+			local title = L"proxy editor"
+
+			if part.Error then
+				title = part.Error
+
+				local line = tonumber(title:match("SCRIPT_ENV:(%d-):"))
+
+				if line then
+					title = title:match("SCRIPT_ENV:(.+)")
+					if self.last_error ~= title then
+						editor:SetScrollPosition(line)
+						editor:SetErrorLine(line)
+						self.last_error = title
+					end
+				end
+			else
+				editor:SetErrorLine(nil)
+
+				if part.script_printing then
+					title = part.script_printing
+					part.script_printing = nil
+				end
+			end
+
+			frame:SetTitle(title)
+		end
+
+		pace.ActiveSpecialPanel = frame
+	end
+
+	function PANEL:EditText()
+		local oldText = self:GetText()
+		self:SetText("")
+
+		local pnl = vgui.Create("DTextEntry")
+		self.editing = pnl
+		pnl:SetFont(pace.CurrentFont)
+		pnl:SetDrawBackground(false)
+		pnl:SetDrawBorder(false)
+		local enc = self:EncodeEdit(self.original_str or "")
+		if enc == "<multiple lines>" then
+			enc = self.original_str
+		end
+		pnl:SetText(enc)
+		pnl:SetKeyboardInputEnabled(true)
+		pnl:RequestFocus()
+		pnl:SelectAllOnFocus(true)
+
+		pnl.OnTextChanged = function() oldText = pnl:GetText() end
+
+		local hookID = tostring({})
+		local textEntry = pnl
+		local delay = os.clock() + 0.5
+
+		pac.AddHook('Think', hookID, function(code)
+			if not IsValid(self) or not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
+			if textEntry:IsHovered() or self:IsHovered() then return end
+			if delay > os.clock() then return end
+			if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
+			pac.RemoveHook('Think', hookID)
+			self.editing = false
+			pace.BusyWithProperties = NULL
+			textEntry:Remove()
+			self:SetText(oldText)
+			pnl:OnEnter()
+		end)
+
+		--local x,y = pnl:GetPos()
+		--pnl:SetPos(x+3,y-4)
+		--pnl:Dock(FILL)
+		local x, y = self:LocalToScreen()
+		local inset_x = self:GetTextInset()
+		pnl:SetPos(x+5 + inset_x, y)
+		pnl:SetSize(self:GetSize())
+		pnl:SetWide(ScrW())
+		pnl:MakePopup()
+
+		pnl.OnEnter = function()
+			pace.BusyWithProperties = NULL
+			self.editing = false
+
+			pnl:Remove()
+
+			self:SetText(tostring(self:Encode(self:DecodeEdit(pnl:GetText() or ""))), true)
+			self.OnValueChanged(self:Decode(self:GetText()))
+		end
+
+		local old = pnl.Paint
+		pnl.Paint = function(...)
+			if not self:IsValid() then pnl:Remove() return end
+
+			surface.SetFont(pnl:GetFont())
+			local w = surface.GetTextSize(pnl:GetText()) + 6
+
+			surface.DrawRect(0, 0, w, pnl:GetTall())
+			surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+			surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
+
+			pnl:SetWide(w)
+
+			old(...)
+		end
+
+		pace.BusyWithProperties = pnl
 	end
 
 	pace.RegisterPanel(PANEL)

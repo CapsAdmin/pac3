@@ -31,7 +31,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("MultipleTargetParts", "", {description = "send output to multiple external partss.\npaste multiple UIDs or names here, separated by semicolons. With bulk select, you can select parts and right click to get that done quickly.."})
 		BUILDER:GetSetPart("OutputTargetPart", {hide_in_editor = true})
 		BUILDER:GetSet("AffectChildren", false)
-		BUILDER:GetSet("Expression", "", {description = "write math here. hit F1 for a tutorial or right click for examples."})
+		BUILDER:GetSet("Expression", "", {description = "write math here. hit F1 for a tutorial or right click for examples.", editor_panel = "code_proxy"})
 
 	BUILDER:SetPropertyGroup("easy setup")
 		BUILDER:GetSet("Input", "time", {enums = function(part) return part.Inputs end, description = "base (inner) function for easy setup\nin sin(time()) it is time"})
@@ -54,11 +54,11 @@ BUILDER:StartStorableVars()
 
 	BUILDER:SetPropertyGroup("extra expressions")
 		BUILDER:GetSet("ExpressionOnHide", "", {description = "Math to apply once, when the proxy is hidden. It computes once, so it will not move."})
-		BUILDER:GetSet("Extra1", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra1() or var1() to save space, or by another proxy as extra1(\"uid or name\") or var1(\"uid or name\")"})
-		BUILDER:GetSet("Extra2", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra2() or var2() to save space, or by another proxy as extra2(\"uid or name\") or var2(\"uid or name\")"})
-		BUILDER:GetSet("Extra3", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra3() or var3() to save space, or by another proxy as extra3(\"uid or name\") or var3(\"uid or name\")"})
-		BUILDER:GetSet("Extra4", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra4() or var4() to save space, or by another proxy as extra4(\"uid or name\") or var4(\"uid or name\")"})
-		BUILDER:GetSet("Extra5", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra5() or var5() to save space, or by another proxy as extra5(\"uid or name\") or var5(\"uid or name\")"})
+		BUILDER:GetSet("Extra1", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra1() or var1() to save space, or by another proxy as extra1(\"uid or name\") or var1(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra2", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra2() or var2() to save space, or by another proxy as extra2(\"uid or name\") or var2(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra3", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra3() or var3() to save space, or by another proxy as extra3(\"uid or name\") or var3(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra4", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra4() or var4() to save space, or by another proxy as extra4(\"uid or name\") or var4(\"uid or name\")", editor_panel = "code_proxy"})
+		BUILDER:GetSet("Extra5", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra5() or var5() to save space, or by another proxy as extra5(\"uid or name\") or var5(\"uid or name\")", editor_panel = "code_proxy"})
 BUILDER:EndStorableVars()
 
 -- redirect
@@ -1818,10 +1818,14 @@ local function set(self, part, x, y, z, children)
 			local math_description = "expression:\n"..self.Expression
 			if self.Expression == "" then math_description = "using " .. self.Function .. " and " .. self.Input end
 			if vector_type then
+				property_pnl.user_proxies = property_pnl.right.user_proxies or {}
+				property_pnl.user_proxies [self] = self
 				if self.using_x then
 					property_pnl.used_by_proxy = true
 					container = property_pnl.left
 					property_pnl.left.used_by_proxy = true
+					property_pnl.left.user_proxies = property_pnl.left.user_proxies or {}
+					property_pnl.left.user_proxies [self] = self
 					local num = x or 0
 					property_pnl.left:SetValue(math.Round(tonumber(num),4))
 					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
@@ -1830,6 +1834,8 @@ local function set(self, part, x, y, z, children)
 					property_pnl.used_by_proxy = true
 					container = property_pnl.middle
 					property_pnl.middle.used_by_proxy = true
+					property_pnl.middle.user_proxies = property_pnl.middle.user_proxies or {}
+					property_pnl.middle.user_proxies [self] = self
 					local num = y or x or 0
 					property_pnl.middle:SetValue(math.Round(tonumber(num),4))
 					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
@@ -1838,6 +1844,8 @@ local function set(self, part, x, y, z, children)
 					property_pnl.used_by_proxy = true
 					container = property_pnl.right
 					property_pnl.right.used_by_proxy = true
+					property_pnl.right.user_proxies = property_pnl.right.user_proxies or {}
+					property_pnl.right.user_proxies [self] = self
 					local num = z or x or 0
 					property_pnl.right:SetValue(math.Round(tonumber(num),4))
 					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
@@ -1845,11 +1853,15 @@ local function set(self, part, x, y, z, children)
 			elseif T == "boolean" then
 				if x ~= nil then
 					property_pnl.used_by_proxy = true
+					property_pnl.user_proxies = property_pnl.user_proxies or {}
+					property_pnl.user_proxies [self] = self
 					property_pnl:SetValue(tonumber(x) > 0)
 					container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
 				end
 			elseif original_x ~= nil then
 				property_pnl.used_by_proxy = true
+				property_pnl.user_proxies = property_pnl.user_proxies or {}
+				property_pnl.user_proxies [self] = self
 				property_pnl:SetValue(math.Round(tonumber(x) or 0,4))
 				container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
 			end
@@ -1960,11 +1972,19 @@ function PART:OnThink(to_hide)
 
 		if not ok then self.error = true
 			if self:GetPlayerOwner() == pac.LocalPlayer and self.Expression ~= self.LastBadExpression then
-				chat.AddText(Color(255,180,180),"============\n[ERR] PAC Proxy error on "..tostring(self)..":\n"..x.."\n============\n")
+				--don't spam the chat every time we type a single character in the luapad
+				if not (pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad) then
+					chat.AddText(Color(255,180,180),"============\n[ERR] PAC Proxy error on "..tostring(self)..":\n"..x.."\n============\n")
+				end
 				self.LastBadExpression = self.Expression
+				self.Error = x --will be used by the luapad for its title
 			end
+
+			if not self.errors_override then self:SetError(self.Error) end
 			return
 		end
+		self.Error = nil
+		if not self.errors_override then self:SetError() end
 
 		if x and not isnumber(x) then x = 0 end
 		if y and not isnumber(y) then y = 0 end

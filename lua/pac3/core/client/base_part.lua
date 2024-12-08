@@ -31,7 +31,7 @@ BUILDER
 	:StartStorableVars()
 		:SetPropertyGroup("generic")
 			:GetSet("Name", "")
-			:GetSet("Notes", "")
+			:GetSet("Notes", "", {editor_panel = "generic_multiline"})
 			:GetSet("Hide", false)
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
@@ -1323,7 +1323,7 @@ function PART:SetupEditorPopup(str, force_open, tbl, x, y)
 	end
 	if not pnl then
 		pnl = pac.InfoPopup(info_string,popup_config_table, x, y)
-		self.pace_tree_node.popupinfopnl = pnl
+		if IsValid(self.pace_tree_node) then self.pace_tree_node.popupinfopnl = pnl end
 	end
 	if pace then
 		pace.legacy_floating_popup_reserved = pnl
