@@ -346,6 +346,7 @@ end
 pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	local pnl = pace.ActiveSpecialPanel
 	if pnl:IsValid() then
+		if pnl.ignore_saferemovespecialpanel then return end
 		local x,y = input.GetCursorPos()
 		local _x, _y = pnl:GetPos()
 		if x < _x or y < _y or x > _x + pnl:GetWide() or y > _y + pnl:GetTall() then

@@ -159,7 +159,7 @@ local function CalcDrag()
 
 	if
 		pace.BusyWithProperties:IsValid() or
-		pace.ActiveSpecialPanel:IsValid() or
+		(pace.ActiveSpecialPanel:IsValid() and not pace.ActiveSpecialPanel.ignore_saferemovespecialpanel) or
 		pace.editing_viewmodel or
 		pace.editing_hands or
 		pace.properties.search:HasFocus()

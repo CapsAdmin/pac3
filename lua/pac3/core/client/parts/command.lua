@@ -112,12 +112,79 @@ function PART:SetUseLua(b)
 	self:SetString(self:GetString())
 end
 
-function PART:SetString(str)
-	if self.UseLua and canRunLua() and self:GetPlayerOwner() == pac.LocalPlayer then
-		self.func = CompileString(str, "pac_event")
+function PART:HandleErrors(result, mode)
+	if isstring(result) then
+		pac.Message(result)
+		self.Error = "[" .. mode .. "] " .. result
+		self.erroring_mode = mode
+		self:SetError(result)
+		if pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad then
+			pace.ActiveSpecialPanel.special_title = self.Error 
+		end
+	elseif isfunction(result) then
+		if pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad then
+			if not self.Error then --good compile
+				pace.ActiveSpecialPanel.special_title = "[" .. mode .. "] " .. "successfully compiled"
+				self.Error = nil
+				self:SetError()
+			elseif (self.erroring_mode~= nil and self.erroring_mode ~= mode) then --good compile but already had an error from somewhere else (there are 3 script areas: main, onhide, delayed)
+				pace.ActiveSpecialPanel.special_title = "successfully compiled, but another erroring script may remain at " .. self.erroring_mode
+			else -- if we fixed our previous error from the same mode
+				pace.ActiveSpecialPanel.special_title = "[" .. mode .. "] " .. "successfully compiled"
+				self.Error = nil
+				self:SetError()
+			end
+		end
 	end
+end
 
+function PART:SetString(str)
+	str = string.Trim(str,"\n")
+	self.func = nil
+	if self.UseLua and canRunLua() and self:GetPlayerOwner() == pac.LocalPlayer and str ~= "" then
+		self.func = CompileString(str, "pac_event", false)
+		self:HandleErrors(self.func, "Main string")
+	end
 	self.String = str
+	if self.UseLua and not canRunLua() then
+		self:SetError("clientside lua is disabled (sv_allowcslua 0)")
+	end
+end
+
+function PART:SetOnHideString(str)
+	str = string.Trim(str,"\n")
+	self.onhide_func = nil
+	if self.erroring_mode == "OnHide string" then self.erroring_mode = nil end
+	if self.UseLua and canRunLua() and self:GetPlayerOwner() == pac.LocalPlayer and str ~= "" then
+		self.onhide_func = CompileString(str, "pac_event", false)
+		self:HandleErrors(self.onhide_func, "OnHide string")
+	end
+	self.OnHideString = str
+	if self.UseLua and not canRunLua() then
+		self:SetError("clientside lua is disabled (sv_allowcslua 0)")
+	end
+end
+
+function PART:SetDelayedString(str)
+	str = string.Trim(str,"\n")
+	self.delayed_func = nil
+	if self.erroring_mode == "Delayed string" then self.erroring_mode = nil end
+	if self.UseLua and canRunLua() and self:GetPlayerOwner() == pac.LocalPlayer and str ~= "" then
+		self.delayed_func = CompileString(str, "pac_event", false)
+		self:HandleErrors(self.delayed_func, "Delayed string")
+	end
+	self.DelayedString = str
+	if self.UseLua and not canRunLua() then
+		self:SetError("clientside lua is disabled (sv_allowcslua 0)")
+	end
+end
+
+function PART:Initialize()
+	--yield for the compile until other vars are available (UseLua)
+	timer.Simple(0, function()
+		self:SetOnHideString(self:GetOnHideString())
+		self:SetDelayedString(self:GetDelayedString())
+	end)
 end
 
 function PART:GetCode()
@@ -160,22 +227,39 @@ function PART:GetNiceName()
 	return "command: " .. self.String
 end
 
+local function try_lua_exec(self, func)
+	if canRunLua() then
+		if isstring(func) then return end
+		local status, err = pcall(func)
+
+		if not status then
+			self:SetError(err)
+			ErrorNoHalt(err .. "\n")
+		end
+	else
+		local msg = "clientside lua is disabled (sv_allowcslua 0)"
+		self:SetError(msg)
+		pac.Message(tostring(self) .. " - ".. msg)
+	end
+end
+
 function PART:Execute(commandstring)
 	local ent = self:GetPlayerOwner()
 
 	if ent == pac.LocalPlayer then
-		if self.UseLua and self.func then
-			if canRunLua() then
-				local status, err = pcall(self.func)
-
-				if not status then
-					self:SetError(err)
-					ErrorNoHalt(err .. "\n")
+		if self.UseLua then
+			if (self.func or self.onhide_func or self.delayed_func) then
+				if commandstring == nil then --regular string
+					try_lua_exec(self, self.func)
+				else --other modes
+					if ((commandstring == self.OnHideString) and self.onhide_func) then
+						try_lua_exec(self, self.onhide_func)
+					elseif ((commandstring == self.DelayedString) and self.delayed_func) then
+						try_lua_exec(self, self.delayed_func)
+					elseif ((commandstring == self.String) and self.func) then
+						try_lua_exec(self, self.func)
+					end
 				end
-			else
-				local msg = "clientside lua is disabled (sv_allowcslua 0)"
-				self:SetError(msg)
-				pac.Message(tostring(self) .. " - ".. msg)
 			end
 		else
 			if hook.Run("PACCanRunConsoleCommand", self.String) == false then return end

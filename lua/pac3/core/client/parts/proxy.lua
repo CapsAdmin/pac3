@@ -1595,6 +1595,7 @@ local allowed = {
 }
 
 function PART:SetExpression(str, slot)
+	str = string.Trim(str,"\n")
 	if not slot then --that's the default expression
 		self.Expression = str
 		self.ExpressionFunc = nil
@@ -1659,26 +1660,31 @@ function PART:SetExpression(str, slot)
 end
 
 function PART:SetExpressionOnHide(str)
+	str = string.Trim(str,"\n")
 	self.ExpressionOnHide = str
 	self:SetExpression(str, 0)
 end
 
 function PART:SetExtra1(str)
+	str = string.Trim(str,"\n")
 	self.Extra1 = str
 	self:SetExpression(str, 1)
 end
 
 function PART:SetExtra2(str)
+	str = string.Trim(str,"\n")
 	self.Extra2 = str
 	self:SetExpression(str, 2)
 end
 
 function PART:SetExtra3(str)
+	str = string.Trim(str,"\n")
 	self.Extra3 = str
 	self:SetExpression(str, 3)
 end
 
 function PART:SetExtra4(str)
+	str = string.Trim(str,"\n")
 	self.Extra4 = str
 	self:SetExpression(str, 4)
 end

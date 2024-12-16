@@ -645,8 +645,15 @@ do --generic multiline text
 	pace.RegisterPanel(PANEL)
 end
 
+
+local calcdrag_remove_pnl = CreateClientConVar("pac_luapad_calcdrag_removal", "1", true, false, "whether dragging view should remove the luapad")
+
+local lua_editor_txt = ""
+local lua_editor_previous_dimensions
 local lua_editor_fontsize = 16
-local function install_fontsize_buttons(frame, editor, add_execute)
+local function install_fontsize_buttons(frame, editor, add_execute, key)
+	frame.ignore_saferemovespecialpanel = not calcdrag_remove_pnl:GetBool()
+
 	local btn_fontplus = vgui.Create("DButton", frame) btn_fontplus:SetSize(20, 18) btn_fontplus:SetText("+")
 	local btn_fontminus = vgui.Create("DButton", frame) btn_fontminus:SetSize(20, 18) btn_fontminus:SetText("-")
 	function btn_fontplus:DoClick()
@@ -663,8 +670,43 @@ local function install_fontsize_buttons(frame, editor, add_execute)
 		surface.SetFont("LuapadEditor");
 		editor.FontWidth, editor.FontHeight = surface.GetTextSize(" ")
 	end
+
+
+	local btn_remember_dimensions = vgui.Create("DButton", frame) btn_remember_dimensions:SetSize(18, 18) btn_remember_dimensions:SetImage("icon16/computer_link.png")
+	btn_remember_dimensions:SetTooltip("Remember winbdow size") btn_remember_dimensions:SetY(3)
+	function btn_remember_dimensions:DoClick()
+		if lua_editor_previous_dimensions == nil then
+			local x,y = frame:LocalToScreen()
+			lua_editor_previous_dimensions = {
+				x = x,
+				y = y,
+				wide = frame:GetWide(),
+				tall = frame:GetTall()
+			}
+			frame.special_title = "will remember position and size" timer.Simple(3, function() if not IsValid(frame) then return end frame.special_title = nil end)
+		else
+			lua_editor_previous_dimensions = nil
+			frame.special_title = "will not remember window position and size" timer.Simple(3, function() if not IsValid(frame) then return end frame.special_title = nil end)
+		end
+	end
+	if lua_editor_previous_dimensions then
+		btn_remember_dimensions:SetImage("icon16/computer_delete.png")
+	end
+
+	local btn_calcdrag_remove = vgui.Create("DButton", frame) btn_calcdrag_remove:SetSize(18, 18) btn_calcdrag_remove:SetImage("icon16/application_delete.png")
+	btn_calcdrag_remove:SetTooltip("Close window if dragging main view") btn_calcdrag_remove:SetY(3)
+	function btn_calcdrag_remove:DoClick()
+		calcdrag_remove_pnl:SetBool(not calcdrag_remove_pnl:GetBool())
+		frame.ignore_saferemovespecialpanel = not calcdrag_remove_pnl:GetBool()
+		if calcdrag_remove_pnl:GetBool() then
+			frame.special_title = "will remove window if dragging main view" timer.Simple(3, function() if not IsValid(frame) then return end frame.special_title = nil end)
+		else
+			frame.special_title = "will not remove window if dragging main view" timer.Simple(3, function() if not IsValid(frame) then return end frame.special_title = nil end)
+		end
+	end
+
+
 	local perflayout = frame.PerformLayout
-	local fthink = frame.Think
 	btn_fontplus:SetY(3)
 	btn_fontminus:SetY(3)
 
@@ -672,17 +714,50 @@ local function install_fontsize_buttons(frame, editor, add_execute)
 		local btn_run = vgui.Create("DButton", frame) btn_run:SetSize(50, 18) btn_run:SetY(3)
 		btn_run:SetImage("icon16/bullet_go.png") btn_run:SetText(" run")
 		function btn_run:DoClick()
-			pace.current_part:Execute()
+			if key then
+				if key == "String" then
+					pace.current_part:SetString(editor:GetValue())
+				elseif key == "OnHideString" then
+					pace.current_part:SetOnHideString(editor:GetValue())
+				elseif key == "DelayedString" then
+					pace.current_part:SetDelayedString(editor:GetValue())
+				end
+				timer.Simple(0.2, function() pace.current_part:Execute(pace.current_part[key]) end)
+			else
+				pace.current_part:Execute()
+			end		
 		end
-		function frame:Think()
+		function frame:PerformLayout()
+			if lua_editor_previous_dimensions then
+				local x,y = frame:LocalToScreen()
+				lua_editor_previous_dimensions = {
+					x = x,
+					y = y,
+					wide = frame:GetWide(),
+					tall = frame:GetTall()
+				}
+			end
+			btn_calcdrag_remove:SetX(self:GetWide() - 230 + 4)
+			btn_remember_dimensions:SetX(self:GetWide() - 210 + 4)
 			btn_run:SetX(self:GetWide() - 190 + 4)
 			btn_fontplus:SetX(self:GetWide() - 120 + 4)
 			btn_fontminus:SetX(self:GetWide() - 140 + 4)
-			fthink(self)
+			perflayout(self)
 		end
 		frame:RequestFocus()
 	else
 		function frame:PerformLayout()
+			if lua_editor_previous_dimensions then
+				local x,y = frame:LocalToScreen()
+				lua_editor_previous_dimensions = {
+					x = x,
+					y = y,
+					wide = frame:GetWide(),
+					tall = frame:GetTall()
+				}
+			end
+			btn_calcdrag_remove:SetX(self:GetWide() - 180 + 4)
+			btn_remember_dimensions:SetX(self:GetWide() - 160 + 4)
 			btn_fontplus:SetX(self:GetWide() - 120 + 4)
 			btn_fontminus:SetX(self:GetWide() - 140 + 4)
 			perflayout(self)
@@ -763,6 +838,7 @@ do -- script
 	pace.RegisterPanel(PANEL)
 end
 
+
 local function install_edge_resizes(frame)
 	local function more_or_less(n1,n2)
 		return math.abs(n1-n2) < 10
@@ -777,10 +853,11 @@ local function install_edge_resizes(frame)
 			frame.resizing_left = false
 			frame.resizing_right = false
 		elseif frame.resizing then
+			if pace.dragging then return end
 			if frame.resizing_down then
-				frame:SetHeight(my-py)
+				frame:SetHeight(math.max(my-py, 100))
 			elseif frame.resizing_left then
-				frame:SetWide(frame.target_edge - mx)
+				frame:SetWide(math.max(frame.target_edge - mx, 100))
 				frame:SetX(mx)
 			elseif frame.resizing_right then
 				frame:SetWide(mx-px)
@@ -869,20 +946,54 @@ do -- script command
 
 		local editor = vgui.Create("pace_luapad", frame)
 		frame.luapad = editor
-		install_fontsize_buttons(frame, editor, true)
+		install_fontsize_buttons(frame, editor, true, self.CurrentKey)
 		editor:Dock(FILL)
-		if pace.Editor:IsLeft() then
-			frame:SetSize(ScrW() - pace.Editor:GetX() - pace.Editor:GetWide(),200)
-			frame:SetPos(pace.Editor:GetWide() + pace.Editor:GetX(), select(2, self:LocalToScreen()))
-		else
-			frame:SetSize(pace.Editor:GetX(),200)
-			frame:SetPos(0, select(2, self:LocalToScreen()))
-		end
-		
 
-		editor:SetText(pace.current_part:GetCode())
-		editor.OnTextChanged = function(self)
-			pace.current_part:SetString(self:GetValue())
+		if lua_editor_previous_dimensions ~= nil then
+			frame:SetPos(lua_editor_previous_dimensions.x,lua_editor_previous_dimensions.y)
+			frame:SetSize(lua_editor_previous_dimensions.wide,lua_editor_previous_dimensions.tall)
+		else
+			if pace.Editor:IsLeft() then
+				frame:SetSize(ScrW() - pace.Editor:GetX() - pace.Editor:GetWide(),200)
+				frame:SetPos(pace.Editor:GetWide() + pace.Editor:GetX(), select(2, self:LocalToScreen()))
+			else
+				frame:SetSize(pace.Editor:GetX(),200)
+				frame:SetPos(0, select(2, self:LocalToScreen()))
+			end
+		end
+
+		editor:SetText(part[self.CurrentKey])
+		local pnl = self
+		if pnl.CurrentKey == "String" then
+			editor.OnTextChanged = function(self)
+				local str = self:GetValue():Trim("\n")
+				if input.IsButtonDown(KEY_ENTER) then part:SetString(str) end
+				pnl:SetValue(str)
+			end
+			editor.OnRemove = function(self)
+				local str = self:GetValue():Trim("\n")
+				part:SetString(str)
+			end
+		elseif pnl.CurrentKey == "OnHideString" then
+			editor.OnTextChanged = function(self)
+				local str = self:GetValue():Trim("\n")
+				if input.IsButtonDown(KEY_ENTER) then part:SetOnHideString(str) end
+				pnl:SetValue(str)
+			end
+			editor.OnRemove = function(self)
+				local str = self:GetValue():Trim("\n")
+				part:SetOnHideString(str)
+			end
+		elseif pnl.CurrentKey == "DelayedString" then
+			editor.OnTextChanged = function(self)
+				local str = self:GetValue():Trim("\n")
+				if input.IsButtonDown(KEY_ENTER) then part:SetDelayedString(str) end
+				pnl:SetValue(str)
+			end
+			editor.OnRemove = function(self)
+				local str = self:GetValue():Trim("\n")
+				part:SetDelayedString(str)
+			end
 		end
 
 		editor.last_error = ""
@@ -901,6 +1012,9 @@ do -- script command
 				title = L"command" ..  " (lua)"
 			else
 				title = L"command" ..  " (console)"
+			end
+			if frame:GetTitle() == "successfully compiled" then
+				title = "(lua) successfully compiled"
 			end
 
 			if part.Error then
@@ -924,7 +1038,7 @@ do -- script command
 					part.script_printing = nil
 				end
 			end
-
+			title = frame.special_title or title
 			frame:SetTitle(title)
 		end
 
@@ -1000,12 +1114,17 @@ do -- script proxy
 		frame.luapad = editor
 		install_fontsize_buttons(frame, editor)
 		editor:Dock(FILL)
-		if pace.Editor:IsLeft() then
-			frame:SetSize(ScrW() - pace.Editor:GetX() - pace.Editor:GetWide(),200)
-			frame:SetPos(pace.Editor:GetWide() + pace.Editor:GetX(), select(2, self:LocalToScreen()))
+		if lua_editor_previous_dimensions ~= nil then
+			frame:SetPos(lua_editor_previous_dimensions.x,lua_editor_previous_dimensions.y)
+			frame:SetSize(lua_editor_previous_dimensions.wide,lua_editor_previous_dimensions.tall)
 		else
-			frame:SetSize(pace.Editor:GetX(),200)
-			frame:SetPos(0, select(2, self:LocalToScreen()))
+			if pace.Editor:IsLeft() then
+				frame:SetSize(ScrW() - pace.Editor:GetX() - pace.Editor:GetWide(),200)
+				frame:SetPos(pace.Editor:GetWide() + pace.Editor:GetX(), select(2, self:LocalToScreen()))
+			else
+				frame:SetSize(pace.Editor:GetX(),200)
+				frame:SetPos(0, select(2, self:LocalToScreen()))
+			end
 		end
 
 		editor:SetText(part["Get"..key](part))
@@ -1052,7 +1171,7 @@ do -- script proxy
 					part.script_printing = nil
 				end
 			end
-
+			title = frame.special_title or title
 			frame:SetTitle(title)
 		end
 
