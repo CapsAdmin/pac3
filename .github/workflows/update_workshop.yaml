@@ -8,12 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  linter:
-    uses: CapsAdmin/pac3/.github/workflows/lua_linter.yaml@develop
-
   update-workshop:
       if: github.repository == 'CapsAdmin/pac3'
-      # needs: linter
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
