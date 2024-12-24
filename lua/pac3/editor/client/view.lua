@@ -227,6 +227,7 @@ function pace.GUIMousePressed(mc)
 
 	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
 		held_ang = pace.ViewAngles * 1
+		held_ang:Normalize()
 		held_mpos = Vector(input.GetCursorPos())
 	end
 
@@ -635,8 +636,7 @@ function pace.CalcView(ply, pos, ang, fov)
 			pace.view_reversed = 1
 		end
 	else
-		pitch_limit = 89.9
-		--pace.ViewAngles.r = 0
+		pitch_limit = 90
 	end
 
 	if pos then
