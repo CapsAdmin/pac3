@@ -32,6 +32,7 @@ local convar_params_damage_zone = {
 	{"pac_sv_damage_zone_max_length", "Max damage zone length", "", 0, 0, 32767},
 	{"pac_sv_damage_zone_max_damage", "Max damage zone damage", "", 0, 0, 268435455},
 	{"pac_sv_damage_zone_allow_dissolve", "Allow damage entity dissolvers", "", -1, 0, 200},
+	{"pac_sv_damage_zone_allow_ragdoll_hitparts", "Allow ragdoll hitparts", "", -1, 0, 200},
 }
 local convar_params_force = {
 	{"pac_sv_force", "Allow force part", "", -1, 0, 200},
@@ -81,6 +82,7 @@ local convar_params_wearing_drawing = {
 	{"pac_submit_spam", "Limit pac_submit to prevent spam", "", -1, 0, 200},
 	{"pac_submit_limit", "limit of pac_submits", "", 0, 0, 100},
 	{"pac_onuse_only_force", "Players need to +USE on others to reveal outfits", "", -1, 0, 200},
+	{"pac_sv_prop_outfits", "allow prop / other player outfits", "0 = don't allow\n1 = allow applying outfits on props/npcs\n2 = allow applying outfits on other players", 0, 0, 2},
 }
 local convar_params_misc = {
 	{"sv_pac_webcontent_allow_no_content_length", "Players need to +USE on others to reveal outfits", "", -1, 0, 200},
@@ -1425,6 +1427,10 @@ function pace.FillEditorSettings(pnl)
 			return "icon16/chart_line.png"
 		elseif option_name == "arraying_menu" then
 			return "icon16/shape_group.png"
+		elseif option_name == "view_lockon" then
+			return "icon16/zoom.png"
+		elseif option_name == "view_goto" then
+			return "icon16/arrow_turn_right.png"
 		end
 		return "icon16/world.png"
 	end
@@ -1435,10 +1441,23 @@ function pace.FillEditorSettings(pnl)
 		local pnl = vgui.Create("DButton", f)
 		pnl:SetText(string.Replace(string.upper(v),"_"," "))
 		pnl:SetImage(FindImage(v))
+		pnl:SetTooltip("Left click to add at the end\nRight click to insert at the beginning")
 
 		function pnl:DoClick()
 			table.insert(buildlist_partmenu,v)
 			partmenu_previews:AddLine(#buildlist_partmenu,v)
+		end
+		function pnl:DoRightClick()
+			table.insert(buildlist_partmenu,1,v)
+			local previous_list = {}
+			for i,v in ipairs(partmenu_previews:GetLines()) do
+				table.insert(previous_list,v:GetValue(2))
+			end
+			ClearPartMenuPreviewList()
+			partmenu_previews:AddLine(1,v)
+			for i,v in ipairs(previous_list) do
+				partmenu_previews:AddLine(i+1,v)
+			end
 		end
 		partmenu_choices:AddItem(pnl)
 		pnl:SetHeight(18)
@@ -1561,7 +1580,8 @@ function pace.FillEditorSettings2(pnl)
 		["up"] = pace.camera_up_bind,
 		["down"] = pace.camera_down_bind,
 		["slow"] = pace.camera_slow_bind,
-		["speed"] = pace.camera_speed_bind
+		["speed"] = pace.camera_speed_bind,
+		["roll_drag"] = pace.camera_roll_drag_bind
 		}
 	]]
 
@@ -1589,74 +1609,91 @@ function pace.FillEditorSettings2(pnl)
 	local forward_binder = vgui.Create("DBinder", LeftPanel)
 		forward_binder:SetSize(40,40)
 		forward_binder:SetPos(100,40)
-		forward_binder:SetTooltip("move forward")
+		forward_binder:SetTooltip("move forward" .. "\nbound to " .. pace.camera_movement_binds["forward"]:GetString())
 		forward_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["forward"]:GetString()))
 		function forward_binder:OnChange(num)
 			pace.camera_movement_binds["forward"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("move forward" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local back_binder = vgui.Create("DBinder", LeftPanel)
 		back_binder:SetSize(40,40)
 		back_binder:SetPos(100,80)
-		back_binder:SetTooltip("move back")
+		back_binder:SetTooltip("move back" .. "\nbound to " .. pace.camera_movement_binds["back"]:GetString())
 		back_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["back"]:GetString()))
 		function back_binder:OnChange(num)
 			pace.camera_movement_binds["back"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("move back" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local moveleft_binder = vgui.Create("DBinder", LeftPanel)
 		moveleft_binder:SetSize(40,40)
 		moveleft_binder:SetPos(60,80)
-		moveleft_binder:SetTooltip("move left")
+		moveleft_binder:SetTooltip("move left" .. "\nbound to " .. pace.camera_movement_binds["moveleft"]:GetString())
 		moveleft_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["moveleft"]:GetString()))
 		function moveleft_binder:OnChange(num)
 			pace.camera_movement_binds["moveleft"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("move left" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local moveright_binder = vgui.Create("DBinder", LeftPanel)
 		moveright_binder:SetSize(40,40)
 		moveright_binder:SetPos(140,80)
-		moveright_binder:SetTooltip("move right")
+		moveright_binder:SetTooltip("move right" .. "\nbound to " .. pace.camera_movement_binds["moveright"]:GetString())
 		moveright_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["moveright"]:GetString()))
 		function moveright_binder:OnChange(num)
 			pace.camera_movement_binds["moveright"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("move right" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local up_binder = vgui.Create("DBinder", LeftPanel)
 		up_binder:SetSize(40,40)
 		up_binder:SetPos(180,40)
-		up_binder:SetTooltip("move up")
+		up_binder:SetTooltip("move up" .. "\nbound to " .. pace.camera_movement_binds["up"]:GetString())
 		up_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["up"]:GetString()))
 		function up_binder:OnChange(num)
 			pace.camera_movement_binds["up"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("move up" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local down_binder = vgui.Create("DBinder", LeftPanel)
 		down_binder:SetSize(40,40)
 		down_binder:SetPos(180,80)
-		down_binder:SetTooltip("move down")
+		down_binder:SetTooltip("move down" .. "\nbound to " .. pace.camera_movement_binds["down"]:GetString())
 		down_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["down"]:GetString()))
 		function down_binder:OnChange(num)
-			print(num, input.GetKeyName( num ))
 			pace.camera_movement_binds["down"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("move down" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local slow_binder = vgui.Create("DBinder", LeftPanel)
 		slow_binder:SetSize(40,40)
 		slow_binder:SetPos(20,80)
-		slow_binder:SetTooltip("go slow")
+		slow_binder:SetTooltip("go slow" .. "\nbound to " .. pace.camera_movement_binds["slow"]:GetString())
 		slow_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["slow"]:GetString()))
 		function slow_binder:OnChange(num)
 			pace.camera_movement_binds["slow"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("go slow" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local speed_binder = vgui.Create("DBinder", LeftPanel)
 		speed_binder:SetSize(40,40)
 		speed_binder:SetPos(20,40)
-		speed_binder:SetTooltip("go fast")
+		speed_binder:SetTooltip("go fast" .. "\nbound to " .. pace.camera_movement_binds["speed"]:GetString())
 		speed_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["speed"]:GetString()))
 		function speed_binder:OnChange(num)
 			pace.camera_movement_binds["speed"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("go fast" .. "\nbound to " .. input.GetKeyName( num ))
+		end
+
+	local roll_binder = vgui.Create("DBinder", LeftPanel)
+		roll_binder:SetSize(40,40)
+		roll_binder:SetPos(60,40)
+		roll_binder:SetTooltip("roll drag (hold & drag to tilt, tap to reset)" .. "\nbound to " .. pace.camera_movement_binds["roll_drag"]:GetString())
+		roll_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["roll_drag"]:GetString()))
+		function roll_binder:OnChange(num)
+			pace.camera_movement_binds["roll_drag"]:SetString(input.GetKeyName( num ))
+			self:SetTooltip("roll drag (hold & drag to tilt, tap to reset)" .. "\nbound to " .. input.GetKeyName( num ))
 		end
 
 	local Parts = pac.GetRegisteredParts()

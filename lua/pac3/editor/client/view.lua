@@ -12,6 +12,89 @@ acsfnc("Pos", Vector(5,5,5))
 acsfnc("Angles", Angle(0,0,0))
 acsfnc("FOV", 75)
 
+function pace.GoTo(obj, mode, extra, alt_move)
+	if not obj then return end
+	if mode == "view" and (obj.GetWorldPosition or isentity(obj)) then
+
+		extra = extra or {radius = 75} --if no 3rd arg, assume a basic 75 distance
+		extra.radius = extra.radius or 75 --if the table is wrong, force insert a default 75 distance
+		if alt_move ~= nil then --repeated hits = reverse? or come back?
+			if alt_move == true then
+				extra.radius = -extra.radius
+			elseif alt_move == false then
+				
+			end
+		end
+		local obj_pos
+		local angfunc
+		if obj.GetWorldPosition then
+			obj_pos = obj:GetWorldPosition()
+		elseif isentity(obj) then
+			obj_pos = obj:GetPos() + obj:OBBCenter()
+		end
+		pace.ViewAngles = (pace.ViewPos - obj_pos):Angle()
+		if extra.axis then
+			local vec
+			local sgn = extra.radius > 0 and 1 or -1
+			if obj.GetWorldPosition then
+				if extra.axis == "x" then
+					vec = obj:GetWorldAngles():Forward()
+				elseif extra.axis == "y" then
+					vec = obj:GetWorldAngles():Right()
+				elseif extra.axis == "z" then
+					vec = obj:GetWorldAngles():Up()
+				elseif extra.axis == "world_x" then
+					vec = Vector(1,0,0)
+				elseif extra.axis == "world_y" then
+					vec = Vector(0,1,0)
+				elseif extra.axis == "world_z" then
+					vec = Vector(0,0,1)
+				end
+			elseif isentity(obj) then
+				local ang = obj:GetAngles()
+				ang.p = 0
+				if extra.axis == "x" then
+					vec = ang:Forward()
+				elseif extra.axis == "y" then
+					vec = ang:Right()
+				elseif extra.axis == "z" then
+					vec = ang:Up()
+				elseif extra.axis == "world_x" then
+					vec = Vector(1,0,0)
+				elseif extra.axis == "world_y" then
+					vec = Vector(0,1,0)
+				elseif extra.axis == "world_z" then
+					vec = Vector(0,0,1)
+				end
+			end
+			vec = sgn * vec
+			local viewpos = obj_pos - vec * math.abs(extra.radius)
+			pace.ViewPos = viewpos
+			pace.ViewAngles = (obj_pos - viewpos):Angle()
+			pace.ViewAngles:Normalize()
+			return
+		end
+		pace.ViewAngles:Normalize()
+		pace.ViewPos = obj_pos + (obj_pos - pace.ViewPos):GetNormalized() * (extra.radius or 75)
+	elseif mode == "treenode" and (obj.pace_tree_node or ispanel(obj)) then
+		local part
+		if obj.pace_tree_node then part = obj elseif ispanel(obj) then part = obj.part end
+		local parent = part:GetParent()
+		while IsValid(parent) and (parent:GetParent() ~= parent) do
+			parent.pace_tree_node:SetExpanded(true)
+			parent = parent:GetParent()
+			if parent:IsValid() then
+				parent.pace_tree_node:SetExpanded(true)
+			end
+		end
+		if part.pace_tree_node then
+			pace.tree:ScrollToChild(part.pace_tree_node)
+		end
+	elseif mode == "property" then
+		pace.FlashProperty(obj, extra or "Name")
+	end
+end
+
 pace.camera_forward_bind = CreateClientConVar("pac_editor_camera_forward_bind", "w", true)
 pace.camera_back_bind = CreateClientConVar("pac_editor_camera_back_bind", "s", true)
 pace.camera_moveleft_bind = CreateClientConVar("pac_editor_camera_moveleft_bind", "a", true)
@@ -21,6 +104,40 @@ pace.camera_down_bind = CreateClientConVar("pac_editor_camera_down_bind", "", tr
 pace.camera_slow_bind = CreateClientConVar("pac_editor_camera_slow_bind", "ctrl", true)
 pace.camera_speed_bind = CreateClientConVar("pac_editor_camera_speed_bind", "shift", true)
 
+pace.camera_roll_drag_bind = CreateClientConVar("pac_editor_camera_roll_bind", "", true)
+pace.roll_snapping = CreateClientConVar("pac_camera_roll_snap", "0", true)
+
+pace.camera_orthographic_cvar = CreateClientConVar("pac_camera_orthographic", "0", true)
+pace.camera_orthographic = false
+pace.viewlock_mode = ""
+
+function pace.OrthographicView(b)
+	if b == nil then b = not pace.camera_orthographic end
+	pace.camera_orthographic = b
+	pace.camera_orthographic_cvar:SetBool(tobool(b or false))
+	if pace.Editor and pace.Editor.zoomslider then
+		if pace.camera_orthographic then
+			timer.Simple(1, function() pace.FlashNotification("Switched to orthographic mode") end)
+			pace.Editor.zoomslider:SetText("Ortho. Width")
+			pace.Editor.zoomslider:SetMax( 1000 )
+			pace.Editor.zoomslider:SetValue(50)
+			pace.Editor.ortho_nearz:Show()
+			pace.Editor.ortho_farz:Show()
+		else
+			timer.Simple(1, function() pace.FlashNotification("Switched to normal FOV mode") end)
+			pace.Editor.zoomslider:SetText("Camera FOV")
+			pace.Editor.zoomslider:SetValue(75)
+			pace.Editor.zoomslider:SetMax( 100 )
+			pace.Editor.ortho_nearz:Hide()
+			pace.Editor.ortho_farz:Hide()
+		end
+	end
+end
+
+cvars.AddChangeCallback("pac_camera_orthographic", function(name, old, new)
+	pace.OrthographicView(tobool(new))
+end, "pac_update_ortho")
+
 pace.camera_movement_binds = {
 	["forward"] = pace.camera_forward_bind,
 	["back"] = pace.camera_back_bind,
@@ -29,7 +146,8 @@ pace.camera_movement_binds = {
 	["up"] = pace.camera_up_bind,
 	["down"] = pace.camera_down_bind,
 	["slow"] = pace.camera_slow_bind,
-	["speed"] = pace.camera_speed_bind
+	["speed"] = pace.camera_speed_bind,
+	["roll_drag"] = pace.camera_roll_drag_bind
 }
 
 function pace.GetViewEntity()
@@ -154,6 +272,24 @@ local function MovementBindDown(name)
 	return input.IsButtonDown(input.GetKeyCode(pace.camera_movement_binds[name]:GetString()))
 end
 
+local follow_entity_ang = CreateClientConVar("pac_camera_follow_entity_ang", "0", true)
+local follow_entity_ang_side = CreateClientConVar("pac_camera_follow_entity_ang_use_side", "0", true)
+local delta_y = 0
+local previous_delta_y = 0
+
+
+local rolling = false
+local initial_roll = 0
+local initial_roll_x = 0
+local current_x = 0
+local roll_x = 0
+local start_x = 0
+local previous_roll = 0
+local roll_x_delta = 0
+local roll_release_time = 0
+
+
+local pitch_limit = 90
 local function CalcDrag()
 	if not pace.properties or not pace.properties.search then return end
 
@@ -215,8 +351,56 @@ local function CalcDrag()
 		mult = mult + 5
 	end
 
+	if MovementBindDown("roll_drag") then
+		local current_x,current_y = input.GetCursorPos()
+		if not rolling then
+			start_x,_ = input.GetCursorPos()
+			rolling = true
+			initial_roll = previous_roll
+		else
+			local wrapping = false
+			local x,_ = input.GetCursorPos()
+			if x >= ScrW()-1 then
+				input.SetCursorPos(2,current_y)
+				current_x = 2
+				start_x = start_x - ScrW() + 2
+				wrapping = true
+			end
+			if x <= 1 then
+				wrapping = true
+				input.SetCursorPos(ScrW()-2,current_y)
+				current_x = ScrW() - 2
+				start_x = start_x + ScrW() - 2
+				wrapping = true
+			end
+
+			local snap = pace.roll_snapping:GetFloat()
+			roll_x_delta = x - start_x --current delta (modify)
+			if not wrapping then
+				pace.view_roll = (180 + math.Round(200 * (initial_roll + x - start_x) / ScrW(),2)) % 360 - 180
+				pace.FlashNotification("view roll : " .. pace.view_roll .. " degrees (Ctrl to snap by " .. snap .. " degrees)")
+			end
+
+			if snap ~= 0 and input.IsButtonDown(KEY_LCONTROL) and pace.view_roll ~= nil then
+				pace.view_roll = math.Round(pace.view_roll / snap,0) * snap
+				pace.FlashNotification("view roll : " .. pace.view_roll .. " (snapped to nearest " .. snap .. " degrees)")
+			end
+			--will be applied post
+		end
+	elseif rolling then
+		local x,_ = input.GetCursorPos()
+		previous_roll = initial_roll + roll_x_delta
+		if math.abs(start_x - x) < 5 then
+			pace.FlashNotification("view roll reset")
+			pace.view_roll = nil
+			previous_roll = 0 initial_roll = 0 start_x = 0 roll_x_delta = 0
+		end
+		rolling = false
+	end
+
 	if not pace.IsSelecting then
 		if mcode == MOUSE_LEFT then
+			pace.dragging = true
 			local mpos = Vector(input.GetCursorPos())
 
 			if mpos.x >= ScrW() - 1 then
@@ -225,24 +409,46 @@ local function CalcDrag()
 				mpos = set_mouse_pos(ScrW() - 2, gui.MouseY())
 			end
 
+			local overflows = false
 			if mpos.y >= ScrH() - 1 then
 				mpos = set_mouse_pos(gui.MouseX(), 1)
+				overflows = 1
 			elseif mpos.y < 1 then
 				mpos = set_mouse_pos(gui.MouseX(), ScrH() - 2)
+				overflows = -1
 			end
 
 			local delta = (held_mpos - mpos) / 5 * math.rad(pace.ViewFOV)
-			pace.ViewAngles.p = math.Clamp(held_ang.p - delta.y, -90, 90)
+			pace.ViewAngles.p = math.Clamp(held_ang.p - delta.y, -pitch_limit, pitch_limit)
 			pace.ViewAngles.y = held_ang.y + delta.x
+			if pace.viewlock and pace.viewlock_mode == "zero pitch" then
+				delta_y = (held_ang.p - delta.y)
+				if (previous_delta_y ~= delta_y) and (not overflows) then
+					pace.ViewPos = pace.ViewPos + Vector(0,0,delta_y - previous_delta_y) * pace.viewlock_distance / 300
+				elseif overflows then
+					pace.ViewPos = pace.ViewPos + Vector(0,0,overflows) * pace.viewlock_distance / 300
+				end
+				previous_delta_y = (held_ang.p - delta.y)
+			end
+		else
+			previous_delta_y = 0
+			delta_y = 0
+			pace.dragging = false
 		end
 	end
 
-
+	local viewlock_direct = (pace.viewlock and not pace.dragging) and (pace.viewlock_mode == "direct")
 	if pace.delaymovement < RealTime() then
 		if MovementBindDown("forward") then
 			pace.ViewPos = pace.ViewPos + pace.ViewAngles:Forward() * mult * ftime
-		elseif  MovementBindDown("back") then
+			if pace.viewlock or follow_entity_ang:GetBool() then
+				pace.viewlock_distance = pace.viewlock_distance - mult * ftime
+			end
+		elseif MovementBindDown("back") then
 			pace.ViewPos = pace.ViewPos - pace.ViewAngles:Forward() * mult * ftime
+			if pace.viewlock or follow_entity_ang:GetBool()then
+				pace.viewlock_distance = pace.viewlock_distance + mult * ftime
+			end
 		end
 
 		if  MovementBindDown("moveright") then
@@ -253,12 +459,27 @@ local function CalcDrag()
 
 		if  MovementBindDown("up") then
 			if not IsValid(pace.timeline.frame) then
+				if viewlock_direct then
+					local up = pace.ViewAngles:Up()
+					mult = mult * up.z
+				end
 				pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * mult * ftime
 			end
 		elseif  MovementBindDown("down") then
 			if not IsValid(pace.timeline.frame) then
+				if viewlock_direct then
+					local up = pace.ViewAngles:Up()
+					mult = mult * up.z
+				end
 				pace.ViewPos = pace.ViewPos - pace.ViewAngles:Up() * mult * ftime
 			end
+		end
+		if viewlock_direct and pace.viewlock_mode ~= "frame of reference" then
+			local distance = pace.viewlock_distance or 75
+			pace.ViewAngles = (pace.viewlock_pos - pace.ViewPos):Angle()
+
+			local newpos = pace.viewlock_pos - distance * pace.ViewAngles:Forward()
+			pace.ViewPos = newpos
 		end
 	end
 
@@ -271,10 +492,13 @@ cvars.AddChangeCallback("pac_enable_editor_view", function(name, old, new)
 		pace.EnableView(true)
 	else
 		pace.CameraPartSwapView()
+		pac.RemoveHook("CalcView", "editor")
 	end
 end, "pace_update_editor_view")
 
 local lastEntityPos
+pace.view_reversed = 1
+pace.viewlock_distance = 75
 
 function pace.CalcView(ply, pos, ang, fov)
 	if pace.editing_viewmodel or pace.editing_hands then
@@ -293,7 +517,127 @@ function pace.CalcView(ply, pos, ang, fov)
 		lastEntityPos = nil
 	end
 
+	if follow_entity_ang:GetBool() then
+		local ent = pace.GetViewEntity()
+		local ang = ent:GetAngles()
+		if follow_entity_ang_side:GetBool() then ang = ang:Right():Angle() end
+		local pos = ent:GetPos() + ent:OBBCenter()
+		pace.viewlock = nil
+		pace.viewlock_pos = pos
+		pace.viewlock_pos_deltaZ = pace.viewlock_pos
+		pace.viewlock_distance = pace.viewlock_distance or 75
+		if pace.viewlock_distance > 10 then
+			pace.ViewAngles = (pace.view_reversed * ang:Forward()):Angle()
+			local newpos = pos - pace.viewlock_distance*pace.ViewAngles:Forward()
+			pace.ViewPos = newpos
+		else
+			pace.view_reversed = -pace.view_reversed --this will flip between front-facing and back-facing
+			pace.viewlock_distance = 75 --but for that to happen we need to move the imposed position forward
+			pace.delaymovement = RealTime() + 0.5
+			pace.ViewPos = pace.ViewPos + 75*pace.ViewAngles:Forward()
+		end
+	end
+
 	local pos, ang, fov = pac.CallHook("EditorCalcView", pace.ViewPos, pace.ViewAngles, pace.ViewFOV)
+
+	if pace.viewlock then
+		local pitch = pace.ViewAngles.p
+		local viewlock_pos
+		if isvector(pace.viewlock) then
+			viewlock_pos = pace.viewlock
+		elseif isentity(pace.viewlock) then
+			viewlock_pos = pace.viewlock:GetPos() + pace.viewlock:OBBCenter()
+		elseif pace.viewlock.GetWorldPosition then
+			viewlock_pos = pace.viewlock:GetWorldPosition()
+		end
+
+		pace.viewlock_pos = viewlock_pos
+		ang = ang or pace.ViewAngles
+		pos = pos or pace.ViewPos
+		local deltaZ = Vector(0,0,pace.ViewPos.z - viewlock_pos.z)
+		pace.viewlock_pos_deltaZ = pace.viewlock_pos + deltaZ
+		
+
+		if pace.viewlock_distance < 10 then
+			pace.view_reversed = -pace.view_reversed --this will flip between front-facing and back-facing
+			pace.viewlock_distance = 75 --but for that to happen we need to move the imposed position forward
+			pos = pace.ViewPos - 75*pace.ViewAngles:Forward()
+		end
+
+		if pace.viewlock_mode == "free pitch" then
+			pitch_limit = 90
+			viewlock_pos = viewlock_pos + deltaZ
+			local distance = pace.viewlock_distance or viewlock_pos:Distance(pace.ViewPos)
+			if not pace.dragging then
+				ang = (-pace.ViewPos + viewlock_pos):Angle()
+				ang:Normalize()
+				pos = viewlock_pos - pace.view_reversed * distance * ang:Forward()
+			else
+				ang = (-pace.ViewPos + viewlock_pos):Angle()
+				ang:Normalize()
+			end
+
+			ang.p = pitch
+		elseif pace.viewlock_mode == "zero pitch" then
+			viewlock_pos = viewlock_pos + deltaZ
+			local distance = pace.viewlock_distance or viewlock_pos:Distance(pace.ViewPos)
+			if not pace.dragging then
+				ang = (-pace.ViewPos + viewlock_pos):Angle()
+				ang:Normalize()
+				pos = viewlock_pos - pace.view_reversed * distance * ang:Forward()
+			else
+				ang = (-pace.ViewPos + viewlock_pos):Angle()
+				ang:Normalize()
+			end
+
+			ang.p = 0
+		elseif pace.viewlock_mode == "direct" then
+			pitch_limit = 89.9
+			local distance = pace.viewlock_distance or viewlock_pos:Distance(pace.ViewPos)
+			local newpos
+			if pace.dragging then
+				newpos = viewlock_pos - distance * pace.ViewAngles:Forward()
+				pos = newpos
+				ang = (-newpos + pace.viewlock_pos):Angle()
+				ang:Normalize()
+				pace.ViewAngles = ang
+			else
+				newpos = viewlock_pos + pace.view_reversed * distance * pace.ViewAngles:Forward()
+				ang = (-pace.ViewPos + newpos):Angle()
+				ang:Normalize()
+			end
+		elseif pace.viewlock_mode == "frame of reference" then
+			pitch_limit = 90
+			viewlock_pos = viewlock_pos + deltaZ
+			local distance = pace.viewlock_distance or viewlock_pos:Distance(pace.ViewPos)
+			if pace.viewlock and pace.viewlock.GetDrawPosition then
+				local _pos, _ang = pace.viewlock:GetDrawPosition()
+				local mat = Matrix()
+				mat:Rotate(_ang)
+				if pace.viewlock_axis == "x" then
+					--mat:Scale(Vector(-1,1,1))
+				elseif pace.viewlock_axis == "y" then
+					mat:Rotate(Angle(0,90,0))
+				elseif pace.viewlock_axis == "z" then
+					mat:Rotate(Angle(90,0,0))
+				end
+				mat:Scale(Vector(pace.view_reversed,1,1))
+				ang = mat:GetAngles()
+				ang.r = pace.view_reversed*ang.r
+				pos = _pos - distance * ang:Forward()
+			end
+		elseif pace.viewlock_mode == "disable" then
+			pitch_limit = 90
+			pace.viewlock = nil
+		end
+		--we apply the reversion only once, so reset here
+		if pace.view_reversed == -1 and (pace.viewlock_mode ~= "frame of reference") then
+			pace.view_reversed = 1
+		end
+	else
+		pitch_limit = 89.9
+		--pace.ViewAngles.r = 0
+	end
 
 	if pos then
 		pace.ViewPos = pos
@@ -306,13 +650,40 @@ function pace.CalcView(ply, pos, ang, fov)
 	if fov then
 		pace.ViewFOV = fov
 	end
+	
+	local viewang_final = Angle(pace.ViewAngles)
 
-	return
-	{
-		origin = pace.ViewPos,
-		angles = pace.ViewAngles,
-		fov = pace.ViewFOV,
-	}
+	if pace.view_roll then
+		pace.ViewAngles_postRoll = Angle(viewang_final)
+		pace.ViewAngles_postRoll:RotateAroundAxis(pace.ViewAngles:Forward(), pace.view_roll)
+		viewang_final = pace.ViewAngles_postRoll
+	end
+	
+	local orthoborder = pace.Editor.zoomslider:GetValue() / 1000
+	if not pace.camera_orthographic then
+		return
+		{
+			origin = pace.ViewPos,
+			angles = viewang_final,
+			fov = pace.ViewFOV
+		}
+	else
+		return
+		{
+			origin = pace.ViewPos,
+			angles = viewang_final,
+			fov = pace.ViewFOV,
+			ortho = {
+				left = -orthoborder * ScrW(),
+				right = orthoborder * ScrW(),
+				top = -orthoborder * ScrH(),
+				bottom = orthoborder * ScrH()
+			},
+			znear = pace.Editor.ortho_nearz:GetValue(),
+			zfar = pace.Editor.ortho_farz:GetValue()
+		}
+	end
+	
 end
 
 function pace.ShouldDrawLocalPlayer()
@@ -619,7 +990,7 @@ end
 function pace.GetBreathing()
 	return pace.breathing
 end
-function pace.ResetEyeAngles()
+function pace.ResetEyeAngles(pitch_only)
 	local ent = pace.GetViewEntity()
 	if ent:IsValid() then
 		if ent:IsPlayer() then
@@ -635,7 +1006,13 @@ function pace.ResetEyeAngles()
 				end)
 			end)
 
-			ent:SetEyeAngles(Angle(0, 0, 0))
+			if not pitch_only then
+				ent:SetEyeAngles(Angle(0, 0, 0))
+			else
+				local ang = ent:EyeAngles()
+				ang.p = 0
+				ent:SetEyeAngles(ang)
+			end
 		else
 			ent:SetAngles(Angle(0, 0, 0))
 		end
@@ -659,6 +1036,11 @@ function pace.PopupMiniFOVSlider()
 	zoomframe.zoomslider:SetMax( 100 )
 	zoomframe.zoomslider:SetDecimals( 0 )
 	zoomframe.zoomslider:SetText("Camera FOV")
+	if pace.camera_orthographic then
+		zoomframe.zoomslider:SetText("Ortho. Width")
+		zoomframe.zoomslider:SetMin( -10000 )
+		zoomframe.zoomslider:SetMax( 10000 )
+	end
 	zoomframe.zoomslider:SetDark(true)
 	zoomframe.zoomslider:SetDefaultValue( 75 )
 

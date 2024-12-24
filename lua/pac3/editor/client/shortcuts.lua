@@ -44,6 +44,12 @@ pace.PACActionShortcut_Dictionary = {
 	"toolbar_view",
 	"toolbar_options",
 	"zoom_panel",
+	"view_orthographic",
+	"view_follow_entity",
+	"view_follow_entity_ang_frontback",
+	"view_follow_entity_sideview",
+	"reset_eyeang",
+	"reset_eyeang_pitch",
 	"T_Pose",
 	"bulk_select",
 	"clear_bulkselect",
@@ -619,6 +625,53 @@ function pace.DoShortcutFunc(action)
 
 	if action == "zoom_panel" then
 		pace.PopupMiniFOVSlider()
+	end
+	if action == "view_orthographic" then
+		pace.OrthographicView()
+	end
+	if action == "view_follow_entity" then
+		GetConVar("pac_camera_follow_entity"):SetBool(not GetConVar("pac_camera_follow_entity"):GetBool())
+	end
+	if action == "reset_eyeang" then
+		pace.ResetEyeAngles()
+	elseif action == "reset_eyeang_pitch" then
+		pace.ResetEyeAngles(true)
+	end
+	if action == "view_follow_entity_ang_frontback" then
+		pace.ResetEyeAngles(true)
+		local b = GetConVar("pac_camera_follow_entity_ang"):GetBool()
+		GetConVar("pac_camera_follow_entity_ang_use_side"):SetBool(false)
+		if not b then
+			pace.view_reversed = 1
+			GetConVar("pac_camera_follow_entity_ang"):SetBool(true)
+			timer.Simple(0, function() pace.FlashNotification("view_follow_entity_ang_frontback (back)") end)
+		else
+			if pace.view_reversed == -1 then
+				GetConVar("pac_camera_follow_entity_ang"):SetBool(false)
+				timer.Simple(0, function() pace.FlashNotification("view_follow_entity_ang_frontback (disable)") end)
+			else
+				timer.Simple(0, function() pace.FlashNotification("view_follow_entity_ang_frontback (front)") end)
+			end
+			pace.view_reversed = -pace.view_reversed
+		end
+	end
+	if action == "view_follow_entity_sideview" then
+		pace.ResetEyeAngles(true)
+		local b = GetConVar("pac_camera_follow_entity_ang"):GetBool()
+		GetConVar("pac_camera_follow_entity_ang_use_side"):SetBool(true)
+		if not b then
+			pace.view_reversed = 1
+			GetConVar("pac_camera_follow_entity_ang"):SetBool(true)
+			timer.Simple(0, function() pace.FlashNotification("view_follow_entity_sideview (left)") end)
+		else
+			if pace.view_reversed == -1 then
+				GetConVar("pac_camera_follow_entity_ang"):SetBool(false)
+				timer.Simple(0, function() pace.FlashNotification("view_follow_entity_sideview (disable)") end)
+			else
+				timer.Simple(0, function() pace.FlashNotification("view_follow_entity_sideview (right)") end)
+			end
+			pace.view_reversed = -pace.view_reversed
+		end
 	end
 
 	if action == "T_Pose" then pace.SetTPose(not pace.GetTPose()) end

@@ -6,7 +6,7 @@ pace.BulkSelectList = {}
 pace.BulkSelectUIDs = {}
 pace.BulkSelectClipboard = {}
 local refresh_halo_hook = true
-pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables", "arraying_menu", "criteria_process", "bulk_morph"}
+pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables", "arraying_menu", "criteria_process", "bulk_morph", "view_goto", "view_lockon"}
 
 pace.operations_default = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "bulk_select", "bulk_apply_properties", "spacer", "save", "load", "spacer", "remove"}
 pace.operations_legacy = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "save", "load", "spacer", "remove"}
@@ -132,6 +132,7 @@ local function DrawHaloHighlight(tbl)
 	if not pace.Active then
 		pac.RemoveHook("PreDrawHalos", "BulkSelectHighlights")
 	end
+	if pace.camera_orthographic then return end
 
 	--Find out the color and apply the halo
 	local color_string = GetConVar("pac_hover_color"):GetString()
@@ -2548,6 +2549,15 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 	local main, pnlmain = menu:AddSubMenu("quick setups") pnlmain:SetIcon("icon16/basket_go.png")
 	--base_movables can restructure, but nah bones aint it
 	if obj.GetDrawPosition and obj.ClassName ~= "bone" and obj.ClassName ~= "bone2" and obj.ClassName ~= "bone3" then
+		if obj.Bone and obj.Bone == "camera" then
+			main:AddOption("camera bone suggestion: limit view to yourself", function()
+				local event = pac.CreatePart("event") event:SetEvent("viewed_by_owner") event:SetParent(obj)
+			end):SetImage("icon16/star.png")
+			if obj.GetAlpha then main:AddOption("camera bone suggestion: fade with distance", function()
+				local model = pac.CreatePart("model2") model:SetModel("models/empty.mdl") model:SetParent(obj.Parent) model:SetName("head_position")
+				local proxy = pac.CreatePart("proxy") proxy:SetExpression("clamp(2 - (part_distance(\"head_position\")/100),0,1)") proxy:SetParent(obj) proxy:SetVariableName("Alpha")
+			end):SetImage("icon16/star.png") end
+		end
 		local substitutes, pnl = main:AddSubMenu("Restructure / Create parent substitute", function()
 			pace.SubstituteBaseMovable(obj, "create_parent")
 			timer.Simple(20, function() if pace.recently_substituted_movable_part == obj then pace.recently_substituted_movable_part = nil end end)
@@ -2654,6 +2664,61 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 		end):SetIcon("icon16/asterisk_yellow.png")
 	elseif obj.ClassName == "proxy" then
 		pnlmain:SetTooltip("remember you also have a preset library by right clicking on the expression field")
+		main:AddOption("basic feedback controller setup", function()
+			Derma_StringRequest("What should we call this controller variable?", "Type a name for the commands.\nThese number ranges would be appropriate for positions\nIf you make more, name them something different", "speed", function(str)
+				if str == "" then return end if str == " " then return end
+				local cmdforward = pac.CreatePart("command") cmdforward:SetParent(obj)
+				cmdforward:SetString("pac_proxy " .. str .. " 100")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("up") btn:SetParent(cmdforward)
+
+				local cmdback = pac.CreatePart("command") cmdback:SetParent(obj)
+				cmdback:SetString("pac_proxy " .. str .. " -100")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("down") btn:SetParent(cmdback)
+
+				local cmdneutral = pac.CreatePart("command") cmdneutral:SetParent(obj)
+				cmdneutral:SetString("pac_proxy " .. str .. " 0")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("up") btn:SetParent(cmdneutral) btn:SetInvert(false)
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("down") btn:SetParent(cmdneutral) btn:SetInvert(false)
+
+				obj:SetExpression("feedback() + ftime()*command(\"".. str .. "\")")
+			end)
+		end):SetIcon("icon16/joystick.png")
+		main:AddOption("2D feedback controller setup", function()
+			Derma_StringRequest("What should we call this controller variable?", "Type a name for the commands.\nThese number ranges would be appropriate for positions\nIf you make more, name them something different", "speed", function(str)
+				if str == "" then return end if str == " " then return end
+				local cmdforward = pac.CreatePart("command") cmdforward:SetParent(obj)
+				cmdforward:SetString("pac_proxy " .. str .. "_x" .. " 100")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("up") btn:SetParent(cmdforward)
+
+				local cmdback = pac.CreatePart("command") cmdback:SetParent(obj)
+				cmdback:SetString("pac_proxy " .. str .. "_x" .. " -100")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("down") btn:SetParent(cmdback)
+
+				local cmdneutral = pac.CreatePart("command") cmdneutral:SetParent(obj)
+				cmdneutral:SetString("pac_proxy " .. str .. "_x" .. " 0")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("up") btn:SetParent(cmdneutral) btn:SetInvert(false)
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("down") btn:SetParent(cmdneutral) btn:SetInvert(false)
+
+
+				local cmdright = pac.CreatePart("command") cmdright:SetParent(obj)
+				cmdright:SetString("pac_proxy " .. str .. "_y" .. " 100")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("right") btn:SetParent(cmdright)
+
+				local cmdleft = pac.CreatePart("command") cmdleft:SetParent(obj)
+				cmdleft:SetString("pac_proxy " .. str .. "_y" .. " -100")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("left") btn:SetParent(cmdleft)
+
+				local cmdneutral = pac.CreatePart("command") cmdneutral:SetParent(obj)
+				cmdneutral:SetString("pac_proxy " .. str .. "_y" .. " 0")
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("left") btn:SetParent(cmdneutral) btn:SetInvert(false)
+				local btn = pac.CreatePart("event") btn:SetEvent("button") btn:SetArguments("right") btn:SetParent(cmdneutral) btn:SetInvert(false)
+				obj:SetExpression(
+					"feedback_x() + ftime()*command(\"".. str .. "_x\")"
+					.. "," ..
+					"feedback_y() + ftime()*command(\"".. str .. "_y\")"
+				)
+			end)
+		end):SetIcon("icon16/joystick.png")
 		main:AddOption("command feedback attractor setup (-100, -50, 0, 50, 100)", function()
 			Derma_StringRequest("What should we call this attractor?", "Type a name for the commands.\nThese number ranges would be appropriate for positions\nIf you make more, name them something different", "target_number", function(str)
 				if str == "" then return end if str == " " then return end
@@ -3960,6 +4025,123 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 			substitute:AddOption("Switch with another (select two parts with bulk select)", function() pace.SwapBaseMovables(pace.BulkSelectList[1], pace.BulkSelectList[2], false) end)
 			substitute:AddOption("Recast into new class (warning!)", function() pace.SubstituteBaseMovable(obj, "cast") end)
 		end
+	elseif option_name == "view_lockon" then
+		if not obj then return end
+		local function add_entity_version(obj, root_owner)
+			local root_owner = obj:GetRootPart():GetOwner()
+			local lockons, pnl2 = menu:AddSubMenu("lock on to " .. tostring(root_owner))
+				local function viewlock(mode)
+					if mode ~= "toggle" then
+						pace.viewlock_mode = mode
+					else
+						if pace.viewlock then
+							if pace.viewlock ~= root_owner then
+								pace.viewlock = root_owner
+								return
+							end
+							pace.viewlock = nil
+							return
+						end
+						pace.viewlock = root_owner
+					end
+					if mode == "disable" then
+						pace.viewlock = nil
+						return
+					end
+					pace.viewlock_distance = pace.ViewPos:Distance(root_owner:GetPos() + root_owner:OBBCenter())
+					pace.viewlock = root_owner
+				end
+				lockons:AddOption("direct", function() viewlock("direct") end):SetImage("icon16/arrow_right.png")
+				lockons:AddOption("free pitch", function() viewlock("free pitch") end):SetImage("icon16/arrow_refresh.png")
+				lockons:AddOption("zero pitch", function() viewlock("zero pitch") end):SetImage("icon16/arrow_turn_right.png")
+				lockons:AddOption("disable", function() viewlock("disable") end):SetImage("icon16/cancel.png")
+			pnl2:SetImage("icon16/zoom.png")
+		end
+		local function add_part_version(obj)
+			local lockons, pnl2 = menu:AddSubMenu("lock on to " .. tostring(obj))
+				local function viewlock(mode)
+					if mode ~= "toggle" then
+						pace.viewlock_mode = mode
+					else
+						if pace.viewlock then
+							if pace.viewlock ~= obj then
+								pace.viewlock = obj
+								return
+							end
+							pace.viewlock = nil
+							return
+						end
+						pace.viewlock = obj
+					end
+					if mode == "disable" then
+						pace.viewlock = nil
+						return
+					end
+					pace.viewlock_distance = pace.ViewPos:Distance(obj:GetWorldPosition())
+					pace.viewlock = obj
+				end
+				lockons:AddOption("direct", function() viewlock("direct") end):SetImage("icon16/arrow_right.png")
+				lockons:AddOption("free pitch", function() viewlock("free pitch") end):SetImage("icon16/arrow_refresh.png")
+				lockons:AddOption("zero pitch", function() viewlock("zero pitch") end):SetImage("icon16/arrow_turn_right.png")
+				lockons:AddOption("frame of reference (x)", function() pace.viewlock_axis = "x" viewlock("frame of reference") end):SetImage("icon16/arrow_branch.png")
+				lockons:AddOption("frame of reference (y)", function() pace.viewlock_axis = "y" viewlock("frame of reference") end):SetImage("icon16/arrow_branch.png")
+				lockons:AddOption("frame of reference (z)", function() pace.viewlock_axis = "z" viewlock("frame of reference") end):SetImage("icon16/arrow_branch.png")
+				lockons:AddOption("disable", function() viewlock("disable") end):SetImage("icon16/cancel.png")
+				pnl2:SetImage("icon16/zoom.png")
+		end
+		local is_root_entity = obj:GetOwner() == obj:GetRootPart():GetOwner()
+		if obj.ClassName == "group" then
+			if is_root_entity then
+				add_entity_version(obj, obj:GetRootPart():GetOwner())
+			elseif obj:GetOwner().GetWorldPosition then
+				add_part_version(obj:GetOwner())
+			end
+		elseif obj.GetWorldPosition then
+			add_part_version(obj)
+		end
+	elseif option_name == "view_goto" then
+		if not obj then return end
+		local is_root_entity = obj:GetOwner() == obj:GetRootPart():GetOwner()
+		if obj.ClassName == "group" then
+			if is_root_entity then
+				local gotos, pnl2 = menu:AddSubMenu("go to")
+				pnl2:SetImage("icon16/arrow_turn_right.png")
+				local axes = {"x","y","z","world_x","world_y","world_z"}
+				for _,ax in ipairs(axes) do
+					gotos:AddOption("+" .. ax, function()
+						pace.GoTo(obj:GetRootPart():GetOwner(), "view", {radius = 50, axis = ax})
+					end):SetImage("icon16/arrow_turn_right.png")
+					gotos:AddOption("-" .. ax, function()
+						pace.GoTo(obj:GetRootPart():GetOwner(), "view", {radius = -50, axis = ax})
+					end):SetImage("icon16/arrow_turn_right.png")
+				end
+			elseif obj:GetOwner().GetWorldPosition then
+				local gotos, pnl2 = menu:AddSubMenu("go to")
+				pnl2:SetImage("icon16/arrow_turn_right.png")
+				local axes = {"x","y","z","world_x","world_y","world_z"}
+				for _,ax in ipairs(axes) do
+					gotos:AddOption("+" .. ax, function()
+						pace.GoTo(obj, "view", {radius = 50, axis = ax})
+					end):SetImage("icon16/arrow_turn_right.png")
+					gotos:AddOption("-" .. ax, function()
+						pace.GoTo(obj, "view", {radius = -50, axis = ax})
+					end):SetImage("icon16/arrow_turn_right.png")
+				end
+			end
+		elseif obj.GetWorldPosition then
+			local gotos, pnl2 = menu:AddSubMenu("go to")
+			pnl2:SetImage("icon16/arrow_turn_right.png")
+			local axes = {"x","y","z","world_x","world_y","world_z"}
+			for _,ax in ipairs(axes) do
+				gotos:AddOption("+" .. ax, function()
+					pace.GoTo(obj, "view", {radius = 50, axis = ax})
+				end):SetImage("icon16/arrow_turn_right.png")
+				gotos:AddOption("-" .. ax, function()
+					pace.GoTo(obj, "view", {radius = -50, axis = ax})
+				end):SetImage("icon16/arrow_turn_right.png")
+			end
+		end
+
 	end
 
 end

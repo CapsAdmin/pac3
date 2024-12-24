@@ -17,7 +17,9 @@ local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 local zoom_persistent = CreateClientConVar("pac_zoom_persistent", 0, true, false, 'Keep zoom between sessions.')
 local zoom_mousewheel = CreateClientConVar("pac_zoom_mousewheel", 0, true, false, 'Enable zooming with mouse wheel.')
 local zoom_smooth = CreateClientConVar("pac_zoom_smooth", 0, true, false, 'Enable smooth zooming.')
+
 local remember_divider = CreateConVar("pac_editor_remember_divider_height", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's vertical divider position")
+local remember_width = CreateConVar("pac_editor_remember_width", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's width")
 
 function PANEL:Init()
 	self:SetTitle("")
@@ -102,6 +104,46 @@ function PANEL:Init()
 			self.smoothlabel:SetWrap(true)
 			self.smoothlabel:SetAutoStretchVertical(true)
 
+			self.orthocheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.orthocheckbox:SetText("Orthographic")
+			self.orthocheckbox:Dock(TOP)
+			self.orthocheckbox:SetDark(true)
+			self.orthocheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+			self.orthocheckbox:SetConVar("pac_camera_orthographic")
+			self.orthocheckbox:SetTooltip("Orthographic view projects parallel rays perpendicular to a rectangle. Instead of degrees, it is in terms of distance units (Hammer Units)\n\nThere are still —possibly engine-related— issues where objects and world geometry can disapear if looking from the wrong angle due to culling. Especially worse in tight spaces.")
+
+			self.ortholabel = vgui.Create("DLabel", self.zoomsettings)
+			self.ortholabel:Dock(TOP)
+			self.ortholabel:SetDark(true)
+			self.ortholabel:SetText("Enable orthographic view.")
+			self.ortholabel:SetWrap(true)
+			self.ortholabel:SetAutoStretchVertical(true)
+
+			self.ortho_nearz = vgui.Create("DNumSlider", self.zoomsettings)
+			self.ortho_nearz:Dock(TOP)
+			self.ortho_nearz:SetMin( 0 )
+			self.ortho_nearz:SetMax( 5000 )
+			self.ortho_nearz:SetDecimals( 1 )
+			self.ortho_nearz:SetText("NearZ")
+			self.ortho_nearz:SetDark(true)
+			self.ortho_nearz:SetDefaultValue( 0 )
+			self.ortho_nearz:SetValue( 0 )
+
+			self.ortho_farz = vgui.Create("DNumSlider", self.zoomsettings)
+			self.ortho_farz:Dock(TOP)
+			self.ortho_farz:SetMin( 0 )
+			self.ortho_farz:SetMax( 64000 )
+			self.ortho_farz:SetDecimals( 1 )
+			self.ortho_farz:SetText("FarZ")
+			self.ortho_farz:SetDark(true)
+			self.ortho_farz:SetDefaultValue( 64000 )
+			self.ortho_farz:SetValue( 64000 )
+			if not pace.camera_orthographic then
+				self.ortho_nearz:Hide()
+				self.ortho_farz:Hide()
+			end
+
+
 		self.sliderpanel = vgui.Create("DPanel", self.zoomframe)
 		self.sliderpanel:SetSize(180, 20)
 		self.sliderpanel:Dock(TOP)
@@ -113,6 +155,11 @@ function PANEL:Init()
 			self.zoomslider:SetMax( 100 )
 			self.zoomslider:SetDecimals( 0 )
 			self.zoomslider:SetText("Camera FOV")
+			if pace.camera_orthographic then
+				self.zoomslider:SetText("Ortho. Width")
+				self.zoomslider:SetMin( -10000 )
+				self.zoomslider:SetMax( 10000 )
+			end
 			self.zoomslider:SetDark(true)
 			self.zoomslider:SetDefaultValue( 75 )
 
@@ -128,6 +175,13 @@ function PANEL:Init()
 
 	self:SetCookieName("pac3_editor")
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
+
+	if remember_width:GetBool() then
+		self.init_w = math.max(self:GetCookieNumber("width"), 200)
+	end
+	if remember_divider:GetBool() then
+		pace.vertical_div_height = self:GetCookieNumber("y_divider")
+	end
 
 	self:MakeBar()
 	self.lastTopBarHover = 0
@@ -177,6 +231,10 @@ function PANEL:OnRemove()
 		pace.vertical_div_height = self.div:GetTopHeight()
 	end
 
+	if remember_width:GetBool() then
+		pace.editor_width = math.max(self:GetWide(), 200)
+	end
+
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
@@ -212,12 +270,26 @@ function PANEL:Think(...)
 
 	self:SetTall(ScrH() - (self.y_offset or 0))
 	local w = math.max(self:GetWide(), 200)
+
+	--wtf the GetWide isn't saved on Init??? I have to do this?
+	if self.init_w then
+		w = self.init_w
+		self.init_w = nil
+	end
 	self:SetWide(w)
 	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), (self.y_offset or 0))
 
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
 		self.last_x = x
+	end
+	if w ~= self.last_w then
+		self:SetCookie("width", w)
+		self.last_w = w
+	end
+	if pace.vertical_div_height ~= self.last_vertical_div_height then
+		self:SetCookie("y_divider", pace.vertical_div_height)
+		self.last_vertical_div_height = pace.vertical_div_height
 	end
 
 	if self.exit_button:IsValid() then
