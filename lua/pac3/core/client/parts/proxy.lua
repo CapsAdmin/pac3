@@ -53,7 +53,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("PreviewOutput", false, {description = "Previews the proxy's output (for yourself) next to the nearest owner entity in the game"})
 
 	BUILDER:SetPropertyGroup("extra expressions")
-		BUILDER:GetSet("ExpressionOnHide", "", {description = "Math to apply once, when the proxy is hidden. It computes once, so it will not move."})
+		BUILDER:GetSet("ExpressionOnHide", "", {description = "Math to apply once, when the proxy is hidden. It computes once, so it will not move.", editor_panel = "code_proxy"})
 		BUILDER:GetSet("Extra1", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra1() or var1() to save space, or by another proxy as extra1(\"uid or name\") or var1(\"uid or name\")", editor_panel = "code_proxy"})
 		BUILDER:GetSet("Extra2", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra2() or var2() to save space, or by another proxy as extra2(\"uid or name\") or var2(\"uid or name\")", editor_panel = "code_proxy"})
 		BUILDER:GetSet("Extra3", "", {description = "Write extra math here.\nIt computes before the main expression and can be accessed from the main expression as extra3() or var3() to save space, or by another proxy as extra3(\"uid or name\") or var3(\"uid or name\")", editor_panel = "code_proxy"})
@@ -1596,6 +1596,13 @@ local allowed = {
 
 function PART:SetExpression(str, slot)
 	str = string.Trim(str,"\n")
+	if self == pace.current_part and (pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad) and str ~= "" then
+		--update luapad text if we update the expression from the properties
+		if slot == pace.ActiveSpecialPanel.luapad.keynumber then --this check prevents cross-contamination
+			pace.ActiveSpecialPanel.luapad:SetText(str)
+		end
+	end
+
 	if not slot then --that's the default expression
 		self.Expression = str
 		self.ExpressionFunc = nil
@@ -1660,31 +1667,26 @@ function PART:SetExpression(str, slot)
 end
 
 function PART:SetExpressionOnHide(str)
-	str = string.Trim(str,"\n")
 	self.ExpressionOnHide = str
 	self:SetExpression(str, 0)
 end
 
 function PART:SetExtra1(str)
-	str = string.Trim(str,"\n")
 	self.Extra1 = str
 	self:SetExpression(str, 1)
 end
 
 function PART:SetExtra2(str)
-	str = string.Trim(str,"\n")
 	self.Extra2 = str
 	self:SetExpression(str, 2)
 end
 
 function PART:SetExtra3(str)
-	str = string.Trim(str,"\n")
 	self.Extra3 = str
 	self:SetExpression(str, 3)
 end
 
 function PART:SetExtra4(str)
-	str = string.Trim(str,"\n")
 	self.Extra4 = str
 	self:SetExpression(str, 4)
 end

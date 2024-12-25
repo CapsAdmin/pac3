@@ -1065,6 +1065,15 @@ do -- script proxy
 		if isnumber(value) then
 			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
 			value = math.Round(value, 7)
+		elseif isvector(var) then
+			var = math.Round(var.x,3) .. "," .. math.Round(var.y,3) .. "," .. math.Round(var.z,3)
+			value = var
+		elseif isangle(var) then
+			var = math.Round(var.p,3) .. "," .. math.Round(var.y,3) .. "," .. math.Round(var.r,3)
+			value = var
+		elseif IsColor(var) then
+			var = math.Round(var.r,3) .. "," .. math.Round(var.g,3) .. "," .. math.Round(var.b,3)
+			value = var
 		end
 		local str = tostring(value)
 		local original_str = string.Trim(str,"\n")
@@ -1111,6 +1120,15 @@ do -- script proxy
 		frame:SetSizable(true)
 
 		local editor = vgui.Create("pace_luapad", frame)
+		local slots = {
+			["ExpressionOnHide"] = 0,
+			["Extra1"] = 1,
+			["Extra2"] = 2,
+			["Extra3"] = 3,
+			["Extra4"] = 4,
+			["Extra5"] = 5,
+		}
+		editor.keynumber = slots[self.CurrentKey]
 		frame.luapad = editor
 		install_fontsize_buttons(frame, editor)
 		editor:Dock(FILL)
