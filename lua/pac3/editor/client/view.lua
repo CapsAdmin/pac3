@@ -108,7 +108,7 @@ pace.camera_roll_drag_bind = CreateClientConVar("pac_editor_camera_roll_bind", "
 pace.roll_snapping = CreateClientConVar("pac_camera_roll_snap", "0", true)
 
 pace.camera_orthographic_cvar = CreateClientConVar("pac_camera_orthographic", "0", true)
-pace.camera_orthographic = false
+pace.camera_orthographic = pace.camera_orthographic_cvar:GetBool()
 pace.viewlock_mode = ""
 
 function pace.OrthographicView(b)
@@ -502,6 +502,7 @@ pace.view_reversed = 1
 pace.viewlock_distance = 75
 
 function pace.CalcView(ply, pos, ang, fov)
+	if not pace.IsActive() then pace.EnableView(false) return end
 	if pace.editing_viewmodel or pace.editing_hands then
 		pace.ViewPos = pos
 		pace.ViewAngles = ang
@@ -658,8 +659,7 @@ function pace.CalcView(ply, pos, ang, fov)
 		pace.ViewAngles_postRoll:RotateAroundAxis(pace.ViewAngles:Forward(), pace.view_roll)
 		viewang_final = pace.ViewAngles_postRoll
 	end
-	
-	local orthoborder = pace.Editor.zoomslider:GetValue() / 1000
+
 	if not pace.camera_orthographic then
 		return
 		{
@@ -668,6 +668,7 @@ function pace.CalcView(ply, pos, ang, fov)
 			fov = pace.ViewFOV
 		}
 	else
+		local orthoborder = pace.Editor.zoomslider:GetValue() / 1000
 		return
 		{
 			origin = pace.ViewPos,
