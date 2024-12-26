@@ -158,4 +158,8 @@ function PART:OnHide()
 	end
 end
 
+function PART:OnRemove()
+	--overridden to prevent calling SafeRemoveEntityDelayed on a weapon entity (not a pac CS Ent)
+end
+
 BUILDER:Register()
