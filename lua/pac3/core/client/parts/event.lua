@@ -1364,6 +1364,7 @@ PART.OldEvents = {
 
 	ammo = {
 		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "ammo compares the active weapon's current clip ammo on either the primary or secondary ammunition.",
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		userdata = {{editor_onchange = function(part, num) return math.Round(num) end}},
 		callback = function(self, ent, primary, amount)
@@ -1377,7 +1378,20 @@ PART.OldEvents = {
 	},
 	total_ammo = {
 		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "total_ammo compares the ammo reserves with a certain amount.\n\nhaving primary or secondary as the ammo ID selects the active weapon.\n\nOtherwise, we expect an ammo ID number.\n\nbeware the ammo IDs are dynamic and might change depending on the server because they're loading different weapons with possible custom ammo.",
 		arguments = {{ammo_id = "string"}, {amount = "number"}},
+		userdata = {{default = "primary", enums = function()
+			local tbl = {}
+			tbl["primary"] = "primary"
+			tbl["secondary"] = "secondary"
+			for i=0,1000,1 do
+				local ammo_name = game.GetAmmoName(i)
+				if ammo_name ~= nil then
+					tbl[ammo_name .. " (ID="..i..")"] = tostring(i)
+				end
+			end
+			return tbl
+		end}},
 		callback = function(self, ent, ammo_id, amount)
 			if ent.GetAmmoCount then
 				ammo_id = tonumber(ammo_id) or ammo_id:lower()
@@ -1904,16 +1918,35 @@ PART.OldEvents = {
 
 	parent_scale_x = {
 		operator_type = "number", preferred_operator = "above",
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
+		arguments = {{scale = "number"},{default_to_grandparent = "boolean"}},
+		userdata = {{default = 1}, {default = true}},
+		callback = function(self, ent, num, default_to_grandparent)
+
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
+			if default_to_grandparent then --legacy behavior
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
+			else
+				--GetParentEx can differ from GetParent, but that only happens if we set TargetPart ("External origin part")
+				if parent ~= self:GetParent() then
+					if self.TargetPart ~= parent then
+						if not self.TargetPart:IsValid() and parent:HasParent() then
+							parent = parent:GetParent()
+						end
+					end
+				end
 			end
 
 			if parent:IsValid() then
-				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.x * parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.x) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
+				local value = (parent.Scale and parent.Scale.x * parent.Size)
+					or (parent.pac_model_scale and parent.pac_model_scale.x)
+					or (parent.GetModelScale and parent:GetModelScale())
+					or 1
+					value = math.Round(value,4)
+				self:SetInfo("selected parent : " .. tostring(parent) .. "\nx scale = " .. value)
+				return self:NumberOperator(value, num)
 			end
 
 			return 1
@@ -1921,16 +1954,35 @@ PART.OldEvents = {
 	},
 	parent_scale_y = {
 		operator_type = "number", preferred_operator = "above",
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
+		arguments = {{scale = "number"},{default_to_grandparent = "boolean"}},
+		userdata = {{default = 1}, {default = true}},
+		callback = function(self, ent, num, default_to_grandparent)
+
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
+			if default_to_grandparent then --legacy behavior
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
+			else
+				--GetParentEx can differ from GetParent, but that only happens if we set TargetPart ("External origin part")
+				if parent ~= self:GetParent() then
+					if self.TargetPart ~= parent then
+						if not self.TargetPart:IsValid() and parent:HasParent() then
+							parent = parent:GetParent()
+						end
+					end
+				end
 			end
 
 			if parent:IsValid() then
-				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.y * parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.y) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
+				local value = (parent.Scale and parent.Scale.y * parent.Size)
+					or (parent.pac_model_scale and parent.pac_model_scale.y)
+					or (parent.GetModelScale and parent:GetModelScale())
+					or 1
+					value = math.Round(value,4)
+				self:SetInfo("selected parent : " .. tostring(parent) .. "\ny scale = " .. value)
+				return self:NumberOperator(value, num)
 			end
 
 			return 1
@@ -1938,16 +1990,35 @@ PART.OldEvents = {
 	},
 	parent_scale_z = {
 		operator_type = "number", preferred_operator = "above",
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
+		arguments = {{scale = "number"},{default_to_grandparent = "boolean"}},
+		userdata = {{default = 1}, {default = true}},
+		callback = function(self, ent, num, default_to_grandparent)
+
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
+			if default_to_grandparent then --legacy behavior
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
+			else
+				--GetParentEx can differ from GetParent, but that only happens if we set TargetPart ("External origin part")
+				if parent ~= self:GetParent() then
+					if self.TargetPart ~= parent then
+						if not self.TargetPart:IsValid() and parent:HasParent() then
+							parent = parent:GetParent()
+						end
+					end
+				end
 			end
 
 			if parent:IsValid() then
-				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.z * parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.z) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
+				local value = (parent.Scale and parent.Scale.z * parent.Size)
+					or (parent.pac_model_scale and parent.pac_model_scale.z)
+					or (parent.GetModelScale and parent:GetModelScale())
+					or 1
+					value = math.Round(value,4)
+				self:SetInfo("selected parent : " .. tostring(parent) .. "\nz scale = " .. value)
+				return self:NumberOperator(value, num)
 			end
 
 			return 1
