@@ -213,32 +213,25 @@ function pace.LoadParts(name, clear, override_part)
 		pac.dprint("loading Parts %s", name)
 
 		if name:find("https?://") then
-
-			local ext = name:match("/.+%.(%a+)[%?&]?.-")
-			if ext == "txt" then
-				local function callback(str)
-					if string.find( str, "<!DOCTYPE html>" ) then
-						pace.MessagePrompt("Invalid URL, the website returned a HTML file. If you're using Github then use the RAW option.", "URL Failed", "OK")
-						return
-					end
-
-					local data, err = pace.luadata.Decode(str)
-					if not data then
-						local message = string.format("URL fail: %s : %s\n", name, err)
-						pace.MessagePrompt(message, "URL Failed", "OK")
-						return
-					end
-
-					pace.LoadPartsFromTable(data, clear, override_part)
+			local function callback(str)
+				if string.find( str, "<!DOCTYPE html>" ) then
+					pace.MessagePrompt("Invalid URL, .txt expected, but the website returned a HTML file. If you're using Github then use the RAW option.", "URL Failed", "OK")
+					return
 				end
 
-				pac.HTTPGet(name, callback, function(err)
-					pace.MessagePrompt(err, "HTTP Request Failed for " .. name, "OK")
-				end)
-			else
-				pace.MessagePrompt(".txt file expected, got" .. ext, "Invalid file", "OK")
-				return
+				local data, err = pace.luadata.Decode(str)
+				if not data then
+					local message = string.format("Failed to load pac3 outfit from url: %s : %s\n", name, err)
+					pace.MessagePrompt(message, "URL Failed", "OK")
+					return
+				end
+
+				pace.LoadPartsFromTable(data, clear, override_part)
 			end
+
+			pac.HTTPGet(name, callback, function(err)
+				pace.MessagePrompt(err, "HTTP Request Failed for " .. name, "OK")
+			end)
 		else
 			name = name:gsub("%.txt", "")
 
