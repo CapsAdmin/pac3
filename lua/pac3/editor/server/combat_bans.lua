@@ -46,7 +46,10 @@ if SERVER then
 end
 
 
-net.Receive("pac.CombatBanUpdate", function()
+net.Receive("pac.CombatBanUpdate", function(len, player)
+	if not player:IsAdmin() then
+		return
+	end
 	--get old states first
 	pac.old_tbl_on_file = get_combat_ban_states()
 
@@ -80,6 +83,9 @@ net.Receive("pac.CombatBanUpdate", function()
 end)
 
 net.Receive("pac.RequestCombatBanStates", function(len, ply)
+	if not ply:IsAdmin() then
+		return
+	end
 	pac.global_combat_whitelist = get_combat_ban_states()
 	net.Start("pac.SendCombatBanStates")
 	net.WriteTable(pac.global_combat_whitelist)
