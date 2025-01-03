@@ -159,6 +159,13 @@ function PART:SetEvent(event)
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 
 	local owner = self:GetPlayerOwner()
+	timer.Simple(1, function()
+		--caching for some events
+		pac.RegisterPartToCache(owner, "button_events", self, event ~= "button")
+		if tracked_events[event] then
+			pac.LinkSpecialTrackedPartsForEvent(self, owner)
+		end
+	end)
 
 	if (owner == pac.LocalPlayer) and (not pace.processing) then
 		if event == "command" then owner.pac_command_events = owner.pac_command_events or {} end
@@ -210,11 +217,6 @@ function PART:SetEvent(event)
 		self:GetDynamicProperties(reset)
 		if not GetConVar("pac_editor_remember_divider_height"):GetBool() and IsValid(pace.Editor) then pace.Editor.div:SetTopHeight(ScrH() - 520) end
 
-	end
-	--caching for some events
-	pac.RegisterPartToCache(owner, "button_events", self, event ~= "button")
-	if tracked_events[event] then
-		timer.Simple(1, function() pac.LinkSpecialTrackedPartsForEvent(self, owner) end)
 	end
 end
 
@@ -2467,7 +2469,6 @@ PART.OldEvents = {
 		callback = function(self, ent, uid)
 			uid = uid or ""
 			uid = string.gsub(uid, "\"", "")
-			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				--for _,part in pairs(pac.GetLocalParts()) do
 				for _,part in ipairs(self.specialtrackedparts) do

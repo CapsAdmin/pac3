@@ -648,14 +648,14 @@ end
 function pac.LinkSpecialTrackedPartsForEvent(part, ply)
 	part.erroring_cached_parts = {}
 	part.found_cached_parts = {}
-	
+
 	part.specialtrackedparts = {}
 	local tracked_classes = {
 		["damage_zone"] = true,
 		["lock"] = true
 	}
 	for _,part2 in pairs(all_parts) do
-		if ply == part2:GetPlayerOwner() and tracked_classes[part.ClassName] then
+		if ply == part2:GetPlayerOwner() and tracked_classes[part2.ClassName] then
 			table.insert(part.specialtrackedparts,part2)
 		end
 	end
