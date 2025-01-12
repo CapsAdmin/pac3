@@ -25,6 +25,7 @@ CreateConVar( "pac_hover_halo_limit", 100, FCVAR_ARCHIVE, "max number of parts b
 CreateConVar("pac_bulk_select_key", "ctrl", FCVAR_ARCHIVE, "Button to hold to use bulk select")
 CreateConVar("pac_bulk_select_halo_mode", 1, FCVAR_ARCHIVE, "Halo Highlight mode.\n0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.")
 local bulk_select_subsume = CreateConVar("pac_bulk_select_subsume", "1", FCVAR_ARCHIVE, "Whether bulk-selecting a part implicitly deselects its children since they are covered by the parent already.\nWhile it can provide a clearer view of what's being selected globally which simplifies broad operations like deleting, moving and copying, it prevents targeted operations on nested parts like bulk property editing.")
+local bulkselect_cursortext = CreateConVar("pac_bulk_select_cursor_info", "1", FCVAR_ARCHIVE, "Whether to draw some info next to your cursor when there is a bulk selection")
 
 CreateConVar("pac_copilot_partsearch_depth", -1, FCVAR_ARCHIVE, "amount of copiloting in the searchable part menu\n-1:none\n0:auto-focus on the text edit for events\n1:bring up a list of clickable event types\nother parts aren't supported yet")
 CreateConVar("pac_copilot_make_popup_when_selecting_event", 1, FCVAR_ARCHIVE, "whether to create a popup so you can read what an event does")
@@ -3841,13 +3842,16 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 
 		local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
 		local info
-		if mode == 0 then info = "not halo-highlighted"
-		elseif mode == 1 then info = "automatically halo-highlighted"
-		elseif mode == 2 then info = "halo-highlighted on custom keypress:"..GetConVar("pac_bulk_select_halo_key"):GetString()
-		elseif mode == 3 then info = "halo-highlighted on preset keypress: control"
-		elseif mode == 4 then info = "halo-highlighted on preset keypress: shift" end
+		if mode == 0 then info = "none"
+		elseif mode == 1 then info = "passive"
+		elseif mode == 2 then info = "custom keypress:"..GetConVar("pac_bulk_select_halo_key"):GetString()
+		elseif mode == 3 then info = "preset keypress: control"
+		elseif mode == 4 then info = "preset keypress: shift" end
 
-		bulk_menu:AddOption(L"Bulk select info: "..info):SetImage(pace.MiscIcons.info)
+		bulk_menu:AddOption(L"Bulk select highlight mode: "..info, function()
+			Derma_StringRequest("Change bulk select halo highlighting mode", "0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.",
+			tostring(mode), function(str) RunConsoleCommand("pac_bulk_select_halo_mode", str) end)
+		end):SetImage(pace.MiscIcons.info)
 		if #pace.BulkSelectList == 0 then
 			bulk_menu:AddOption(L"Bulk select info: nothing selected"):SetImage(pace.MiscIcons.info)
 		else
@@ -3882,7 +3886,8 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		end
 		local subsume_pnl = bulk_menu:AddCVar("bulk select subsume", "pac_bulk_select_subsume", "1", "0")
 		subsume_pnl:SetTooltip("Whether bulk select should take the hierarchy into account, deselecting children when selecting a part.\nEnable this if you commonly do broad operations like copying, deleting or moving parts.\nDisable this for targeted operations like property editing on nested model structures, for example.")
-
+		bulk_menu:AddCVar("draw bulk select info next to cursor", "pac_bulk_select_cursor_info", "1", "0")
+		
 		local resetting_mode, resetpnl = bulk_menu:AddSubMenu("Clear selection after operation?") resetpnl:SetImage("icon16/table_delete.png")
 		local resetting_mode1 = resetting_mode:AddOption("Yes") resetting_mode1:SetIsCheckable(true) resetting_mode1:SetRadio(true)
 		local resetting_mode2 = resetting_mode:AddOption("No") resetting_mode2:SetIsCheckable(true) resetting_mode2:SetRadio(true)
@@ -5166,3 +5171,36 @@ tbl = {
 
 ]]
 
+local bsel_main_icon = Material("icon16/table_multiple.png")
+local bsel_clipboard_icon = Material("icon16/page_white_text.png")
+local white = Color(255,255,255)
+
+pac.AddHook("DrawOverlay", "bulkselect_cursor_info", function()
+	if not bulkselect_cursortext:GetBool() then return end
+	if not pace then return end
+	if not pace.IsFocused() then return end
+	local mx, my = input.GetCursorPos()
+
+	surface.SetFont("BudgetLabel")
+	surface.SetMaterial(Material("icon16/table_multiple.png"))
+	surface.SetTextColor(white)
+	surface.SetDrawColor(white)
+	local base_y = my + 8
+
+	if pace.BulkSelectList then
+		if #pace.BulkSelectList > 0 then
+			surface.DrawTexturedRect(mx + 10, base_y, 16, 16)
+			surface.SetTextPos(mx + 12 + 16, base_y)
+			surface.DrawText("bulk select [" .. #pace.BulkSelectList .."]")
+			base_y = base_y + 16
+		end
+	end
+	if pace.BulkSelectClipboard then
+		if #pace.BulkSelectClipboard > 0 then
+			surface.SetMaterial(Material("icon16/page_white_text.png"))
+			surface.DrawTexturedRect(mx + 10, base_y, 16, 16)
+			surface.SetTextPos(mx + 12 + 16, base_y)
+			surface.DrawText("bulk clipboard [" .. #pace.BulkSelectClipboard .."]")
+		end
+	end
+end)

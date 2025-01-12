@@ -229,7 +229,7 @@ pace.PACActionShortcut_Experimental = {
 		[1] = {"CTRL", "c"}
 	},
 
-	["bulk_copy"] = {
+	["copy_bulkselect"] = {
 		[1] = {"SHIFT", "CTRL", "c"}
 	},
 
@@ -680,6 +680,7 @@ function pace.DoShortcutFunc(action)
 		pace.DoBulkSelect(pace.current_part)
 	end
 	if action == "clear_bulkselect" then pace.ClearBulkList() end
+	if action == "bulk_copy" then pace.BulkCopy(pace.current_part) end --deprecated keyword
 	if action == "copy_bulkselect" then pace.BulkCopy(pace.current_part) end
 	if action == "bulk_insert" then pace.BulkCutPaste(pace.current_part) end
 	if action == "bulk_delete" then pace.BulkRemovePart() end
