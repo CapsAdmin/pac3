@@ -22,8 +22,9 @@ local hover_color = CreateConVar( "pac_hover_color", "255 255 255", FCVAR_ARCHIV
 CreateConVar( "pac_hover_pulserate", 20, FCVAR_ARCHIVE, "pulse rate of the highlighting when hovering over pac3 parts")
 CreateConVar( "pac_hover_halo_limit", 100, FCVAR_ARCHIVE, "max number of parts before hovering over pac3 parts stops computing to avoid lag")
 
-CreateConVar( "pac_bulk_select_key", "ctrl", FCVAR_ARCHIVE, "Button to hold to use bulk select")
-CreateConVar( "pac_bulk_select_halo_mode", 1, FCVAR_ARCHIVE, "Halo Highlight mode.\n0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.")
+CreateConVar("pac_bulk_select_key", "ctrl", FCVAR_ARCHIVE, "Button to hold to use bulk select")
+CreateConVar("pac_bulk_select_halo_mode", 1, FCVAR_ARCHIVE, "Halo Highlight mode.\n0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.")
+local bulk_select_subsume = CreateConVar("pac_bulk_select_subsume", "1", FCVAR_ARCHIVE, "Whether bulk-selecting a part implicitly deselects its children since they are covered by the parent already.\nWhile it can provide a clearer view of what's being selected globally which simplifies broad operations like deleting, moving and copying, it prevents targeted operations on nested parts like bulk property editing.")
 
 CreateConVar("pac_copilot_partsearch_depth", -1, FCVAR_ARCHIVE, "amount of copiloting in the searchable part menu\n-1:none\n0:auto-focus on the text edit for events\n1:bring up a list of clickable event types\nother parts aren't supported yet")
 CreateConVar("pac_copilot_make_popup_when_selecting_event", 1, FCVAR_ARCHIVE, "whether to create a popup so you can read what an event does")
@@ -73,7 +74,11 @@ local function BulkSelectRefreshFadedNodes(part_trace)
 	for _,v in ipairs(pace.BulkSelectList) do
 		if not v:IsValid() then table.RemoveByValue(pace.BulkSelectList, v)
 		elseif IsValid(v.pace_tree_node) then
-			v.pace_tree_node:SetAlpha( 150 )
+			if bulk_select_subsume:GetBool() then
+				v.pace_tree_node:SetAlpha( 150 )
+			else
+				v.pace_tree_node:SetAlpha( 255 )
+			end
 		end
 	end
 end
@@ -1375,25 +1380,33 @@ do -- menu
 		pace.BulkSelectList = pace.BulkSelectList or {}
 		if (table.HasValue(pace.BulkSelectList, obj)) then
 			pace.RemoveFromBulkSelect(obj)
+			pace.FlashNotification("Bulk select: de-selected " .. tostring(obj))
 			selected_part_added = false
 		elseif (pace.BulkSelectList[obj] == nil) then
 			pace.AddToBulkSelect(obj)
+			pace.FlashNotification("Bulk select: selected " .. tostring(obj))
 			selected_part_added = true
-			for _,v in ipairs(obj:GetChildrenList()) do
-				pace.RemoveFromBulkSelect(v)
+			if bulk_select_subsume:GetBool() then
+				for _,v in ipairs(obj:GetChildrenList()) do
+					pace.RemoveFromBulkSelect(v)
+				end
 			end
 		end
 
-		--check parents and children
-		for _,v in ipairs(pace.BulkSelectList) do
-			if table.HasValue(v:GetChildrenList(), obj) then
-				--print("selected part is already child to a bulk-selected part!")
-				pace.RemoveFromBulkSelect(obj)
-				selected_part_added = false
-			elseif table.HasValue(obj:GetChildrenList(), v) then
-				--print("selected part is already parent to a bulk-selected part!")
-				pace.RemoveFromBulkSelect(v)
-				selected_part_added = false
+		if bulk_select_subsume:GetBool() then
+			--check parents and children
+			for _,v in ipairs(pace.BulkSelectList) do
+				if table.HasValue(v:GetChildrenList(), obj) then
+					--print("selected part is already child to a bulk-selected part!")
+					pace.RemoveFromBulkSelect(obj)
+					pace.FlashNotification("")
+					selected_part_added = false
+				elseif table.HasValue(obj:GetChildrenList(), v) then
+					--print("selected part is already parent to a bulk-selected part!")
+					pace.RemoveFromBulkSelect(v)
+					pace.FlashNotification("")
+					selected_part_added = false
+				end
 			end
 		end
 
@@ -1426,7 +1439,9 @@ do -- menu
 
 	function pace.RemoveFromBulkSelect(obj)
 		table.RemoveByValue(pace.BulkSelectList, obj)
-		obj.pace_tree_node:SetAlpha( 255 )
+		if IsValid(obj.pace_tree_node) then
+			obj.pace_tree_node:SetAlpha( 255 )
+		end
 		obj:SetInfo()
 		--RebuildBulkHighlight()
 	end
@@ -1435,7 +1450,14 @@ do -- menu
 		table.insert(pace.BulkSelectList, obj)
 		if obj.pace_tree_node == nil then return end
 		obj:SetInfo("selected in bulk select")
-		obj.pace_tree_node:SetAlpha( 150 )
+		if IsValid(obj.pace_tree_node) then
+			if bulk_select_subsume:GetBool() then
+				obj.pace_tree_node:SetAlpha( 150 )
+			else
+				obj.pace_tree_node:SetAlpha( 255 )
+			end
+			
+		end
 		--RebuildBulkHighlight()
 	end
 	function pace.BulkHide()
@@ -2269,8 +2291,17 @@ do -- menu
 			--default_operations_order
 		--if not obj then obj = pace.current_part end
 		if obj then pace.AddClassSpecificPartMenuComponents(menu, obj) end
+		local contained_bulk_select = false
 		for _,option_name in ipairs(pace.operations_order) do
+			if option_name == "bulk_select" then
+				contained_bulk_select = true
+			end
 			pace.addPartMenuComponent(menu, obj, option_name)
+		end
+
+		if #pace.BulkSelectList >= 1 and not contained_bulk_select then
+			menu:AddSpacer()
+			pace.addPartMenuComponent(menu, obj, "bulk_select")
 		end
 
 		--[[if obj then
@@ -3783,7 +3814,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 			end
 		end)
 	elseif option_name == "arraying_menu" then
-		local arraying_menu, pnl = menu:AddSubMenu(L"arraying menu", function() pace.OpenArrayingMenu(obj) end) pnl:SetImage('icon16/table_multiple.png')
+		local arraying_menu, pnl = menu:AddSubMenu(L"arraying menu", function() pace.OpenArrayingMenu(obj) end) pnl:SetImage("icon16/table_multiple.png")
 		if obj.GetWorldPosition then
 			local icon = obj.pace_tree_node.ModelPath or obj.Icon
 			if string.sub(icon,-3) == "mdl" then icon = "materials/spawnicons/"..string.gsub(icon, ".mdl", "")..".png" end
@@ -3849,6 +3880,8 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				copied:AddOption(i .. " : " .. name_str .. " (" .. v.ClassName .. ")"):SetIcon(v.Icon)
 			end
 		end
+		local subsume_pnl = bulk_menu:AddCVar("bulk select subsume", "pac_bulk_select_subsume", "1", "0")
+		subsume_pnl:SetTooltip("Whether bulk select should take the hierarchy into account, deselecting children when selecting a part.\nEnable this if you commonly do broad operations like copying, deleting or moving parts.\nDisable this for targeted operations like property editing on nested model structures, for example.")
 
 		local resetting_mode, resetpnl = bulk_menu:AddSubMenu("Clear selection after operation?") resetpnl:SetImage("icon16/table_delete.png")
 		local resetting_mode1 = resetting_mode:AddOption("Yes") resetting_mode1:SetIsCheckable(true) resetting_mode1:SetRadio(true)
@@ -3963,9 +3996,9 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 			pace.BulkMorphProperty()
 		end):SetImage("icon16/chart_line_edit.png")
 
-		bulk_menu:AddOption(L"bulk change properties", function() pace.BulkApplyProperties(obj, "harsh") end):SetImage('icon16/table_multiple.png')
+		bulk_menu:AddOption(L"bulk change properties", function() pace.BulkApplyProperties(obj, "harsh") end):SetImage("icon16/application_form.png")
 
-		local arraying_menu, pnl = bulk_menu:AddSubMenu(L"arraying menu", function() pace.OpenArrayingMenu(obj) end) pnl:SetImage('icon16/table_multiple.png')
+		local arraying_menu, pnl = bulk_menu:AddSubMenu(L"arraying menu", function() pace.OpenArrayingMenu(obj) end) pnl:SetImage("icon16/table_multiple.png")
 		if obj and obj.GetWorldPosition then
 			local icon = obj.pace_tree_node.ModelPath or obj.Icon
 			if string.sub(icon,-3) == "mdl" then icon = "materials/spawnicons/"..string.gsub(icon, ".mdl", "")..".png" end
