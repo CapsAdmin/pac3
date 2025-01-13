@@ -1295,9 +1295,9 @@ PART.OldEvents = {
 		operator_type = "none",
 		tutorial_explanation = "is_touching_life checks in a stretchable box (util.TraceHull) around the host model to see if there's something inside it.\nusually the center is the parent model or root owner entity,\nbut you can force it to use the nearest pac3 model as an owner to override the old root owner setting,\nin case of issues when stacking this event inside others",
 
-		arguments = {{extra_radius = "number"}, {x_stretch = "number"}, {y_stretch = "number"}, {z_stretch = "number"}, {nearest_model = "boolean"}},
-		userdata = {{editor_panel = "is_touching", default = 0}, {x = "x_stretch", default = 1}, {y = "y_stretch", default = 1}, {z = "z_stretch", default = 1}, {default = false}},
-		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model)
+		arguments = {{extra_radius = "number"}, {x_stretch = "number"}, {y_stretch = "number"}, {z_stretch = "number"}, {nearest_model = "boolean"}, {world_only = "boolean"}},
+		userdata = {{editor_panel = "is_touching", default = 15, editor_friendly = "radius"}, {x = "x_stretch", default = 1}, {y = "y_stretch", default = 1}, {z = "z_stretch", default = 1}, {default = false}, {default = false}},
+		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model, world_only)
 			if nearest_model then ent = self:GetOwner() end
 			if not IsValid(ent) then return false end
 			extra_radius = extra_radius or 15
@@ -1314,25 +1314,36 @@ PART.OldEvents = {
 			mins = mins * radius
 			maxs = maxs * radius
 
-			local tr = util.TraceHull( {
-				start = startpos,
-				endpos = startpos,
-				maxs = maxs,
-				mins = mins,
-				filter = {self:GetRootPart():GetOwner(),ent}
-			} )
-			return tr.Hit
+			if world_only then
+				local tr = util.TraceHull( {
+					start = startpos,
+					endpos = startpos,
+					maxs = maxs,
+					mins = mins,
+					filter = function(ent) return ent:IsWorld() end
+				} )
+				return tr.Hit
+			else
+				local tr = util.TraceHull( {
+					start = startpos,
+					endpos = startpos,
+					maxs = maxs,
+					mins = mins,
+					filter = {self:GetRootPart():GetOwner(),ent}
+				} )
+				return tr.Hit
+			end
 		end,
 		nice = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
 			if not IsValid(ent) then return "" end
-			local radius = ent:BoundingRadius()
+			local radius = extra_radius
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
 				radius = ent.pac_projectile:GetRadius()
 			end
 
-			radius = math.Round(math.max(radius + extra_radius + 1, 1))
+			radius = math.Round(math.max(extra_radius, 1),1)
 
 			local str = self.Event .. " [radius: " .. radius .. ", stretch: " .. x_stretch .. "*" .. y_stretch .. "*" .. z_stretch .. "]"
 			return str

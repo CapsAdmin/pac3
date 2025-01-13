@@ -1416,7 +1416,7 @@ do -- event is_touching
 
 			local startpos = ent:WorldSpaceCenter()
 			local b = false
-			if part:GetEvent() == "is_touching" or part:GetEvent() == "is_touching_scalable" then
+			if part:GetEvent() == "is_touching" then
 				local tr = util.TraceHull( {
 					start = startpos,
 					endpos = startpos,
@@ -1425,6 +1425,31 @@ do -- event is_touching
 					filter = {part:GetRootPart():GetOwner(),ent}
 				} )
 				b = tr.Hit
+			elseif part:GetEvent() == "is_touching_scalable" then
+				radius = math.max(extra_radius, 1) --oops, extra_radius is not accounted. but we need to keep backward compatibility
+				mins = Vector(-x_stretch,-y_stretch,-z_stretch)
+				maxs = Vector(x_stretch,y_stretch,z_stretch)
+				mins = mins * radius
+				maxs = maxs * radius
+				if part:GetProperty("world_only") then
+					local tr = util.TraceHull( {
+						start = startpos,
+						endpos = startpos,
+						maxs = maxs,
+						mins = mins,
+						filter = function(ent) return ent:IsWorld() end
+					} )
+					b = tr.Hit
+				else
+					local tr = util.TraceHull( {
+						start = startpos,
+						endpos = startpos,
+						maxs = maxs,
+						mins = mins,
+						filter = {part:GetRootPart():GetOwner(),ent}
+					} )
+					b = tr.Hit
+				end
 			elseif part:GetEvent() == "is_touching_life" then
 				local found = false
 				local ents_hits = ents.FindInBox(startpos + mins, startpos + maxs)
