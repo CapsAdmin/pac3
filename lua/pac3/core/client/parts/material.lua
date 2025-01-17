@@ -271,6 +271,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		self.rotation_angle = Angle(0, 0, 0)
 		timer.Simple(0, function()
 			self:SetbasetexturetransformAngle(self:GetbasetexturetransformAngle())
+			self:SetHide(self:GetHide())
 		end)
 	end
 
