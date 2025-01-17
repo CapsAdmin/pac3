@@ -1580,16 +1580,6 @@ if SERVER then
 			local endpos = pos + ang:Forward()*tbl.Length
 			ents_hits = ents.FindAlongRay(startpos, endpos)
 			ProcessForcesList(ents_hits, tbl, pos, ang, ply)
-
-			if tbl.Bullet then
-				local bullet = {}
-				bullet.Src = pos + ang:Forward()
-				bullet.Dir = ang:Forward()*50000
-				bullet.Damage = -1
-				bullet.Force = 0
-				bullet.Entity = dmg_info:GetAttacker()
-				dmg_info:GetInflictor():FireBullets(bullet)
-			end
 		end
 	end
 
