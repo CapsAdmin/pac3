@@ -187,7 +187,7 @@ local tracer_ids = {
 	["HunterTracer"] = 7,
 	["StriderTracer"] = 8,
 	["GunshipTracer"] = 9,
-	["ToolgunTracer"] = 10,
+	["ToolTracer"] = 10,
 	["LaserTracer"] = 11
 }
 
@@ -217,7 +217,7 @@ function PART:SendNetMessage()
 	net.WriteUInt(self.Force, 16)
 	net.WriteUInt(self.MaxDistance, 16)
 	net.WriteUInt(self.NumberBullets, 9)
-	net.WriteUInt(tracer_ids[self.TracerName], 4)
+	net.WriteUInt(tracer_ids[self.TracerName] or 0, 4)
 	net.WriteBool(self.DistributeDamage)
 
 	net.WriteBool(self.DamageFalloff)

@@ -225,7 +225,7 @@ do
 	function PART:BreakLock(ent)
 		self.forcebreak = true
 		self.next_allowed_grab = CurTime() + 3
-		if self.target_ent then self.target_ent.IsGrabbedID = nil end
+		if self.target_ent then self.target_ent.IsGrabbedByUID = nil end
 		self.target_ent = nil
 		self.grabbing = false
 		pac.Message(Color(255, 50, 50), "lock break result:")
@@ -291,7 +291,7 @@ do
 			part:BreakLock(target_to_mark) --yes we will employ the aggressive lock break here
 		else
 			target_to_mark.IsGrabbed = successful_grab
-			target_to_mark.IsGrabbedID = uid
+			target_to_mark.IsGrabbedByUID = uid
 			target_to_mark:SetGravity(0)
 		end
 	end)
@@ -389,7 +389,7 @@ function PART:OnHide()
 	self.teleported = false
 	self.grabbing = false
 	if not IsValid(self.target_ent) then return
-	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedID = nil end
+	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedByUID = nil end
 	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	self:reset_ent_ang()
 end
@@ -505,7 +505,7 @@ function PART:CheckEntValidity()
 		self.valid_ent = true
 	end
 	if self.target_ent ~= nil then
-		if self.target_ent.IsGrabbedID and self.target_ent.IsGrabbedID ~= self.UniqueID then self.valid_ent = false end
+		if self.target_ent.IsGrabbedByUID and self.target_ent.IsGrabbedByUID ~= self.UniqueID then self.valid_ent = false end
 	end
 	if not self.valid_ent then self.target_ent = nil end
 	--print("ent check:",self.valid_ent)

@@ -25,9 +25,31 @@ BUILDER:StartStorableVars()
 		:GetSet("BaseForce", 0)
 		:GetSet("AddedVectorForce", Vector(0,0,0))
 		:GetSet("Torque", Vector(0,0,0))
-		:GetSet("BaseForceAngleMode","Radial",{enums = {["Radial"] = "Radial", ["Locus"] = "Locus", ["Local"] = "Local"}})
-		:GetSet("VectorForceAngleMode", "Global", {enums = {["Global"] = "Global", ["Local"] = "Local", ["Radial"] = "Radial",  ["RadialNoPitch"] = "RadialNoPitch"}})
-		:GetSet("TorqueMode", "TargetLocal", {enums = {["Global"] = "Global", ["TargetLocal"] = "TargetLocal", ["Local"] = "Local", ["Radial"] = "Radial"}})
+		:GetSet("BaseForceAngleMode","Radial",{enums = {["Radial"] = "Radial", ["Locus"] = "Locus", ["Local"] = "Local"},
+			description = 
+[[Radial points the base force outward from the force part. To point in, use negative values
+
+Locus points out from the locus (external point)
+
+Local points forward (red arrow) from the force part]]})
+		:GetSet("VectorForceAngleMode", "Global", {enums = {["Global"] = "Global", ["Local"] = "Local", ["Radial"] = "Radial",  ["RadialNoPitch"] = "RadialNoPitch"},
+		description = 
+[[Global applies the vector force on world coordinates
+
+Local applies it based on the force part's angles
+
+Radial gets the base directions from the targets to the force part
+
+RadialNoPitch gets the base directions from the targets to the force part, but making pitch horizon-level]]})
+		:GetSet("TorqueMode", "TargetLocal", {enums = {["Global"] = "Global", ["TargetLocal"] = "TargetLocal", ["Local"] = "Local", ["Radial"] = "Radial"},
+		description = 
+[[Global applies the angular force on world coordinates
+
+TargetLocal applies it on the target's local angles
+
+Local applies it based on the force part's angles
+
+Radial gets the base directions from the targets to the force part]]})
 		:GetSetPart("Locus", nil)
 
 	:SetPropertyGroup("Behaviors")
@@ -39,9 +61,9 @@ BUILDER:StartStorableVars()
 		:GetSet("LevitationHeight", 0)
 
 	:SetPropertyGroup("Damping")
-		:GetSet("Damping", 0, {editor_clamp = {0,1}, editor_sensitivity = 0.1})
-		:GetSet("DampingFalloff", false, {description = "Whether the damping should fade with distance"})
-		:GetSet("DampingReverseFalloff", false, {description = "Whether the damping should fade with distance but reverse"})
+		:GetSet("Damping", 0, {editor_clamp = {0,1}, editor_sensitivity = 0.1, description = "Reduces the existing velocity before applying force, by way of multiplication by (1-damping). 0 doesn't change it, while 1 is a full negation of the initial speed."})
+		:GetSet("DampingFalloff", false, {description = "Whether the damping should fade with distance (further is weaker influence)"})
+		:GetSet("DampingReverseFalloff", false, {description = "Whether the damping should fade with distance but reverse (closer is weaker influence)"})
 
 	:SetPropertyGroup("Targets")
 		:GetSet("AffectSelf",false)
@@ -174,7 +196,7 @@ function PART:Impulse(on)
 		end
 	else locus_pos = self:GetWorldPosition() end
 
-	if self.BaseForce == 0 and not game.SinglePlayer() then
+	if self.BaseForce == 0 and not game.SinglePlayer() and self.Damping == 0 then
 		if math.abs(self.AddedVectorForce.x) < 10 and math.abs(self.AddedVectorForce.y) < 10 and math.abs(self.AddedVectorForce.z) < 10 then
 			if math.abs(self.Torque.x) < 10 and math.abs(self.Torque.y) < 10 and math.abs(self.Torque.z) < 10 then
 				return
