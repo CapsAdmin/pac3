@@ -21,6 +21,22 @@ local zoom_smooth = CreateClientConVar("pac_zoom_smooth", 0, true, false, 'Enabl
 local remember_divider = CreateConVar("pac_editor_remember_divider_height", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's vertical divider position")
 local remember_width = CreateConVar("pac_editor_remember_width", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's width")
 
+function pace.RefreshZoomBounds(zoomslider)
+	if pace.Editor then
+		if not zoomslider then
+			zoomslider = pace.Editor.zoomslider
+		end
+		if pace.camera_orthographic then
+			zoomslider:SetMin(-10000)
+			zoomslider:SetMax(10000)
+		else
+			zoomslider:SetMin(0)
+			zoomslider:SetMax(pace.max_fov)
+			timer.Simple(0, function() zoomslider:SetValue(math.Clamp(pace.ViewFOV, 0, pace.max_fov)) end)
+		end
+	end
+end
+
 function PANEL:Init()
 	self:SetTitle("")
 	self:SetSizable(true)
@@ -104,6 +120,14 @@ function PANEL:Init()
 			self.smoothlabel:SetWrap(true)
 			self.smoothlabel:SetAutoStretchVertical(true)
 
+			self.limitfovcheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.limitfovcheckbox:SetText("Expanded FOV")
+			self.limitfovcheckbox:SetChecked(pace.max_fov ~= 100)
+			self.limitfovcheckbox:Dock(TOP)
+			self.limitfovcheckbox:SetDark(true)
+			self.limitfovcheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+
+
 			self.orthocheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
 			self.orthocheckbox:SetText("Orthographic")
 			self.orthocheckbox:Dock(TOP)
@@ -151,15 +175,12 @@ function PANEL:Init()
 			self.zoomslider = vgui.Create("DNumSlider", self.sliderpanel)
 			self.zoomslider:DockPadding(4,0,0,0)
 			self.zoomslider:SetSize(200, 20)
-			self.zoomslider:SetMin( 0 )
-			self.zoomslider:SetMax( 100 )
 			self.zoomslider:SetDecimals( 0 )
 			self.zoomslider:SetText("Camera FOV")
 			if pace.camera_orthographic then
 				self.zoomslider:SetText("Ortho. Width")
-				self.zoomslider:SetMin( -10000 )
-				self.zoomslider:SetMax( 10000 )
 			end
+			pace.RefreshZoomBounds(self.zoomslider)
 			self.zoomslider:SetDark(true)
 			self.zoomslider:SetDefaultValue( 75 )
 
@@ -167,6 +188,15 @@ function PANEL:Init()
 				self.zoomslider:SetValue( pace.ViewFOV )
 			else
 				self.zoomslider:SetValue( 75 )
+			end
+			local zoomslider = self.zoomslider
+			function self.limitfovcheckbox:OnChange(b)
+				if b then
+					pace.max_fov = 179
+				else
+					pace.max_fov = 100
+				end
+				pace.RefreshZoomBounds(zoomslider)
 			end
 
 	self.btnClose.Paint = function() end

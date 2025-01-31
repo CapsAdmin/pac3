@@ -104,6 +104,7 @@ pace.camera_down_bind = CreateClientConVar("pac_editor_camera_down_bind", "", tr
 pace.camera_slow_bind = CreateClientConVar("pac_editor_camera_slow_bind", "ctrl", true)
 pace.camera_speed_bind = CreateClientConVar("pac_editor_camera_speed_bind", "shift", true)
 
+pace.max_fov = 100
 pace.camera_roll_drag_bind = CreateClientConVar("pac_editor_camera_roll_bind", "", true)
 pace.roll_snapping = CreateClientConVar("pac_camera_roll_snap", "0", true)
 
@@ -119,7 +120,6 @@ function pace.OrthographicView(b)
 		if pace.camera_orthographic then
 			timer.Simple(1, function() pace.FlashNotification("Switched to orthographic mode") end)
 			pace.Editor.zoomslider:SetText("Ortho. Width")
-			pace.Editor.zoomslider:SetMax( 1000 )
 			pace.Editor.zoomslider:SetValue(50)
 			pace.Editor.ortho_nearz:Show()
 			pace.Editor.ortho_farz:Show()
@@ -127,10 +127,10 @@ function pace.OrthographicView(b)
 			timer.Simple(1, function() pace.FlashNotification("Switched to normal FOV mode") end)
 			pace.Editor.zoomslider:SetText("Camera FOV")
 			pace.Editor.zoomslider:SetValue(75)
-			pace.Editor.zoomslider:SetMax( 100 )
 			pace.Editor.ortho_nearz:Hide()
 			pace.Editor.ortho_farz:Hide()
 		end
+		pace.RefreshZoomBounds(pace.Editor.zoomslider)
 	end
 end
 
@@ -185,16 +185,24 @@ end
 
 function pace.SetZoom(fov, smooth)
 	if smooth then
-		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,100))
+		if pace.camera_orthographic then
+			pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,-10000,10000))
+			return
+		end
+		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,pace.max_fov))
 	else
-		pace.ViewFOV = math.Clamp(fov,1,100)
+		if pace.camera_orthographic then
+			pace.ViewFOV = math.Clamp(fov,-10000,10000)
+			return
+		end
+		pace.ViewFOV = math.Clamp(fov,1,pace.max_fov)
 	end
 end
 
 function pace.ResetZoom()
 	pace.zoom_reset = 75
 end
-
+ 
 local worldPanel = vgui.GetWorldPanel();
 function worldPanel.OnMouseWheeled( self, scrollDelta )
 	if IsValid(pace.Editor) then
@@ -660,6 +668,16 @@ function pace.CalcView(ply, pos, ang, fov)
 		viewang_final = pace.ViewAngles_postRoll
 	end
 
+
+	--[[
+	local entpos = pace.GetViewEntity():WorldSpaceCenter()
+	local diff = pace.ViewPos - entpos
+	local MAX_CAMERA_DISTANCE = 300
+	local backtrace = util.QuickTrace(entpos, diff*50000, ply)
+	local final_dist = math.min(diff:Length(), MAX_CAMERA_DISTANCE, (backtrace.HitPos - entpos):Length() - 10)
+	pace.ViewPos = entpos + diff:GetNormalized() * final_dist
+	]]
+
 	if not pace.camera_orthographic then
 		return
 		{
@@ -1033,15 +1051,12 @@ function pace.PopupMiniFOVSlider()
 	zoomframe.zoomslider = vgui.Create("DNumSlider", zoomframe)
 	zoomframe.zoomslider:DockPadding(4,0,0,0)
 	zoomframe.zoomslider:SetSize(200, 20)
-	zoomframe.zoomslider:SetMin( 0 )
-	zoomframe.zoomslider:SetMax( 100 )
 	zoomframe.zoomslider:SetDecimals( 0 )
 	zoomframe.zoomslider:SetText("Camera FOV")
 	if pace.camera_orthographic then
 		zoomframe.zoomslider:SetText("Ortho. Width")
-		zoomframe.zoomslider:SetMin( -10000 )
-		zoomframe.zoomslider:SetMax( 10000 )
 	end
+	pace.RefreshZoomBounds(zoomframe.zoomslider)
 	zoomframe.zoomslider:SetDark(true)
 	zoomframe.zoomslider:SetDefaultValue( 75 )
 

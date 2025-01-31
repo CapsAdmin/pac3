@@ -2571,7 +2571,26 @@ local part_classes_with_quicksetups = {
 	jiggle = true,
 	interpolated_multibone = true,
 }
-
+local function AddOptionRightClickable(title, func, parent_menu)
+	local pnl = parent_menu:AddOption(title, func)
+	function pnl:Think()
+		if input.IsMouseDown(MOUSE_RIGHT) and self:IsHovered() then
+			if not self.clicked then func() end
+			self.clicked = true
+		else
+			self.clicked = false
+		end
+	end
+	--to communicate to the user that they can right click to activate without closing the parent menu
+	--tooltip may be set later, so we'll sandwich it with a timer
+	timer.Simple(0.5, function()
+		if not IsValid(pnl) then return end
+		if pnl:GetTooltip() == nil then
+			pnl:SetTooltip("You can right click this to use the option without exiting the menu")
+		end
+	end)
+	return pnl
+end
 --those are more to configure a part into common setups, might involve creating other parts
 function pace.AddQuickSetupsToPartMenu(menu, obj)
 	if not part_classes_with_quicksetups[obj.ClassName] and not obj.GetDrawPosition then
@@ -3078,6 +3097,106 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			pace.RefreshTree(true)
 		end):SetIcon("icon16/user.png")
 	elseif obj.ClassName == "camera" then
+		menu:AddOption("clone position as a node for interpolators", function()
+			local newpart = pac.CreatePart("model2")
+			newpart:SetParent(obj:GetParent())
+			newpart:SetModel("models/editor/camera.mdl") newpart:SetMaterial("models/wireframe")
+			newpart:SetPosition(obj:GetPosition())
+			newpart:SetPositionOffset(obj:GetPositionOffset())
+			newpart:SetAngles(obj:GetAngles())
+			newpart:SetAngleOffset(obj:GetAngleOffset())
+			newpart:SetBone(obj:GetBone())
+			newpart:SetNotes("editor FOV: " .. math.Round(pace.ViewFOV,1) ..
+				"\ncamera FOV: " .. math.Round(obj:GetFOV(),1) ..
+				(obj.Name ~= "" and ("\ncamera name: " .. obj:GetName()) or "") ..
+				"\ncamera UID: " .. obj.UniqueID
+			)
+			Derma_StringRequest("Set a name", "give a name to the camera position node", "camera_node", function(str)
+				newpart:SetName(str)
+				if newpart.pace_tree_node then
+					newpart.pace_tree_node:SetText(str)
+				end
+			end)
+		end):SetImage("icon16/find.png")
+
+		local bone_parent = obj:GetParent()
+		if obj:GetOwner() ~= obj:GetRootPart():GetOwner() then
+			while not (bone_parent.Bone and bone_parent.GetWorldPosition) do
+				bone_parent = bone_parent:GetParent()
+				if bone_parent:GetOwner() == obj:GetRootPart():GetOwner() then
+					bone_parent = obj:GetRootPart():GetOwner()
+				end
+			end
+		else
+			bone_parent = obj:GetRootPart():GetOwner()
+		end
+		local function bone_reposition(bone)
+			local bone_pos, bone_ang = pac.GetBonePosAng(obj:GetOwner(), bone)
+			local pos, ang = WorldToLocal(pace.ViewPos, pace.view_roll and pace.ViewAngles_postRoll or pace.ViewAngles, bone_pos, bone_ang)
+			obj:SetPosition(pos) obj:SetAngles(ang) obj:SetEyeAnglesLerp(0) obj:SetBone(bone)
+			pace.PopulateProperties(obj)
+		end
+		local translate_from_view, pnl = main:AddSubMenu("Apply editor view", function()
+			bone_reposition(obj.Bone)
+		end) pnl:SetImage("icon16/arrow_redo.png")
+
+		AddOptionRightClickable("apply FOV: " .. math.Round(pace.ViewFOV,1), function()
+			obj:SetFOV(math.Round(pace.ViewFOV,1))
+			pace.PopulateProperties(obj)
+		end, translate_from_view):SetImage("icon16/zoom.png")
+		
+		AddOptionRightClickable("reset FOV" , function()
+			obj:SetFOV(-1)
+			pace.PopulateProperties(obj)
+		end, translate_from_view):SetImage("icon16/zoom_out.png")
+
+		translate_from_view:AddOption("current bone: " .. obj.Bone, function()
+			bone_reposition(obj.Bone)
+		end):SetImage("icon16/arrow_redo.png")
+		translate_from_view:AddOption("no bone", function()
+			bone_reposition("invalidbone")
+		end):SetImage("icon16/arrow_redo.png")
+
+		local bone_list = {}
+		if isentity(bone_parent) then
+			bone_list = pac.GetAllBones(bone_parent)
+		else
+			bone_list = pac.GetAllBones(bone_parent:GetOwner())
+		end
+		local bonekeys = {}
+		local common_human_bones = {
+			"head", "neck", "spine", "spine 1", "spine 2", "spine 4", "pelvis",
+			"left clavicle", "left upperarm", "left forearm", "left hand",
+			"right clavicle", "right upperarm", "right forearm", "right hand",
+			"left thigh", "left calf", "left foot", "left toe", "right thigh", "right calf", "right foot", "right toe"
+		}
+		local sorted_bonekeys = {}
+		for i,v in pairs(bone_list) do
+			bonekeys[v.friendly] = v.friendly
+		end
+		for i,v in SortedPairs(bonekeys) do
+			table.insert(sorted_bonekeys, v)
+		end
+
+		--basic humanoid bones
+		if bone_list["spine"] and bone_list["head"] and bone_list["left upperarm"] and bone_list["right upperarm"] then
+			local common_bones_menu, pnl = translate_from_view:AddSubMenu("shortened bone list (humanoid)") pnl:SetIcon("icon16/user.png")
+			for _,bonename in ipairs(common_human_bones) do
+				AddOptionRightClickable(bonename, function()
+					bone_reposition(bonename)
+				end, common_bones_menu):SetImage("icon16/user.png")
+			end
+		end
+
+		translate_from_view:AddSpacer()
+		local full_bones_menu, pnl = translate_from_view:AddSubMenu("full bone list for " .. tostring(bone_parent)) pnl:SetIcon("icon16/user_add.png")
+		--full bone list
+		for _,bonename in ipairs(sorted_bonekeys) do
+			AddOptionRightClickable(bonename, function()
+				bone_reposition(bonename)
+			end, full_bones_menu):SetImage("icon16/connect.png")
+		end 
+
 		local function extract_camera_from_jiggle()
 			camera = obj
 			if not IsValid(camera.recent_jiggle) then
@@ -3090,7 +3209,14 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			local camparent = jig:GetParent()
 			camera:SetParent(camparent)
 			camera:SetBone(cambone) camera:SetAngles(camang) camera:SetPosition(campos)
-			jig:SetBone("head") jig:SetAngles(Angle(0,0,0)) jig:SetPosition(Vector(0,0,0))
+			jig:Remove()
+			if not camera:IsHidden() then
+				if not camera.Hide then
+					timer.Simple(0, function()
+						camera:SetHide(true) camera:SetHide(false)
+					end)
+				end
+			end
 		end
 		local function insert_camera_into_jiggle()
 			camera = obj
@@ -3104,123 +3230,182 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			jig:SetBone(camera.Bone) jig:SetAngles(camera:GetAngles()) jig:SetPosition(camera:GetPosition())
 			camera:SetBone("head") camera:SetAngles(Angle(0,0,0)) camera:SetPosition(Vector(0,0,0))
 			camera:SetParent(jig)
+			if not camera:IsHidden() then
+				if not camera.Hide then
+					timer.Simple(0, function()
+						camera:SetHide(true) camera:SetHide(false)
+					end)
+				end
+			end
+			
 			return jig
 		end
 
 		--helper variable to adjust relative to player height
 		local ent = obj:GetRootPart():GetOwner()
-		local height = math.Round((ent:GetBonePosition(ent:LookupBone("ValveBiped.Bip01_Head1")) - ent:GetPos()).z,1)
-		main:AddOption("calculated head height : " .. height):SetIcon("icon16/help.png")
+		local default_headbone = ent:LookupBone("ValveBiped.Bip01_Head1")
+		if not default_headbone then
+			for i=0,ent:GetBoneCount(),1 do
+				if string.find(ent:GetBoneName(i), "head") or string.find(ent:GetBoneName(i), "Head") then
+					default_headbone = i
+					break
+				end
+			end
+		end
 
-		local fp, pnl = main:AddSubMenu("first person camera setups") pnl:SetImage("icon16/eye.png")
-			fp:AddOption("easy first person (head)", function()
-				extract_camera_from_jiggle()
-				obj:SetBone("head")
-				obj:SetPosition(Vector(5,-4,0)) obj:SetEyeAnglesLerp(1) obj:SetAngles(Angle(0,-90,-90))
+		if default_headbone then
+			local head_base_pos = ent:GetBonePosition(default_headbone)
+			local trace = util.QuickTrace(head_base_pos + Vector(0,0,50), Vector(0,0,-10000), function(ent2) return ent2 == ent end)
+			local mins, maxs = ent:GetHull()
+
+			local height_headbase = math.Round((head_base_pos - ent:GetPos()).z,1)
+			local height_eyepos = math.Round((ent:EyePos() - ent:GetPos()).z,1)
+			local height_traced = math.Round((trace.HitPos - ent:GetPos()).z,1)
+			local height_hull = (maxs - mins).z
+
+			local height = height_traced
+			if trace.Entity ~= ent then
+				height = height_headbase
+			end
+ 
+			local info, pnl = main:AddSubMenu("calculated head height : " .. height .. " HU (" .. math.Round(height / 39,2) .." m)")
+			info:AddOption("alternate height calculations"):SetImage("icon16/help.png")
+			info:SetTooltip("Due to lack of standardization on models' scales, heights are not guaranteed to be accurate or consistent\n\nThe unit conversion used is 1 Hammer Unit : 2.5 cm (1 inch)")
+			info:AddSpacer()
+
+			AddOptionRightClickable("head bone's base position : " .. height_headbase .. " HU (" .. math.Round(height_headbase / 39,2) .." m)", function()
+				height = height_headbase
+				pnl:SetText("calculated head height : " .. height .. " HU (" .. math.Round(height / 39,2) .." m)")
+			end, info):SetIcon("icon16/monkey.png")
+			AddOptionRightClickable("traced to top of the head: " .. height_traced .. " HU (" .. math.Round(height_traced / 39,2) .." m)", function()
+				height = height_traced
+				pnl:SetText("calculated head height : " .. height .. " HU (" .. math.Round(height / 39,2) .." m)")
+			end, info):SetIcon("icon16/arrow_down.png")
+			AddOptionRightClickable("player eye position (ent:EyePos()) : " .. height_eyepos .. " HU (" .. math.Round(height_eyepos / 39,2) .." m)", function()
+				height = height_eyepos
+				pnl:SetText("calculated head height : " .. height .. " HU (" .. math.Round(height / 39,2) .." m)")
+			end, info):SetIcon("icon16/eye.png")
+			AddOptionRightClickable("hull dimensions : " .. height_hull .. " HU (" .. math.Round(height_hull / 39,2) .." m)", function()
+				height = height_hull
+				pnl:SetText("calculated head height : " .. height .. " HU (" .. math.Round(height / 39,2) .." m)")
+			end, info):SetIcon("icon16/collision_on.png")
+
+			pnl:SetImage("icon16/help.png")
+			pnl:SetTooltip(ent:GetBoneName(default_headbone) .. "\n" .. ent:GetModel())
+			local fp, pnl = main:AddSubMenu("first person camera setups") pnl:SetImage("icon16/eye.png")
+				AddOptionRightClickable("easy first person (head)", function()
+					extract_camera_from_jiggle()
+					obj:SetBone("head")
+					obj:SetPosition(Vector(5,-4,0)) obj:SetEyeAnglesLerp(1) obj:SetAngles(Angle(0,-90,-90))
+					pace.PopulateProperties(obj)
+				end, fp):SetIcon("icon16/eye.png")
+	
+				AddOptionRightClickable("on neck + collapsed head", function()
+					extract_camera_from_jiggle()
+					obj:SetBone("neck")
+					obj:SetPosition(Vector(5,0,0)) obj:SetEyeAnglesLerp(1) obj:SetAngles(Angle(0,-90,-90))
+					local bone = pac.CreatePart("bone3")
+					bone:SetScaleChildren(true) bone:SetSize(0)
+					bone:SetParent(obj)
+					local event = pac.CreatePart("event") event:SetEvent("viewed_by_owner") event:SetParent(bone)
+					pace.PopulateProperties(obj)
+				end, fp):SetIcon("icon16/eye.png")
+	
+				AddOptionRightClickable("on neck + collapsed head + eyeang limiter", function()
+					extract_camera_from_jiggle()
+					obj:SetBone("neck")
+					obj:SetPosition(Vector(5,0,0)) obj:SetEyeAnglesLerp(0.7) obj:SetAngles(Angle(0,-90,-90))
+					local bone = pac.CreatePart("bone3")
+					bone:SetScaleChildren(true) bone:SetSize(0)
+					bone:SetParent(obj)
+					local event = pac.CreatePart("event") event:SetEvent("viewed_by_owner") event:SetParent(bone)
+					pace.PopulateProperties(obj)
+				end, fp):SetIcon("icon16/eye.png")
+
+			AddOptionRightClickable("smoothen", function()
+				insert_camera_into_jiggle()
 				pace.PopulateProperties(obj)
-			end):SetIcon("icon16/eye.png")
-
-			fp:AddOption("on neck + collapsed head", function()
+			end, main):SetIcon("icon16/chart_line.png")
+			AddOptionRightClickable("undo smoothen (extract from jiggle)", function()
 				extract_camera_from_jiggle()
-				obj:SetBone("neck")
-				obj:SetPosition(Vector(5,0,0)) obj:SetEyeAnglesLerp(1) obj:SetAngles(Angle(0,-90,-90))
-				local bone = pac.CreatePart("bone3")
-				bone:SetScaleChildren(true) bone:SetSize(0)
-				bone:SetParent(obj)
-				local event = pac.CreatePart("event") event:SetEvent("viewed_by_owner") event:SetParent(bone)
 				pace.PopulateProperties(obj)
-			end):SetIcon("icon16/eye.png")
-
-			fp:AddOption("on neck + collapsed head + eyeang limiter", function()
+			end, main):SetIcon("icon16/chart_line_delete.png")
+	
+			AddOptionRightClickable("close up (zoomed on the face)", function()
 				extract_camera_from_jiggle()
-				obj:SetBone("neck")
-				obj:SetPosition(Vector(5,0,0)) obj:SetEyeAnglesLerp(0.7) obj:SetAngles(Angle(0,-90,-90))
-				local bone = pac.CreatePart("bone3")
-				bone:SetScaleChildren(true) bone:SetSize(0)
-				bone:SetParent(obj)
-				local event = pac.CreatePart("event") event:SetEvent("viewed_by_owner") event:SetParent(bone)
+				obj:SetBone("head") obj:SetAngles(Angle(0,90,90)) obj:SetPosition(Vector(3,-20,0)) obj:SetEyeAnglesLerp(0) obj:SetFOV(45)
 				pace.PopulateProperties(obj)
-			end):SetIcon("icon16/eye.png")
+			end, main):SetIcon("icon16/monkey.png")
+	
+			AddOptionRightClickable("Cowboy / medium shot (waist up) (relative to neck)", function()
+				extract_camera_from_jiggle()
+				obj:SetBone("neck") obj:SetAngles(Angle(0,120,90)) obj:SetPosition(Vector(14,-24,0)) obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
+				pace.PopulateProperties(obj)
+			end, main):SetIcon("icon16/user.png")
+	
+			AddOptionRightClickable("Cowboy / medium shot (waist up) (no bone) (20 + 0.6*height)", function()
+				extract_camera_from_jiggle()
+				obj:SetBone("invalidbone") obj:SetAngles(Angle(0,180,0)) obj:SetPosition(Vector(40,0,20 + 0.6*height)) obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
+				pace.PopulateProperties(obj)
+			end, main):SetIcon("icon16/user.png")
+	
+			AddOptionRightClickable("over the shoulder (no bone) (12 + 0.8*height)", function()
+				extract_camera_from_jiggle()
+				obj:SetBone("invalidbone") obj:SetAngles(Angle(0,0,0)) obj:SetPosition(Vector(-30,15,12 + 0.8*height)) obj:SetEyeAnglesLerp(0.3) obj:SetFOV(-1)
+				pace.PopulateProperties(obj)
+			end, main):SetIcon("icon16/user_gray.png")
+	
+			AddOptionRightClickable("over the shoulder (with jiggle)", function()
+				local jiggle = insert_camera_into_jiggle()
+				jiggle:SetConstrainSphere(75) jiggle:SetSpeed(3)
+				obj:SetEyeAnglesLerp(0.7) obj:SetFOV(-1)
+				jiggle:SetBone("neck") jiggle:SetAngles(Angle(180,90,90)) jiggle:SetPosition(Vector(-2,18,-10))
+				pace.PopulateProperties(obj)
+			end, main):SetIcon("icon16/user_gray.png")
 
-		main:AddOption("smoothen", function()
-			insert_camera_into_jiggle()
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/chart_line.png")
+			AddOptionRightClickable("full shot (0.7*height)", function()
+				extract_camera_from_jiggle()
+				obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
+				obj:SetBone("invalidbone") obj:SetAngles(Angle(6,180,0)) obj:SetPosition(Vector(height,-15,height * 0.7))
+				pace.PopulateProperties(obj)
+			end, main):SetIcon("icon16/user_suit.png")
+		end
 
-		main:AddOption("close up (zoomed on the face)", function()
-			extract_camera_from_jiggle()
-			obj:SetBone("head") obj:SetAngles(Angle(0,90,90)) obj:SetPosition(Vector(3,-20,0)) obj:SetEyeAnglesLerp(0) obj:SetFOV(45)
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/monkey.png")
-
-		main:AddOption("Cowboy / medium shot (waist up) (relative to neck)", function()
-			extract_camera_from_jiggle()
-			obj:SetBone("neck") obj:SetAngles(Angle(0,120,90)) obj:SetPosition(Vector(14,-24,0)) obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/user.png")
-
-		main:AddOption("Cowboy / medium shot (waist up) (no bone) (20 + 0.6*height = " .. (20 + 0.6*height) .. ")", function()
-			extract_camera_from_jiggle()
-			obj:SetBone("invalidbone") obj:SetAngles(Angle(0,180,0)) obj:SetPosition(Vector(40,0,20 + 0.6*height)) obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/user.png")
-
-		main:AddOption("over the shoulder (no bone) (12 + 0.8*height = " .. 12 + 0.8*height .. ")", function()
-			extract_camera_from_jiggle()
-			obj:SetBone("invalidbone") obj:SetAngles(Angle(0,0,0)) obj:SetPosition(Vector(-30,15,12 + 0.8*height)) obj:SetEyeAnglesLerp(0.3) obj:SetFOV(-1)
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/user_gray.png")
-
-		main:AddOption("over the shoulder (with jiggle)", function()
-			local jiggle = insert_camera_into_jiggle()
-			jiggle:SetConstrainSphere(75) jiggle:SetSpeed(3)
-			obj:SetEyeAnglesLerp(0.7) obj:SetFOV(-1)
-			jiggle:SetBone("neck") jiggle:SetAngles(Angle(180,90,90)) jiggle:SetPosition(Vector(-2,18,-10))
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/user_gray.png")
-
-		main:AddOption("full shot", function()
-			extract_camera_from_jiggle()
-			obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
-			obj:SetBone("invalidbone") obj:SetAngles(Angle(6,180,0)) obj:SetPosition(Vector(height,-15,height * 0.7))
-			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/user_suit.png")
-
-		main:AddOption("wide shot (with jiggle)", function()
+		AddOptionRightClickable("wide shot (with jiggle)", function()
 			local jiggle = insert_camera_into_jiggle()
 			jiggle:SetConstrainSphere(150) jiggle:SetSpeed(1)
 			obj:SetEyeAnglesLerp(0.2) obj:SetFOV(-1)
 			jiggle:SetBone("invalidbone") jiggle:SetAngles(Angle(0,0,0)) jiggle:SetPosition(Vector(0,15,120))
 			obj:SetPosition(Vector(-250,0,0))
 			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/arrow_out.png")
+		end, main):SetIcon("icon16/arrow_out.png")
 
-		main:AddOption("extreme wide shot (with jiggle)", function()
+		AddOptionRightClickable("extreme wide shot (with jiggle)", function()
 			local jiggle = insert_camera_into_jiggle()
 			jiggle:SetConstrainSphere(0) jiggle:SetSpeed(0.3)
 			obj:SetEyeAnglesLerp(0.1) obj:SetFOV(-1)
 			jiggle:SetBone("invalidbone") jiggle:SetAngles(Angle(0,0,0)) jiggle:SetPosition(Vector(-500,0,200))
 			obj:SetPosition(Vector(0,0,0)) obj:SetAngles(Angle(15,0,0))
 			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/map.png")
+		end, main):SetIcon("icon16/map.png")
 
-		main:AddOption("bird eye view (with jiggle)", function()
+		AddOptionRightClickable("bird eye view (with jiggle)", function()
 			local jiggle = insert_camera_into_jiggle()
 			jiggle:SetConstrainSphere(300) jiggle:SetSpeed(1)
 			obj:SetEyeAnglesLerp(0.2) obj:SetFOV(-1)
 			jiggle:SetBone("invalidbone") jiggle:SetAngles(Angle(0,0,0)) jiggle:SetPosition(Vector(-150,0,300))
 			obj:SetPosition(Vector(0,0,0)) obj:SetAngles(Angle(70,0,0))
 			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/map_magnify.png")
+		end, main):SetIcon("icon16/map_magnify.png")
 
-		main:AddOption("Dutch shot (tilt)", function()
+		AddOptionRightClickable("Dutch shot (tilt)", function()
 			local jiggle = insert_camera_into_jiggle()
 			jiggle:SetConstrainSphere(150) jiggle:SetSpeed(1)
 			obj:SetEyeAnglesLerp(0) obj:SetFOV(-1)
 			jiggle:SetBone("invalidbone") jiggle:SetAngles(Angle(0,0,0)) jiggle:SetPosition(Vector(0,15,50))
 			obj:SetPosition(Vector(-75,0,0)) obj:SetAngles(Angle(0,0,25))
 			pace.PopulateProperties(obj)
-		end):SetIcon("icon16/arrow_refresh.png")
+		end, main):SetIcon("icon16/arrow_refresh.png")
 	elseif obj.ClassName == "faceposer" then
 		if obj:GetDynamicProperties() == nil then main:AddOption("No flexes found!"):SetIcon("icon16/cancel.png") return end
 		main:AddOption("reset expressions", function()
@@ -3600,12 +3785,16 @@ function pace.AddClassSpecificPartMenuComponents(menu, obj)
 
 	if obj.ClassName == "camera" then
 		if not obj:IsHidden() then
-			if obj ~= pac.active_camera then
-				menu:AddOption("View this camera", function()
+			local remembered_view = {pace.ViewPos, pace.ViewAngles}
+			local view
+			local viewing = obj == pac.active_camera
+			local initial_name = viewing and "Unview this camera" or "View this camera"
+			view = AddOptionRightClickable(initial_name, function()
+				if not viewing then
+					remembered_view = {pace.ViewPos, pace.ViewAngles}
 					pace.ManuallySelectCamera(obj, true)
-				end):SetIcon("icon16/star.png")
-			else
-				menu:AddOption("Unview this camera", function()
+					view:SetText("Unview this camera")
+				else
 					pace.EnableView(true)
 					pace.ResetView()
 					pac.active_camera_manual = nil
@@ -3618,8 +3807,12 @@ function pace.AddClassSpecificPartMenuComponents(menu, obj)
 							end
 						end
 					end
-				end):SetIcon("icon16/camera_delete.png")
-			end
+					pace.ViewPos = remembered_view[1]
+					pace.ViewAngles = remembered_view[2]
+					view:SetText("View this camera")
+				end
+				viewing = obj == pac.active_camera
+			end, menu) view:SetIcon("icon16/star.png")
 		else
 			menu:AddOption("View this camera", function()
 				local toggleable_command_events = {}
