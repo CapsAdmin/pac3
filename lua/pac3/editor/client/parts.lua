@@ -3237,7 +3237,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 					end)
 				end
 			end
-			
+
 			return jig
 		end
 
@@ -4276,6 +4276,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 						pace.viewlock = root_owner
 					end
 					if mode == "disable" then
+						pace.ViewAngles.r = 0
 						pace.viewlock = nil
 						return
 					end
@@ -4305,6 +4306,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 						pace.viewlock = obj
 					end
 					if mode == "disable" then
+						pace.ViewAngles.r = 0
 						pace.viewlock = nil
 						return
 					end
