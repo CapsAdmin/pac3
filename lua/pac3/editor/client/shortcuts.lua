@@ -44,6 +44,8 @@ pace.PACActionShortcut_Dictionary = {
 	"toolbar_view",
 	"toolbar_options",
 	"zoom_panel",
+	"reset_zoom",
+	"reset_view_position",
 	"view_orthographic",
 	"view_follow_entity",
 	"view_follow_entity_ang_frontback",
@@ -338,10 +340,13 @@ local last = 0
 pace.passthrough_keys = {
 	[KEY_LWIN] = true,
 	[KEY_RWIN] = true,
-	[KEY_CAPSLOCK] = true,
-	[KEY_CAPSLOCKTOGGLE] = true
+	[KEY_CAPSLOCK] = true
 }
-
+pace.shortcuts_ignored_keys = {
+	[KEY_CAPSLOCKTOGGLE] = true,
+	[KEY_NUMLOCKTOGGLE] = true,
+	[KEY_SCROLLLOCKTOGGLE] = true
+}
 
 function pace.LookupShortcutsForAction(action, provided_inputs, do_it)
 	pace.BulkSelectKey = input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString())
@@ -366,6 +371,7 @@ function pace.LookupShortcutsForAction(action, provided_inputs, do_it)
 		local counterexample = false
 		for key,bool in ipairs(inputs) do --check the input for counter-examples
 			if input.IsKeyDown(key) then
+				if pace.shortcuts_ignored_keys[key] then continue end
 				if not table.HasValue(combo, input.GetKeyName(key)) then --any keypress that is not in the combo invalidates the combo
 					--some keys don't count as counterexamples??
 					--random windows or capslocktoggle keys being pressed screw up the input
@@ -626,6 +632,12 @@ function pace.DoShortcutFunc(action)
 	if action == "zoom_panel" then
 		pace.PopupMiniFOVSlider()
 	end
+	if action == "reset_zoom" then
+		pace.ResetZoom()
+	end
+	if action == "reset_view_position" then
+		pace.ResetView()
+	end
 	if action == "view_orthographic" then
 		pace.OrthographicView()
 	end
@@ -674,7 +686,7 @@ function pace.DoShortcutFunc(action)
 		end
 	end
 
-	if action == "T_Pose" then pace.SetTPose(not pace.GetTPose()) end
+	if action == "T_Pose" or action == "t_pose" then pace.SetTPose(not pace.GetTPose()) end
 
 	if action == "bulk_select" then
 		pace.DoBulkSelect(pace.current_part)
@@ -906,6 +918,7 @@ function pace.CheckShortcuts()
 	pace.shortcut_inputs_count = 0
 	for i=1,172,1 do --build bool list of all current keys
 		if input.IsKeyDown(i) then
+			if pace.shortcuts_ignored_keys[i] then continue end
 			if pace.passthrough_keys[i] or i == pace.BulkSelectKey then no_input_override = true end
 			input_active[i] = true
 			pace.shortcut_inputs_count = pace.shortcut_inputs_count + 1

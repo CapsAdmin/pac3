@@ -689,7 +689,7 @@ function pace.OpenSettings(tab)
 	local pnl = vgui.Create("DFrame")
 	pnl:SetTitle("pac settings")
 	pace.settings_panel = pnl
-	pnl:SetSize(800,600)
+	pnl:SetSize(900,600)
 	pnl:MakePopup()
 	pnl:Center()
 	pnl:SetSizable(true)
@@ -1084,25 +1084,264 @@ function pace.FillEditorSettings(pnl)
 
 	local shortcutaction_choices = vgui.Create("DComboBox", LeftPanel)
 	shortcutaction_choices:SetText("Select a PAC action")
-	for _,name in ipairs(pace.PACActionShortcut_Dictionary) do
-		shortcutaction_choices:AddChoice(name)
+	shortcutaction_choices:SetSortItems(false)
+	local function rebuild_shortcut_box()
+		local display, active_action = shortcutaction_choices:GetSelected()
+		local active_action_count = 0
+		if pace.PACActionShortcut[active_action] and (table.Count(pace.PACActionShortcut[active_action]) > 0) then
+			active_action_count = table.Count(pace.PACActionShortcut[active_action])
+		end
+		for i=#pace.PACActionShortcut_Dictionary,1,-1 do
+			shortcutaction_choices:RemoveChoice(i)
+		end
+		for _,name in ipairs(pace.PACActionShortcut_Dictionary) do
+			local display_name = name
+			local binds_str = ""
+			if pace.PACActionShortcut[name] and (table.Count(pace.PACActionShortcut[name]) > 0) then
+				display_name = "[" .. table.Count(pace.PACActionShortcut[name]) .. "]  " .. name
+			end
+			shortcutaction_choices:AddChoice(display_name, name)
+		end
+		if active_action then
+			if active_action_count > 0 then
+				timer.Simple(0, function() shortcutaction_choices:SetText("[" .. active_action_count .. "]  " .. active_action) end)
+			end
+		end
 	end
+
+	local shortcut_dumps = {}
+	local shortcut_dumps_rawstring = ""
+	local function refresh_shortcut_dumps()
+		shortcut_dumps = {}
+		shortcut_dumps_rawstring = ""
+		for _,name in ipairs(pace.PACActionShortcut_Dictionary) do
+			local already_included_basename = false
+			if pace.PACActionShortcut[name] then
+				local binds_str = ""
+				for i=1,10,1 do
+					if pace.PACActionShortcut[name][i] then
+						if not already_included_basename then
+							shortcut_dumps_rawstring = shortcut_dumps_rawstring .. "\n" .. name .. " : "
+							already_included_basename = true
+						end
+						local raw_combo = {}
+						local combo_string = "["..i.."] = "
+						for j=1,10,1 do
+							if not pace.PACActionShortcut[name][i][j] then continue end
+							combo_string = combo_string .. pace.PACActionShortcut[name][i][j] .. " + "
+							table.insert(raw_combo, pace.PACActionShortcut[name][i][j])
+						end
+						if not table.IsEmpty(raw_combo) then
+							shortcut_dumps_rawstring = shortcut_dumps_rawstring ..
+								" {" .. table.concat(raw_combo, "+") .. "},"
+							end
+						if combo_string ~= "" then
+							combo_string = string.TrimRight(combo_string, " + ")
+							binds_str = binds_str .. "\n" .. combo_string
+						end
+					end
+				end
+				shortcut_dumps[name] = string.Trim(binds_str,"\n")
+			end
+			shortcut_dumps_rawstring = string.Trim(shortcut_dumps_rawstring,"\n")
+		end
+		
+		local name, value = shortcutaction_choices:GetSelected()
+		shortcutaction_choices:SetTooltip(shortcut_dumps[value])
+		rebuild_shortcut_box()
+	end
+	
+	local function get_common_keybind_groupings(filter)
+		if filter then
+			if table.IsEmpty(filter) then return get_common_keybind_groupings() end
+		end
+
+		local ctrl = {}
+		local shift = {}
+		local alt = {}
+		local ctrl_shift = {}
+		local ctrl_alt = {}
+		local shift_alt = {}
+		local singles = {}
+		local pass_filter = {}
+
+		for action,tbl in pairs(pace.PACActionShortcut) do
+			for i=1,10,1 do
+				if pace.PACActionShortcut[action][i] then
+
+					local raw_combo = {}
+					local contains_ctrl = false
+					local contains_shift = false
+					local contains_alt = false
+					local fail_filter = true
+					local filter_match_number = 0
+
+					for j=1,10,1 do
+						key = pace.PACActionShortcut[action][i][j]
+						if not key then continue end
+						table.insert(raw_combo, pace.PACActionShortcut[action][i][j])
+						if filter then
+							for _,k in ipairs(filter) do
+								if input.GetKeyCode(key) == k or key == k then
+									filter_match_number = filter_match_number + 1
+								end
+							end
+						else
+							if input.GetKeyCode(key) == KEY_LCONTROL or input.GetKeyCode(key) == KEY_RCONTROL then
+								contains_ctrl = true
+							elseif input.GetKeyCode(key) == KEY_LSHIFT or input.GetKeyCode(key) == KEY_RSHIFT then
+								contains_shift = true
+							elseif input.GetKeyCode(key) == KEY_LALT or input.GetKeyCode(key) == KEY_RALT then
+								contains_alt = true
+							end
+						end
+					end
+
+					if filter then
+						if filter_match_number == #filter then
+							table.insert(pass_filter, {raw_combo, action})
+						end
+					end
+
+					if not table.IsEmpty(raw_combo) then
+						if contains_ctrl then
+							table.insert(ctrl, {raw_combo, action})
+							if contains_shift then
+								table.insert(shift, {raw_combo, action})
+								table.insert(ctrl_shift, {raw_combo, action})
+								if contains_alt then
+									table.insert(shift_alt, {raw_combo, action})
+								end
+							end
+							if contains_alt then
+								table.insert(alt, {raw_combo, action})
+								table.insert(ctrl_alt, {raw_combo, action})
+							end
+						elseif contains_shift then
+							table.insert(shift, {raw_combo, action})
+							if contains_alt then
+								table.insert(alt, {raw_combo, action})
+								table.insert(shift_alt, {raw_combo, action})
+							end
+						elseif contains_alt then
+							table.insert(alt, {raw_combo, action})
+						else
+							table.insert(singles, {raw_combo, action})
+						end
+					end
+				end
+			end
+		end
+
+		return {
+			ctrl = ctrl,
+			shift = shift,
+			alt = alt,
+			ctrl_shift = ctrl_shift,
+			ctrl_alt = ctrl_alt,
+			shift_alt = shift_alt,
+			singles = singles,
+			pass_filter = pass_filter
+		}
+	end
+
+	local output_panel_scroll = vgui.Create("DScrollPanel", LeftPanel)
+	output_panel_scroll:SetPos(430, 10) output_panel_scroll:SetSize(500, 500)
+	local output_panel
+	local function create_richtext()
+		if IsValid(output_panel) then output_panel:Remove() end
+		output_panel = vgui.Create("RichText", output_panel_scroll)
+		output_panel_scroll:AddItem(output_panel)
+		output_panel_scroll:SetVerticalScrollbarEnabled(true)
+		output_panel:SetSize(900 - 430 - 200,500)
+		output_panel:InsertColorChange(0,0,0, 255)
+	end
+	create_richtext()
+	output_panel:AppendText("keybind viewer\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n<- Use this dropdown to filter")
+
+	local test_cbox = vgui.Create("DComboBox", LeftPanel)
+	test_cbox:SetPos(300, 440) test_cbox:SetSize(120, 20)
+	test_cbox:SetSortItems(false)
+	test_cbox:SetText("filter keybinds")
+	local binder1_value
+	local binder2_value
+	local binder3_value
+	function test_cbox:OnSelect(i,val,data)
+		create_richtext()
+		local keybind_groupings = get_common_keybind_groupings()
+		
+		if keybind_groupings then
+			local str = ""
+			if val == "all actions" then
+				refresh_shortcut_dumps()
+				str = shortcut_dumps_rawstring
+			elseif val == "keybind categories" then
+				for groupname,group in pairs(keybind_groupings) do
+					str = str .. "Category: " .. groupname .. "\n"
+					for j,v in ipairs(group) do
+						str = str .. table.concat(v[1], "+") .. " : " .. v[2] .. "\n"
+					end
+					str = str .. "\n\n"
+				end
+			elseif val == "<<< filter" then
+				if not binder1_value then
+					output_panel:InsertColorChange(255,0,0, 255)
+					output_panel:AppendText("No binds to search! Use the three binder buttons\n")
+					output_panel:InsertColorChange(0,0,0, 255)
+				end
+				keybind_groupings = get_common_keybind_groupings({binder1_value, binder2_value, binder3_value})
+				if table.IsEmpty(keybind_groupings["pass_filter"]) then
+					output_panel:InsertColorChange(100,100,100, 255)
+					output_panel:AppendText("<No matching results>\n")
+					output_panel:InsertColorChange(0,0,0, 255)
+				end
+				for i,v in ipairs(keybind_groupings["pass_filter"]) do
+					str = str .. table.concat(v[1], "+") .. " : " .. v[2]
+					str = str .. "\n"
+				end
+			else
+				for i,v in ipairs(keybind_groupings[val]) do
+					str = str .. table.concat(v[1], "+") .. " : " .. v[2]
+					str = str .. "\n"
+				end
+			end
+			output_panel:AppendText(str)
+		end
+		
+	end
+	test_cbox:AddChoice("<<< filter") test_cbox:AddChoice("all actions") test_cbox:AddChoice("keybind categories") test_cbox:AddChoice("singles")
+	test_cbox:AddChoice("ctrl") test_cbox:AddChoice("shift") test_cbox:AddChoice("alt")
+	test_cbox:AddChoice("ctrl_alt") test_cbox:AddChoice("ctrl_shift") test_cbox:AddChoice("shift_alt")
+
+	rebuild_shortcut_box()
 	shortcutaction_choices:SetX(10) shortcutaction_choices:SetY(400)
 	shortcutaction_choices:SetWidth(170)
 	shortcutaction_choices:SetHeight(20)
 	shortcutaction_choices:ChooseOptionID(1)
-
+	refresh_shortcut_dumps()
+	shortcutaction_choices:SetTooltip(shortcut_dumps_rawstring)
+	function shortcutaction_choices:OnMenuOpened(menu)
+		refresh_shortcut_dumps()
+		self:SetTooltip()
+	end
 	function shortcutaction_choices:Think()
 		self.next = self.next or 0
 		self.found = self.found or false
 		if self.next < RealTime() then self.found = false end
 		if self:IsHovered() then
+			if self:IsMenuOpen() then
+				self:SetTooltip()
+			end
+
 			if input.IsKeyDown(KEY_UP) then
+				refresh_shortcut_dumps()
 				if not self.found then self:ChooseOptionID(math.Clamp(self:GetSelectedID() + 1,1,table.Count(pace.PACActionShortcut_Dictionary))) self.found = true self.next = RealTime() + 0.3 end
 			elseif input.IsKeyDown(KEY_DOWN) then
+				refresh_shortcut_dumps()
 				if not self.found then self:ChooseOptionID(math.Clamp(self:GetSelectedID() - 1,1,table.Count(pace.PACActionShortcut_Dictionary))) self.found = true self.next = RealTime() + 0.3 end
 			else self.found = false end
-		else self.found = false
+		else
+			self.found = false
 		end
 	end
 
@@ -1162,7 +1401,7 @@ function pace.FillEditorSettings(pnl)
 	local function update_shortcutaction_choices_textCurrentShortcut(num)
 		shortcutaction_choices_textCurrentShortcut:SetText("<No shortcut at index "..num..">")
 		num = tonumber(num)
-		local action, val = shortcutaction_choices:GetSelected()
+		local diplayname, action = shortcutaction_choices:GetSelected()
 		local strs = {}
 
 		if action and action ~= "" then
@@ -1182,8 +1421,12 @@ function pace.FillEditorSettings(pnl)
 		update_shortcutaction_choices_textCurrentShortcut(num)
 	end
 
-	function shortcutaction_choices:OnSelect(i, action)
+	function shortcutaction_choices:OnSelect(i, displayname, action)
 		shortcutaction_index:OnValueChanged(shortcutaction_index:GetValue())
+		refresh_shortcut_dumps()
+		create_richtext()
+		output_panel:AppendText(action .. "\n")
+		output_panel:AppendText(shortcut_dumps[action] or "<no keybinds>")
 	end
 
 	local binder1 = vgui.Create("DBinder", LeftPanel)
@@ -1192,8 +1435,9 @@ function pace.FillEditorSettings(pnl)
 	binder1:SetHeight(30)
 	binder1:SetWidth(90)
 	function binder1:OnChange( num )
-		if not num or num == 0 then return end
+		if not num or num == 0 then binder1_value = nil return end
 		if not input.GetKeyName( num ) then return end
+		binder1_value = num
 		LocalPlayer():ChatPrint("New bound key 1: "..input.GetKeyName( num ))
 		pace.FlashNotification("New bound key 1: "..input.GetKeyName( num ))
 	end
@@ -1204,8 +1448,9 @@ function pace.FillEditorSettings(pnl)
 	binder2:SetHeight(30)
 	binder2:SetWidth(90)
 	function binder2:OnChange( num )
-		if not num or num == 0 then return end
+		if not num or num == 0 then binder2_value = nil  return end
 		if not input.GetKeyName( num ) then return end
+		binder2_value = num
 		LocalPlayer():ChatPrint("New bound key 2: "..input.GetKeyName( num ))
 		pace.FlashNotification("New bound key 2: "..input.GetKeyName( num ))
 	end
@@ -1216,16 +1461,16 @@ function pace.FillEditorSettings(pnl)
 	binder3:SetHeight(30)
 	binder3:SetWidth(90)
 	function binder3:OnChange( num )
-		if not num or num == 0 then return end
+		if not num or num == 0 then binder3_value = nil return end
 		if not input.GetKeyName( num ) then return end
+		binder2_value = num
 		LocalPlayer():ChatPrint("New bound key 3: "..input.GetKeyName( num ))
 		pace.FlashNotification("New bound key 3: "..input.GetKeyName( num ))
 	end
 
 	local function send_active_shortcut_to_assign(tbl)
-		local action = shortcutaction_choices:GetValue()
+		local display, action = shortcutaction_choices:GetSelected()
 		local index = shortcutaction_index:GetValue()
-
 		if not tbl then
 			pace.PACActionShortcut[action] = pace.PACActionShortcut[action] or {}
 			pace.PACActionShortcut[action][index] = pace.PACActionShortcut[action][index] or {}
@@ -1239,7 +1484,7 @@ function pace.FillEditorSettings(pnl)
 				pace.PACActionShortcut[action][index] = nil
 			end
 		elseif not table.IsEmpty(tbl) then
-			pace.AssignEditorShortcut(shortcutaction_choices:GetValue(), tbl, shortcutaction_index:GetValue())
+			pace.AssignEditorShortcut(action, tbl, shortcutaction_index:GetValue())
 		end
 		encode_table_to_file("pac_editor_shortcuts")
 	end
@@ -1259,6 +1504,7 @@ function pace.FillEditorSettings(pnl)
 		binder3:SetSelectedNumber(0)
 		send_active_shortcut_to_assign()
 		update_shortcutaction_choices_textCurrentShortcut(shortcutaction_index:GetValue())
+		refresh_shortcut_dumps()
 	end
 
 	local bindoverwrite = vgui.Create("DButton", LeftPanel)
@@ -1271,6 +1517,7 @@ function pace.FillEditorSettings(pnl)
 	bindoverwrite:SetColor(Color(0,200,0))
 	bindoverwrite:SetIcon("icon16/disk.png")
 	function bindoverwrite:DoClick()
+		local _, action = shortcutaction_choices:GetSelected()
 		local tbl = {}
 		local i = 1
 		--print(binder1:GetValue(), binder2:GetValue(), binder3:GetValue())
@@ -1278,9 +1525,9 @@ function pace.FillEditorSettings(pnl)
 		if binder2:GetValue() ~= 0 then tbl[i] = input.GetKeyName(binder2:GetValue()) i = i + 1 end
 		if binder3:GetValue() ~= 0 then tbl[i] = input.GetKeyName(binder3:GetValue()) end
 		if not table.IsEmpty(tbl) then
-			pace.FlashNotification("Combo " .. shortcutaction_index:GetValue() .. " committed: " .. table.concat(tbl," "))
-			if not pace.PACActionShortcut[shortcutaction_choices:GetValue()] then
-				pace.PACActionShortcut[shortcutaction_choices:GetValue()] = {}
+			pace.FlashNotification(action .. " " .. "Combo " .. shortcutaction_index:GetValue() .. " committed: " .. table.concat(tbl," "))
+			if not pace.PACActionShortcut[action] then
+				pace.PACActionShortcut[action] = {}
 			end
 			send_active_shortcut_to_assign(tbl)
 			update_shortcutaction_choices_textCurrentShortcut(shortcutaction_index:GetValue())
@@ -1315,6 +1562,7 @@ function pace.FillEditorSettings(pnl)
 	bindcapture:SetWidth(90)
 	pace.bindcapturelabel_text = ""
 	function bindcapture:DoClick()
+		local previous_inputs_tbl = {}
 		pace.delayshortcuts = RealTime() + 5
 		local input_active = {}
 		local no_input = true
@@ -1327,6 +1575,7 @@ function pace.FillEditorSettings(pnl)
 			local inputs_tbl = {}
 			inputs_str = ""
 			for i=1,172,1 do --build bool list of all current keys
+				if pace.shortcuts_ignored_keys[i] then continue end
 				if input.IsKeyDown(i) then
 					input_active[i] = true
 					inputs_tbl[i] = true
@@ -1341,7 +1590,6 @@ function pace.FillEditorSettings(pnl)
 			if previous_inputs_tbl and table.Count(previous_inputs_tbl) > 0 then
 				if table.Count(inputs_tbl) < table.Count(previous_inputs_tbl) then
 					pace.FlashNotification("ending input!" .. previous_inputs_str)
-
 					local tbl = {}
 					local i = 1
 					for key,bool in pairs(previous_inputs_tbl) do
@@ -1349,11 +1597,25 @@ function pace.FillEditorSettings(pnl)
 						i = i + 1
 					end
 					--print(shortcutaction_choices:GetValue(), shortcutaction_index:GetValue())
-					pace.AssignEditorShortcut(shortcutaction_choices:GetValue(), tbl, shortcutaction_index:GetValue())
+					local _, action = shortcutaction_choices:GetSelected()
+					pace.AssignEditorShortcut(action, tbl, shortcutaction_index:GetValue())
 					--pace.PACActionShortcut[shortcutaction_choices:GetValue()][shortcutaction_index:GetValue()] = tbl
 					pace.delayshortcuts = RealTime() + 5
 					pace.bindcapturelabel_text = "Recorded input:\n" .. previous_inputs_str
+					previous_inputs_tbl = {}
+					inputs_tbl = {}
 					pac.RemoveHook("Tick", "pace_buttoncapture_countdown")
+					if #tbl < 4 then
+						if tbl[1] then
+							binder1:SetValue(input.GetKeyCode(tbl[1]))
+						end
+						if tbl[2] then
+							binder2:SetValue(input.GetKeyCode(tbl[2]))
+						end
+						if tbl[3] then
+							binder3:SetValue(input.GetKeyCode(tbl[3]))
+						end
+					end
 				end
 			end
 			previous_inputs_str = inputs_str
@@ -1498,7 +1760,7 @@ function pace.FillEditorSettings(pnl)
 	div:SetDividerWidth( 8 )
 	div:SetLeftMin( 50 )
 	div:SetRightMin( 50 )
-	div:SetLeftWidth( 450 )
+	div:SetLeftWidth( 700 )
 	partmenu_order_presets.OnSelect = function( self, index, value )
 		local temp_list = {"wear","save","load"}
 		if value == "factory preset" then
