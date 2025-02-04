@@ -1363,7 +1363,7 @@ do -- menu
 
 	function pace.ClearBulkList()
 		for _,v in ipairs(pace.BulkSelectList) do
-			if v.pace_tree_node ~= nil then v.pace_tree_node:SetAlpha( 255 ) end
+			if IsValid(v.pace_tree_node) then v.pace_tree_node:SetAlpha( 255 ) end
 			v:SetInfo()
 		end
 		pace.BulkSelectList = {}
@@ -2652,6 +2652,78 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			end):SetIcon("icon16/table_multiple.png")
 	end
 
+	local function install_submaterial_options(menu)
+		local mats = obj:GetOwner():GetMaterials()
+		local mats_str = table.concat(mats,"\n")
+		local dyn_props = obj:GetDynamicProperties()
+		local submat_togglers, pnl = main:AddSubMenu("create submaterial zone togglers (hide/show materials)", function()
+			Derma_StringRequest("submaterial togglers", "please input a submaterial name or a list of submaterial names with spaces\navailable materials:\n"..mats_str, "", function(str)
+				local event = pac.CreatePart("event") event:SetAffectChildrenOnly(true) event:SetEvent("command") event:SetArguments("materials_"..string.sub(obj.UniqueID,1,6))
+				local proxy = pac.CreatePart("proxy") proxy:SetAffectChildren(true) proxy:SetVariableName("no_draw") proxy:SetExpression("0") proxy:SetExpressionOnHide("1")
+				event:SetParent(obj) proxy:SetParent(event)
+				for i, kw in ipairs(string.Split(str, " ")) do
+					for id,mat2 in ipairs(mats) do
+						if string.GetFileFromFilename(mat2) == kw then
+							local mat = pac.CreatePart("material_3d") mat:SetParent(proxy)
+							mat:SetName("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
+							mat:SetLoadVmt(mat2)
+							dyn_props[kw].set("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
+						end
+					end
+				end
+			end)
+		end) pnl:SetImage("icon16/picture_delete.png") pnl:SetTooltip("The sub-options are right clickable")
+
+		local submat_toggler_proxy
+		local submat_toggler_event
+		local submaterials = {}
+		for i,mat2 in ipairs(mats) do
+			table.insert(submaterials,"")
+			local kw = string.GetFileFromFilename(mat2)
+			AddOptionRightClickable(kw, function()
+				if not submat_toggler_proxy then
+					local event = pac.CreatePart("event") event:SetAffectChildrenOnly(true) event:SetEvent("command") event:SetArguments("materials_"..string.sub(obj.UniqueID,1,6))
+					local proxy = pac.CreatePart("proxy") proxy:SetAffectChildren(true) proxy:SetVariableName("no_draw") proxy:SetExpression("0") proxy:SetExpressionOnHide("1")
+					event:SetParent(obj) proxy:SetParent(event)
+					submat_toggler_proxy = proxy
+				end
+				local mat = pac.CreatePart("material_3d") mat:SetParent(submat_toggler_proxy)
+				mat:SetName("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
+				mat:SetLoadVmt(mat2)
+
+				submaterials[i] = "toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6)
+				obj:SetMaterials(table.concat(submaterials, ";"))
+			end, submat_togglers):SetIcon("icon16/paintcan.png")
+		end
+
+		local edit_materials, pnl = main:AddSubMenu("edit all materials", function()
+			local materials = ""
+			obj:SetMaterial("")
+			for i,mat2 in ipairs(mats) do
+				local kw = string.GetFileFromFilename(mat2)
+				local mat = pac.CreatePart("material_3d") mat:SetParent(obj)
+				mat:SetName(kw.."_"..string.sub(obj.UniqueID,1,6))
+				mat:SetLoadVmt(mat2)
+				submaterials[i] = kw.."_"..string.sub(obj.UniqueID,1,6)
+				
+			end
+			obj:SetMaterials(table.concat(submaterials, ";"))
+		end) pnl:SetImage("icon16/paintcan.png")
+
+		for i,mat2 in ipairs(mats) do
+			local kw = string.GetFileFromFilename(mat2)
+			AddOptionRightClickable(kw, function()
+				obj:SetMaterial("")
+
+				local mat = pac.CreatePart("material_3d") mat:SetParent(obj)
+				mat:SetName(kw.."_"..string.sub(obj.UniqueID,1,6))
+				mat:SetLoadVmt(mat2)
+
+				submaterials[i] = kw.."_"..string.sub(obj.UniqueID,1,6)
+				obj:SetMaterials(table.concat(submaterials, ";"))
+			end, edit_materials):SetIcon("icon16/paintcan.png")
+		end
+	end
 	if obj.ClassName == "particles" then
 		main:AddOption("bare 3D setup", function()
 			obj:Set3D(true) obj:SetZeroAngle(false) obj:SetVelocity(0) obj:SetParticleAngleVelocity(Vector(0,0,0)) obj:SetGravity(Vector(0,0,0))
@@ -2928,26 +3000,8 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				end
 			end
 		end
-		main:AddOption("create submaterial zone togglers (hide/show materials)", function()
-			local mats = obj:GetOwner():GetMaterials()
-			local mats_str = table.concat(mats,"\n")
-			local dyn_props = obj:GetDynamicProperties()
-			Derma_StringRequest("submaterial togglers", "please input a submaterial name or a list of submaterial names with spaces\navailable materials:\n"..mats_str, "", function(str)
-				local event = pac.CreatePart("event") event:SetAffectChildrenOnly(true) event:SetEvent("command") event:SetArguments("materials_"..string.sub(obj.UniqueID,1,6))
-				local proxy = pac.CreatePart("proxy") proxy:SetAffectChildren(true) proxy:SetVariableName("no_draw") proxy:SetExpression("0") proxy:SetExpressionOnHide("1")
-				event:SetParent(obj) proxy:SetParent(event)
-				for i, kw in ipairs(string.Split(str, " ")) do
-					for id,mat2 in ipairs(mats) do
-						if string.GetFileFromFilename(mat2) == kw then
-							local mat = pac.CreatePart("material_3d") mat:SetParent(proxy)
-							mat:SetName("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
-							mat:SetLoadVmt(mat2)
-							dyn_props[kw].set("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
-						end
-					end
-				end
-			end)
-		end):SetIcon("icon16/picture_delete.png")
+		install_submaterial_options(main)
+
 	elseif obj.ClassName == "model2" then
 		local pm = pace.current_part:GetPlayerOwner():GetModel()
 		local pm_selected = player_manager.TranslatePlayerModel(GetConVar("cl_playermodel"):GetString())
@@ -2995,26 +3049,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			end
 		end
 
-		main:AddOption("create submaterial zone togglers (hide/show materials)", function()
-			local mats = obj:GetOwner():GetMaterials()
-			local mats_str = table.concat(mats,"\n")
-			local dyn_props = obj:GetDynamicProperties()
-			Derma_StringRequest("submaterial togglers", "please input a submaterial name or a list of submaterial names with spaces\navailable materials:\n"..mats_str, "", function(str)
-				local event = pac.CreatePart("event") event:SetAffectChildrenOnly(true) event:SetEvent("command") event:SetArguments("materials_"..string.sub(obj.UniqueID,1,6))
-				local proxy = pac.CreatePart("proxy") proxy:SetAffectChildren(true) proxy:SetVariableName("no_draw") proxy:SetExpression("0") proxy:SetExpressionOnHide("1")
-				event:SetParent(obj) proxy:SetParent(event)
-				for i, kw in ipairs(string.Split(str, " ")) do
-					for id,mat2 in ipairs(mats) do
-						if string.GetFileFromFilename(mat2) == kw then
-							local mat = pac.CreatePart("material_3d") mat:SetParent(proxy)
-							mat:SetName("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
-							mat:SetLoadVmt(mat2)
-							dyn_props[kw].set("toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6))
-						end
-					end
-				end
-			end)
-		end):SetIcon("icon16/picture_delete.png")
+		install_submaterial_options(main)
 
 		local collapses, pnl = main:AddSubMenu("bone collapsers") pnl:SetImage("icon16/compress.png")
 			collapses:AddOption("collapse arms", function()
