@@ -2692,7 +2692,12 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				mat:SetLoadVmt(mat2)
 
 				submaterials[i] = "toggled_"..kw.."_"..string.sub(obj.UniqueID,1,6)
-				obj:SetMaterials(table.concat(submaterials, ";"))
+				if #submaterials == 1 then
+					obj:SetMaterials("") obj:SetMaterial(submaterials[1])
+				else
+					obj:SetMaterials(table.concat(submaterials, ";"))
+				end
+				
 			end, submat_togglers):SetIcon("icon16/paintcan.png")
 		end
 
@@ -2707,7 +2712,11 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				submaterials[i] = kw.."_"..string.sub(obj.UniqueID,1,6)
 				
 			end
-			obj:SetMaterials(table.concat(submaterials, ";"))
+			if #submaterials == 1 then
+				obj:SetMaterials("") obj:SetMaterial(submaterials[1])
+			else
+				obj:SetMaterials(table.concat(submaterials, ";"))
+			end
 		end) pnl:SetImage("icon16/paintcan.png")
 
 		for i,mat2 in ipairs(mats) do
@@ -2720,7 +2729,11 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				mat:SetLoadVmt(mat2)
 
 				submaterials[i] = kw.."_"..string.sub(obj.UniqueID,1,6)
-				obj:SetMaterials(table.concat(submaterials, ";"))
+				if #submaterials == 1 then
+					obj:SetMaterials("") obj:SetMaterial(submaterials[1])
+				else
+					obj:SetMaterials(table.concat(submaterials, ";"))
+				end
 			end, edit_materials):SetIcon("icon16/paintcan.png")
 		end
 	end
@@ -3909,6 +3922,24 @@ function pace.AddClassSpecificPartMenuComponents(menu, obj)
 				end
 				obj:SetMultipleTargetParts(table.concat(uid_tbl,";"))
 			end):SetIcon("icon16/star.png")
+			if obj.MultipleTargetParts ~= "" then
+				menu:AddOption("(" .. #pace.BulkSelectList .. " parts in Bulk select) Add to multiple target parts", function()
+					local anti_duplicate = {}
+					local uid_tbl = string.Split(obj.MultipleTargetParts,";")
+					
+					for i,uid in ipairs(uid_tbl) do
+						anti_duplicate[uid] = uid
+					end
+					for i,part in ipairs(pace.BulkSelectList) do
+						anti_duplicate[part.UniqueID] = part.UniqueID
+					end
+					uid_tbl = {}
+					for _,uid in pairs(anti_duplicate) do
+						table.insert(uid_tbl, uid)
+					end
+					obj:SetMultipleTargetParts(table.concat(uid_tbl,";"))
+				end):SetIcon("icon16/star.png")
+			end
 		end
 	elseif obj.ClassName == "beam" then
 		if not IsValid(obj.TargetPart) and obj.MultipleEndPoints == "" then
