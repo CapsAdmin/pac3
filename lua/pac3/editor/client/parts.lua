@@ -25,6 +25,7 @@ CreateConVar( "pac_hover_halo_limit", 100, FCVAR_ARCHIVE, "max number of parts b
 CreateConVar("pac_bulk_select_key", "ctrl", FCVAR_ARCHIVE, "Button to hold to use bulk select")
 CreateConVar("pac_bulk_select_halo_mode", 1, FCVAR_ARCHIVE, "Halo Highlight mode.\n0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.")
 local bulk_select_subsume = CreateConVar("pac_bulk_select_subsume", "1", FCVAR_ARCHIVE, "Whether bulk-selecting a part implicitly deselects its children since they are covered by the parent already.\nWhile it can provide a clearer view of what's being selected globally which simplifies broad operations like deleting, moving and copying, it prevents targeted operations on nested parts like bulk property editing.")
+local bulk_select_deselect = CreateConVar("pac_bulk_select_deselect", "1", FCVAR_ARCHIVE, "Whether selecting a part without holding bulk select key will deselect the bulk selected parts")
 local bulkselect_cursortext = CreateConVar("pac_bulk_select_cursor_info", "1", FCVAR_ARCHIVE, "Whether to draw some info next to your cursor when there is a bulk selection")
 
 CreateConVar("pac_copilot_partsearch_depth", -1, FCVAR_ARCHIVE, "amount of copiloting in the searchable part menu\n-1:none\n0:auto-focus on the text edit for events\n1:bring up a list of clickable event types\nother parts aren't supported yet")
@@ -360,9 +361,18 @@ local last_span_select_part
 local last_select_was_span = false
 local last_direction
 
+pac.AddHook("VGUIMousePressed", "kecode_tracker", function(pnl, mc)
+	pace.last_mouse_code = mc
+end)
+
 function pace.OnPartSelected(part, is_selecting)
 	pace.delaybulkselect = pace.delaybulkselect or 0 --a time updated in shortcuts.lua to prevent common pac operations from triggering bulk selection
 	local bulk_key_pressed = input.IsKeyDown(input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString()))
+
+	if (not bulk_key_pressed) and bulk_select_deselect:GetBool() then
+		if pace.last_mouse_code == MOUSE_LEFT then pace.ClearBulkList(true) end
+	end
+
 	if RealTime() > pace.delaybulkselect and bulk_key_pressed and not input.IsKeyDown(input.GetKeyCode("v")) and not input.IsKeyDown(input.GetKeyCode("z")) and not input.IsKeyDown(input.GetKeyCode("y")) then
 		--jumping multi-select if holding shift + ctrl
 		if bulk_key_pressed and input.IsShiftDown() then
@@ -1361,13 +1371,13 @@ do -- menu
 		pace.recently_substituted_movable_part = obj
 	end
 
-	function pace.ClearBulkList()
+	function pace.ClearBulkList(silent)
 		for _,v in ipairs(pace.BulkSelectList) do
 			if IsValid(v.pace_tree_node) then v.pace_tree_node:SetAlpha( 255 ) end
 			v:SetInfo()
 		end
 		pace.BulkSelectList = {}
-		pac.Message("Bulk list deleted!")
+		if not silent then pac.Message("Bulk list deleted!") end
 		--surface.PlaySound('buttons/button16.wav')
 	end
 //@note pace.DoBulkSelect
@@ -4146,7 +4156,9 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		local subsume_pnl = bulk_menu:AddCVar("bulk select subsume", "pac_bulk_select_subsume", "1", "0")
 		subsume_pnl:SetTooltip("Whether bulk select should take the hierarchy into account, deselecting children when selecting a part.\nEnable this if you commonly do broad operations like copying, deleting or moving parts.\nDisable this for targeted operations like property editing on nested model structures, for example.")
 		bulk_menu:AddCVar("draw bulk select info next to cursor", "pac_bulk_select_cursor_info", "1", "0")
-		
+		local deselect_pnl = bulk_menu:AddCVar("bulk select deselect", "pac_bulk_select_deselect", "1", "0")
+		deselect_pnl:SetTooltip("Deselect all bulk selects if you select a part without holding bulk select key")
+
 		local resetting_mode, resetpnl = bulk_menu:AddSubMenu("Clear selection after operation?") resetpnl:SetImage("icon16/table_delete.png")
 		local resetting_mode1 = resetting_mode:AddOption("Yes") resetting_mode1:SetIsCheckable(true) resetting_mode1:SetRadio(true)
 		local resetting_mode2 = resetting_mode:AddOption("No") resetting_mode2:SetIsCheckable(true) resetting_mode2:SetRadio(true)
