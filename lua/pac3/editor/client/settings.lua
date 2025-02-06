@@ -1626,6 +1626,7 @@ function pace.FillEditorSettings(pnl)
 
 	local bulkbinder = vgui.Create("DBinder", LeftPanel)
 	function bulkbinder:OnChange( num )
+		if num == 0 then GetConVar("pac_bulk_select_key"):SetString("") return end
 		GetConVar("pac_bulk_select_key"):SetString(input.GetKeyName( num ))
 	end
 	bulkbinder:SetX(210)
