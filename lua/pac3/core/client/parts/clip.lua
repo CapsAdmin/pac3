@@ -40,6 +40,12 @@ do
 	function PART:PreOnDraw()
 		bclip = render_EnableClipping(true)
 
+		-- this fixes clip planes lagging behind when parented to a bone on a model part
+		local owner = self:GetParentOwner()
+		if owner:IsValid() and owner.PACPart then
+			pac.SetupBones(owner)
+		end
+
 		local pos, ang = LocalToWorld(self.Position + self.PositionOffset, self:CalcAngles(self.Angles + self.AngleOffset), self:GetBonePosition())
 		local normal = ang:Forward()
 
