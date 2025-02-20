@@ -92,6 +92,13 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Material", "cable/rope")
 		BUILDER:GetSetPart("EndPoint")
 		BUILDER:GetSet("MultipleEndPoints","")
+		BUILDER:GetSet("AutoHitpos", false, {description = "Create the endpoint at the hit position in front of the part (red arrow)"})
+		BUILDER:GetSet("AutoHitposFilter", "standard", {enums = {
+			standard = "standard",
+			world_only = "world_only",
+			life = "life",
+			none = "none"
+		}, description = "the filter modes are as such: standard = exclude player, root owner and pac_projectile\nworld_only = only hit world\nlife = hit players, NPCs, Nextbots\nnone = hit anything"})
 	BUILDER:SetPropertyGroup("beam size")
 		BUILDER:GetSet("Width", 1)
 		BUILDER:GetSet("WidthBend", 0)
@@ -105,6 +112,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Resolution", 16)
 		BUILDER:GetSet("TextureStretch", 1)
 		BUILDER:GetSet("TextureScroll", 0)
+		BUILDER:GetSet("ScrollRate", 0)
 	BUILDER:SetPropertyGroup("orientation")
 	BUILDER:SetPropertyGroup("appearance")
 		BUILDER:GetSet("StartColor", Vector(255, 255, 255), {editor_panel = "color"})
@@ -113,6 +121,19 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("EndAlpha", 1)
 	BUILDER:SetPropertyGroup("other")
 		BUILDER:PropertyOrder("DrawOrder")
+	BUILDER:SetPropertyGroup("Showtime dynamics")
+		BUILDER:GetSet("EnableDynamics", false, {description = "If you want to make a fading effect, you can do it here instead of adding proxies."})
+		BUILDER:GetSet("SizeFadeSpeed", 1)
+		BUILDER:GetSet("SizeFadePower", 1)
+		BUILDER:GetSet("IncludeWidthBend", true, {description = "whether to include the width bend in the dynamics fading of the overall width multiplier"})
+		BUILDER:GetSet("DynamicsStartSizeMultiplier", 1, {editor_friendly = "StartSizeMultiplier"})
+		BUILDER:GetSet("DynamicsEndSizeMultiplier", 1, {editor_friendly = "EndSizeMultiplier"})
+
+		BUILDER:GetSet("AlphaFadeSpeed", 1)
+		BUILDER:GetSet("AlphaFadePower", 1)
+		BUILDER:GetSet("DynamicsStartAlpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}, editor_friendly = "StartAlpha"})
+		BUILDER:GetSet("DynamicsEndAlpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}, editor_friendly = "EndAlpha"})
+
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
@@ -265,10 +286,34 @@ function PART:SetMaterial(var)
 	end
 end
 
+function PART:OnShow()
+	self.starttime = CurTime()
+	self.scrolled_amount = 0
+end
+
 function PART:OnDraw()
 	local part = self.EndPoint
 
-	if self.Materialm and self.StartColorC and self.EndColorC and ((part:IsValid() and part.GetWorldPosition) or self.MultiEndPoint) then
+	local lifetime = (CurTime() - self.starttime)
+	self.scrolled_amount = self.scrolled_amount + FrameTime() * self.ScrollRate
+
+	local fade_factor_w = math.Clamp(lifetime*self.SizeFadeSpeed,0,1)
+	local fade_factor_a = math.Clamp(lifetime*self.AlphaFadeSpeed,0,1)
+	
+	local final_alpha_mult = self.EnableDynamics and
+		self.DynamicsStartAlpha + (self.DynamicsEndAlpha - self.DynamicsStartAlpha) * math.pow(fade_factor_a,self.AlphaFadePower)
+		or 1
+
+	local StartColorA = self.StartColorC.a
+	local EndColorA = self.EndColorC.a
+	self.StartColorC.a = final_alpha_mult * StartColorA
+	self.EndColorC.a = final_alpha_mult * EndColorA
+
+	local final_size_mult = self.EnableDynamics and
+		self.DynamicsStartSizeMultiplier + (self.DynamicsEndSizeMultiplier - self.DynamicsStartSizeMultiplier) * math.pow(fade_factor_w,self.SizeFadePower)
+		or 1
+
+	if self.Materialm and self.StartColorC and self.EndColorC and ((part:IsValid() and part.GetWorldPosition) or self.MultiEndPoint or self.AutoHitpos) then
 		local pos, ang = self:GetDrawPosition()
 		render.SetMaterial(self.Materialm)
 		if self.MultiEndPoint then
@@ -282,13 +327,13 @@ function PART:OnDraw()
 
 					self.Bend,
 					math.Clamp(self.Resolution, 1, 256),
-					self.Width,
+					self.Width * final_size_mult,
 					self.StartColorC,
 					self.EndColorC,
 					self.Frequency,
 					self.TextureStretch,
-					self.TextureScroll,
-					self.WidthBend,
+					self.TextureScroll - self.scrolled_amount,
+					self.IncludeWidthBend and final_size_mult * self.WidthBend or self.WidthBend,
 					self.WidthBendSize,
 					self.StartWidthMultiplier,
 					self.EndWidthMultiplier,
@@ -296,22 +341,44 @@ function PART:OnDraw()
 				)
 			end
 		else
+			if self.AutoHitpos then
+				local filter = {}
+				local playerowner = self:GetPlayerOwner()
+				local rootowner = self:GetRootPart():GetOwner()
+				if self.AutoHitposFilter == "standard" then
+					filter = function(ent)
+						if ent == playerowner then return false end
+						if ent == rootowner then return false end
+						if ent:GetClass() == "pac_projectile" then return false end
+						return true
+					end
+				elseif self.AutoHitposFilter == "world_only" then
+					filter = function(ent)
+						return ent:IsWorld()
+					end
+				elseif self.AutoHitposFilter == "life" then
+					filter = function(ent) return (ent:IsNPC() or (ent:IsPlayer() and ent ~= playerowner) or ent:IsNextBot()) end
+				else
+					filter = nil
+				end
+				self.hitpos = util.QuickTrace(pos, ang:Forward()*32000, filter).HitPos
+			end
 			pac.DrawBeam(
 				pos,
-				part:GetWorldPosition(),
+				self.AutoHitpos and self.hitpos or part:GetWorldPosition(),
 
 				ang:Forward(),
-				part:GetWorldAngles():Forward(),
+				self.AutoHitpos and ang:Forward() or part:GetWorldAngles():Forward(),
 
 				self.Bend,
 				math.Clamp(self.Resolution, 1, 256),
-				self.Width,
+				self.Width * final_size_mult,
 				self.StartColorC,
 				self.EndColorC,
 				self.Frequency,
 				self.TextureStretch,
-				self.TextureScroll,
-				self.WidthBend,
+				self.TextureScroll - self.scrolled_amount,
+				self.IncludeWidthBend and final_size_mult * self.WidthBend or self.WidthBend,
 				self.WidthBendSize,
 				self.StartWidthMultiplier,
 				self.EndWidthMultiplier,
@@ -319,6 +386,9 @@ function PART:OnDraw()
 			)
 		end
 	end
+
+	self.StartColorC.a = StartColorA
+	self.EndColorC.a = EndColorA
 end
 
 BUILDER:Register()

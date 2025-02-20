@@ -138,7 +138,8 @@ function pace.ClientSettingsMenu(self)
 		self:NumSlider(L"Shake draw distance: ", "pac_limit_shake_draw_distance", 0, 20000, 0)
 		self:NumSlider(L"Shake max duration: ", "pac_limit_shake_duration", 0, 120, 0)
 		self:NumSlider(L"Shake max amplitude: ", "pac_limit_shake_amplitude", 0, 1000, 0)
-
+		self:NumSlider(L"Particles max per emission: ", "pac_limit_particles_per_emission", 0, 5000, 0)
+		self:NumSlider(L"Particles max per emitter: ", "pac_limit_particles_per_emitter", 0, 10000, 0)
 end
 
 function pace.AdminSettingsMenu(self)

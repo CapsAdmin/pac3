@@ -24,7 +24,24 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
 		BUILDER:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		BUILDER:GetSet("Translucent", true)
+
+	BUILDER:SetPropertyGroup("Showtime dynamics")
+		BUILDER:GetSet("EnableDynamics", false, {description = "If you want to make a fading effect, you can do it here instead of adding proxies."})
+		BUILDER:GetSet("SizeFadeSpeed", 1)
+		BUILDER:GetSet("SizeFadePower", 1)
+		BUILDER:GetSet("DynamicsStartSizeMultiplier", 1, {editor_friendly = "StartSizeMultiplier"})
+		BUILDER:GetSet("DynamicsEndSizeMultiplier", 1, {editor_friendly = "EndSizeMultiplier"})
+
+		BUILDER:GetSet("AlphaFadeSpeed", 1)
+		BUILDER:GetSet("AlphaFadePower", 1)
+		BUILDER:GetSet("DynamicsStartAlpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}, editor_friendly = "StartAlpha"})
+		BUILDER:GetSet("DynamicsEndAlpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}, editor_friendly = "EndAlpha"})
+
 BUILDER:EndStorableVars()
+
+function PART:OnShow()
+	self.starttime = CurTime()
+end
 
 function PART:GetNiceName()
 	if not self:GetSpritePath() then
@@ -110,6 +127,24 @@ function PART:OnDraw()
 		end
 
 		local old_alpha
+
+		local lifetime = (CurTime() - self.starttime)
+
+		local fade_factor_s = math.Clamp(lifetime*self.SizeFadeSpeed,0,1)
+		local fade_factor_a = math.Clamp(lifetime*self.AlphaFadeSpeed,0,1)
+		local final_alpha_mult = self.EnableDynamics and
+			self.DynamicsStartAlpha + (self.DynamicsEndAlpha - self.DynamicsStartAlpha) * math.pow(fade_factor_a,self.AlphaFadePower)
+			or 1
+
+		local final_size_mult = self.EnableDynamics and
+			self.DynamicsStartSizeMultiplier + (self.DynamicsEndSizeMultiplier - self.DynamicsStartSizeMultiplier) * math.pow(fade_factor_s,self.SizeFadePower)
+			or 1
+
+		if self.EnableDynamics then
+			if not self.ColorC then self:SetColor(self:GetColor()) end
+			self.ColorC.a = self.Alpha * 255 * final_alpha_mult
+		end
+
 		if pac.drawing_motionblur_alpha then
 			if not self.ColorC then self:SetColor(self:GetColor()) end
 			old_alpha = self.ColorC.a
@@ -120,7 +155,7 @@ function PART:OnDraw()
 		local pos = self:GetDrawPosition()
 
 		render_SetMaterial(mat)
-		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
+		render_DrawSprite(pos, self.SizeX * self.Size * final_size_mult, self.SizeY * self.Size * final_size_mult, self.ColorC)
 
 		if self.IgnoreZ then
 			cam_IgnoreZ(false)
@@ -129,6 +164,7 @@ function PART:OnDraw()
 		if pac.drawing_motionblur_alpha then
 			self.ColorC.a = old_alpha
 		end
+
 	end
 end
 
