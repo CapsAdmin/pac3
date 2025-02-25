@@ -76,6 +76,10 @@ BUILDER:StartStorableVars()
 
 BUILDER:EndStorableVars()
 
+function PART:Initialize()
+	self.number_particles = 0
+end
+
 function PART:GetNiceName()
 	local str = (self:GetMaterial()):match(".+/(.+)") or ""
 	--return pac.PrettifyName("/".. str) or "error"
@@ -165,10 +169,10 @@ function PART:OnShow(from_rendering)
 end
 
 function PART:OnDraw()
-	self.number_particles = self.NumberParticles
+	self.number_particles = self.NumberParticles or 0
 	if not self.FireOnce then
 		if self.Decay == 0 then
-			self.number_particles = self.NumberParticles
+			self.number_particles = self.NumberParticles or 0
 		elseif self.Decay > 0 then
 			self.number_particles = math.Clamp(self.NumberParticles - (RealTime() - self.FirstShotTime) * self.Decay,0,self.NumberParticles)
 		else
@@ -243,6 +247,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
+	self.number_particles = self.number_particles or 0
 	if self.FireOnce and not self.FirstShot then self.CanKeepFiring = false end
 	local emt = self:GetEmitter()
 	if not emt then return end
