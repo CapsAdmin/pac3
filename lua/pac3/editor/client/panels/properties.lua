@@ -1640,6 +1640,33 @@ do -- base editable
 
 				end):SetImage("materials/spawnicons/"..string.gsub(pm_selected, ".mdl", "")..".png")
 			end
+
+			if IsValid(pace.current_part:GetRootPart():GetOwner()) then
+				local root_model = pace.current_part:GetRootPart():GetOwner():GetModel()
+				if root_model ~= pm then
+					if not file.Exists("materials/spawnicons/"..string.gsub(root_model, ".mdl", "")..".png", "GAME") then
+						pace.FlashNotification("missing spawn icon")
+						local spawnicon = vgui.Create("SpawnIcon")
+						spawnicon:SetPos(0,0)
+						spawnicon:SetModel(root_model)
+						spawnicon:RebuildSpawnIcon()
+						timer.Simple(2, function()
+							spawnicon:Remove()
+						end)
+					end
+					local pnl = menu2:AddOption("root owner model - " .. string.gsub(string.GetFileFromFilename(root_model), ".mdl", ""), function()
+						pace.current_part:SetModel(root_model)
+						pace.current_part.pace_properties["Model"]:SetValue(root_model)
+						pace.PopulateProperties(pace.current_part)
+	
+					end)
+					pnl:SetImage("materials/spawnicons/"..string.gsub(root_model, ".mdl", "")..".png")
+					timer.Simple(0, function()
+						pnl:SetImage("materials/spawnicons/"..string.gsub(root_model, ".mdl", "")..".png")
+					end)
+				end
+			end
+			
 			menu2:AddOption("Active playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
 				pace.current_part:SetModel(pm)
 				pace.current_part.pace_properties["Model"]:SetValue(pm)
