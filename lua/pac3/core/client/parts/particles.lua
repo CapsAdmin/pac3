@@ -158,6 +158,7 @@ function PART:Set3D(b)
 end
 
 function PART:OnShow(from_rendering)
+	self.number_particles = self.NumberParticles
 	self.CanKeepFiring = true
 	self.FirstShot = true
 	self.FirstShotTime = RealTime()
