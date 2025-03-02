@@ -66,6 +66,8 @@ BUILDER:StartStorableVars()
 		:GetSet("AffectPitch", true)
 		:GetSet("AffectYaw", true)
 		:GetSet("ContinuousAim", true)
+		:GetSet("SmoothAiming", false, {description = "Gradually ease into the target angle by only changing the angle by a fraction every frame instead of fully setting it immediately"})
+		:GetSet("SmoothFraction", 0.05, {editor_clamp = {0,1}})
 
 	:SetPropertyGroup("TeleportSafety")
 		:GetSet("ClampDistance", false, {description = "Prevents the teleport from going too far (By Radius amount). For example, if you use hitpos bone on a pac model, it can act as a safety in case the raycast falls out of bounds."})
@@ -99,11 +101,16 @@ local function set_eyeang(ply, self)
 		ang.r = 0
 		if not self.AffectPitch then ang.p = plyang.p end
 		if not self.AffectYaw then ang.y = plyang.y end
-		ply:SetEyeAngles(ang)
 	elseif self.Mode == "AimToPos" then
-		local ang = (pos - ply:EyePos()):Angle()
+		ang = (pos - ply:EyePos()):Angle()
 		if not self.AffectPitch then ang.p = plyang.p end
 		if not self.AffectYaw then ang.y = plyang.y end
+	end
+	if self.SmoothAiming then
+		local lerped_ang = LerpAngle(self.SmoothFraction, plyang, ang)
+		lerped_ang.r = 0
+		ply:SetEyeAngles(lerped_ang)
+	else
 		ply:SetEyeAngles(ang)
 	end
 end
