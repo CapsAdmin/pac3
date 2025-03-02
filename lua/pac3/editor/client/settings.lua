@@ -21,6 +21,7 @@ local convar_params_lock = {
 	{"pac_sv_lock", "Allow lock part", "", -1, 0, 200},
 	{"pac_sv_lock_teleport", "Allow lock part teleportation", "", -1, 0, 200},
 	{"pac_sv_lock_grab", "Allow lock part grabbing", "", -1, 0, 200},
+	{"pac_sv_lock_aim", "Allow lock part aiming", "", -1, 0, 200},
 	{"pac_sv_lock_allow_grab_ply", "Allow grabbing players", "", -1, 0, 200},
 	{"pac_sv_lock_allow_grab_npc", "Allow grabbing NPCs", "", -1, 0, 200},
 	{"pac_sv_lock_allow_grab_ent", "Allow grabbing other entities", "", -1, 0, 200},

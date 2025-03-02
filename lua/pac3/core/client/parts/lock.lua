@@ -22,12 +22,14 @@ local convar_lock = GetConVar("pac_sv_lock")
 local convar_lock_grab = GetConVar("pac_sv_lock_grab")
 local convar_lock_max_grab_radius = GetConVar("pac_sv_lock_max_grab_radius")
 local convar_lock_teleport = GetConVar("pac_sv_lock_teleport")
+local convar_lock_aim = GetConVar("pac_sv_lock_aim")
 local convar_combat_enforce_netrate = GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside")
 
 --sorcerous hack fix
 if convar_lock == nil then timer.Simple(10, function() convar_lock = GetConVar("pac_sv_lock") end) end
 if convar_lock_grab == nil then timer.Simple(10, function() convar_lock_grab = GetConVar("pac_sv_lock_grab") end) end
 if convar_lock_teleport == nil then timer.Simple(10, function() convar_lock_teleport = GetConVar("pac_sv_lock_teleport") end) end
+if convar_lock_aim == nil then timer.Simple(10, function() convar_lock_aim = GetConVar("pac_sv_lock_aim") end) end
 if convar_lock_max_grab_radius == nil then timer.Simple(10, function() convar_lock_max_grab_radius = GetConVar("pac_sv_lock_max_grab_radius") end) end
 if convar_combat_enforce_netrate == nil then timer.Simple(10, function() convar_combat_enforce_netrate = GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside") end) end
 
@@ -41,7 +43,13 @@ PART.Icon = "icon16/lock.png"
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("Behaviour")
-		:GetSet("Mode", "None", {enums = {["None"] = "None", ["Grab"] = "Grab", ["Teleport"] = "Teleport"}})
+		:GetSet("Mode", "None", {enums = {
+			["None"] = "None",
+			["Grab"] = "Grab",
+			["Teleport"] = "Teleport",
+			["SetEyeang"] = "SetEyeang",
+			["AimToPos"] = "AimToPos"
+		}})
 		:GetSet("OverrideAngles", true, {description = "Whether the part will rotate the entity alongside it, otherwise it changes just the position"})
 		:GetSet("RelativeGrab", false)
 		:GetSet("RestoreDelay", 1, {description = "Seconds until the entity's original angles before self.grabbing are re-applied"})
@@ -53,6 +61,11 @@ BUILDER:StartStorableVars()
 		:GetSetPart("TargetPart")
 		:GetSet("ContinuousSearch", false, {description = "Will search for entities until one is found. Otherwise only try once when part is shown."})
 		:GetSet("Preview", false)
+
+	:SetPropertyGroup("AimMode")
+		:GetSet("AffectPitch", true)
+		:GetSet("AffectYaw", true)
+		:GetSet("ContinuousAim", true)
 
 	:SetPropertyGroup("TeleportSafety")
 		:GetSet("ClampDistance", false, {description = "Prevents the teleport from going too far (By Radius amount). For example, if you use hitpos bone on a pac model, it can act as a safety in case the raycast falls out of bounds."})
@@ -72,6 +85,28 @@ BUILDER:StartStorableVars()
 
 
 BUILDER:EndStorableVars()
+
+local function set_eyeang(ply, self)
+	if ply ~= pac.LocalPlayer or self:GetPlayerOwner() ~= ply then return end
+	if not convar_lock_aim:GetBool() then
+		self:SetWarning("lock part aiming is disabled on this server!")
+		return
+	end
+	local plyang = ply:EyeAngles()
+	local pos, ang = self:GetDrawPosition()
+
+	if self.Mode == "SetEyeang" then
+		ang.r = 0
+		if not self.AffectPitch then ang.p = plyang.p end
+		if not self.AffectYaw then ang.y = plyang.y end
+		ply:SetEyeAngles(ang)
+	elseif self.Mode == "AimToPos" then
+		local ang = (pos - ply:EyePos()):Angle()
+		if not self.AffectPitch then ang.p = plyang.p end
+		if not self.AffectYaw then ang.y = plyang.y end
+		ply:SetEyeAngles(ang)
+	end
+end
 
 function PART:OnThink()
 	if not convar_lock:GetBool() then return end
@@ -216,6 +251,12 @@ function PART:OnThink()
 			self.grabbing = true
 			self.teleported = false
 		end
+	elseif self.Mode == "SetEyeang" then
+		if not self.ContinuousAim then return end
+		set_eyeang(self:GetPlayerOwner(), self)
+	elseif self.Mode == "AimToPos" then
+		if not self.ContinuousAim then return end
+		set_eyeang(self:GetPlayerOwner(), self)
 	end
 	--if self.is_first_time then print("lock " .. self.UniqueID .. "did its first clock") end
 	self.is_first_time = false
@@ -326,7 +367,7 @@ function PART:OnShow()
 			origin_part = self
 		end
 		if origin_part == nil or not self.Preview or pac.LocalPlayer ~= self:GetPlayerOwner() then return end
-		local sv_dist = GetConVar("pac_sv_lock_max_grab_radius"):GetInt()
+		local sv_dist = convar_lock_max_grab_radius:GetInt()
 
 		render.DrawLine(origin_part:GetWorldPosition(),origin_part:GetWorldPosition() + Vector(0,0,-self.OffsetDownAmount),Color(255,255,255))
 
@@ -342,7 +383,7 @@ function PART:OnShow()
 
 	end)
 	if self.Mode == "Teleport" then
-		if not GetConVar('pac_sv_lock_teleport'):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
+		if not convar_lock_teleport:GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
 		if pace.still_loading_wearing then return end
 		self.target_ent = nil
 
@@ -363,7 +404,7 @@ function PART:OnShow()
 				end
 			end
 			if self.SlopeSafety then teleport_pos_final = teleport_pos_final + Vector(0,0,30) end
-			if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+			if not convar_combat_enforce_netrate:GetBool() then
 				if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 			end
 			timer.Simple(0, function()
@@ -381,6 +422,10 @@ function PART:OnShow()
 	elseif self.Mode == "Grab" then
 		self:DecideTarget()
 		self:CheckEntValidity()
+	elseif self.Mode == "SetEyeang" then
+		set_eyeang(self:GetPlayerOwner(), self)
+	elseif self.Mode == "AimToPos" then
+		set_eyeang(self:GetPlayerOwner(), self)
 	end
 end
 
@@ -388,7 +433,7 @@ function PART:OnHide()
 	pac.RemoveHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
 	self.teleported = false
 	self.grabbing = false
-	if not IsValid(self.target_ent) then return
+	if self.target_ent == nil then return
 	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedByUID = nil end
 	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	self:reset_ent_ang()
@@ -401,7 +446,7 @@ function PART:reset_ent_ang()
 	if reset_ent:IsValid() then
 		timer.Simple(math.min(self.RestoreDelay,5), function()
 			if pac.LocalPlayer == self:GetPlayerOwner() then
-				if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+				if not convar_combat_enforce_netrate:GetBool() then
 					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 				end
 				net.Start("pac_request_angle_reset_on_entity")
@@ -521,21 +566,21 @@ end
 
 function PART:Initialize()
 	self.default_ang = Angle(0,0,0)
-	if not GetConVar('pac_sv_lock_grab'):GetBool() then
-		if not GetConVar('pac_sv_lock_teleport'):GetBool() then
+	if not convar_lock_grab:GetBool() then
+		if not convar_lock_teleport:GetBool() then
 			self:SetWarning("lock part grabs and teleports are disabled on this server!")
 		else
 			self:SetWarning("lock part grabs are disabled on this server!")
 		end
 	end
-	if not GetConVar('pac_sv_lock_teleport'):GetBool() then
-		if not GetConVar('pac_sv_lock_grab'):GetBool() then
+	if not convar_lock_teleport:GetBool() then
+		if not convar_lock_grab:GetBool() then
 			self:SetWarning("lock part grabs and teleports are disabled on this server!")
 		else
 			self:SetWarning("lock part teleports are disabled on this server!")
 		end
 	end
-	if not GetConVar('pac_sv_lock'):GetBool() then self:SetError("lock parts are disabled on this server!") end
+	if not convar_lock:GetBool() then self:SetError("lock parts are disabled on this server!") end
 end
 
 

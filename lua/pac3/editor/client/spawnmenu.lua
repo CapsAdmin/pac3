@@ -192,7 +192,8 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Enable lock part", "pac_sv_lock")
 		self:CheckBox(L"Allow grab", "pac_sv_lock_grab")
 		self:CheckBox(L"Allow teleport", "pac_sv_lock_teleport")
-		
+		self:CheckBox(L"Allow aiming", "pac_sv_lock_aim")
+
 		self:Help(L"Force part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable force part", "pac_sv_force")
 		self:NumSlider(L"Max amount", "pac_sv_force_max_amount", 0, 10000000, 0)
