@@ -3841,47 +3841,6 @@ end
 function pace.AddClassSpecificPartMenuComponents(menu, obj)
 	if obj.Notes == "showhidetest" then menu:AddOption("(hide/show test) reset", function() obj:CallRecursive("OnShow") end):SetIcon("icon16/star.png") end
 
-	do --event reorganization
-		local full_events = true
-		for i,v in ipairs(pace.BulkSelectList) do
-			if v.ClassName ~= "event" then full_events = false end
-		end
-		if full_events then
-			menu:AddOption("reorganize into a non-ACO pocket", function()
-				for i,part in ipairs(pace.BulkSelectList) do
-					part:SetParent(part:GetRootPart())
-				end
-				local prime_parent = obj:GetParent()
-				if prime_parent.ClassName == "event" or pace.BulkSelectList[1] == prime_parent then
-					prime_parent = obj:GetRootPart()
-				end
-				for i,part in ipairs(pace.BulkSelectList) do
-					part:SetParent()
-					part:SetAffectChildrenOnly(false)
-					part:SetDestinationPart()
-				end
-				obj:SetParent(prime_parent)
-				for i,part in ipairs(pace.BulkSelectList) do
-					part:SetParent(obj)
-				end
-			end):SetIcon("icon16/clock_link.png")
-			menu:AddOption("reorganize into an ACO downward tower", function()
-				local parent = obj:GetParent()
-				local grandparent = obj:GetParent()
-				if parent.Parent then grandparent = parent:GetParent() end
-				
-				for i,part in ipairs(pace.BulkSelectList) do
-					part:SetAffectChildrenOnly(true)
-					part:SetDestinationPart()
-					part:SetParent(parent)
-					parent = part
-				end
-				pace.BulkSelectList[1]:SetParent(obj:GetParent())
-				obj:SetParent(parent)
-			end):SetIcon("icon16/clock_link.png")
-		end
-	end
-
 	if obj.ClassName == "camera" then
 		if not obj:IsHidden() then
 			local remembered_view = {pace.ViewPos, pace.ViewAngles}
@@ -4056,6 +4015,47 @@ function pace.AddClassSpecificPartMenuComponents(menu, obj)
 		end
 		if not IsValid(obj.DestinationPart) then
 			menu:AddOption("engrave / quick-link to parent", function() obj:SetDestinationPart(obj:GetParent()) end):SetIcon("icon16/star.png")
+		end
+	end
+
+	do --event reorganization
+		local full_events = true
+		for i,v in ipairs(pace.BulkSelectList) do
+			if v.ClassName ~= "event" then full_events = false end
+		end
+		if #pace.BulkSelectList > 0 and full_events then
+			menu:AddOption("reorganize into a non-ACO pocket", function()
+				for i,part in ipairs(pace.BulkSelectList) do
+					part:SetParent(part:GetRootPart())
+				end
+				local prime_parent = obj:GetParent()
+				if prime_parent.ClassName == "event" or pace.BulkSelectList[1] == prime_parent then
+					prime_parent = obj:GetRootPart()
+				end
+				for i,part in ipairs(pace.BulkSelectList) do
+					part:SetParent()
+					part:SetAffectChildrenOnly(false)
+					part:SetDestinationPart()
+				end
+				obj:SetParent(prime_parent)
+				for i,part in ipairs(pace.BulkSelectList) do
+					part:SetParent(obj)
+				end
+			end):SetIcon("icon16/clock_link.png")
+			menu:AddOption("reorganize into an ACO downward tower", function()
+				local parent = obj:GetParent()
+				local grandparent = obj:GetParent()
+				if parent.Parent then grandparent = parent:GetParent() end
+				
+				for i,part in ipairs(pace.BulkSelectList) do
+					part:SetAffectChildrenOnly(true)
+					part:SetDestinationPart()
+					part:SetParent(parent)
+					parent = part
+				end
+				pace.BulkSelectList[1]:SetParent(obj:GetParent())
+				obj:SetParent(parent)
+			end):SetIcon("icon16/clock_link.png")
 		end
 	end
 
