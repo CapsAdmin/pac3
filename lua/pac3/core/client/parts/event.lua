@@ -170,6 +170,16 @@ function PART:SetEvent(event)
 	if (owner == pac.LocalPlayer) and (not pace.processing) then
 		if event == "command" then owner.pac_command_events = owner.pac_command_events or {} end
 		if not self.Events[event] then --invalid event? try another event
+			if #string.Split(event, " ") == 2 then --timerx2
+				local strs = string.Split(event, " ")
+				timer.Simple(0.2, function()
+					if not self.pace_properties or self ~= pace.current_part then return end
+					self:SetEvent("timerx2")
+					self:SetArguments(strs[1] .. "@@" .. strs[2] .. "@@1@@0")
+					pace.PopulateProperties(self)
+				end)
+				return
+			end
 			if isnumber(tonumber(event)) then --timerx
 				timer.Simple(0.2, function()
 					if not self.pace_properties or self ~= pace.current_part then return end
@@ -220,7 +230,36 @@ function PART:SetEvent(event)
 	end
 end
 
+function PART:SetProperty(key, val)
+	if self["Set" .. key] ~= nil then
+		if self["Get" .. key](self) ~= val then
+			self["Set" .. key](self, val)
+		end
+	elseif self.GetDynamicProperties then
+		local info = self:GetDynamicProperties()[key]
+		if info and info then
+			if isnumber(val) then
+				val = math.Round(val, 7)
+			end
+			info.set(val)
+			if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
+			if pace.IsActive() then
+				self.pace_properties["Arguments"]:SetText("  " .. self.Arguments)
+				self.pace_properties["Arguments"].original_str = self.Arguments
+			end
+		end
+	end
+end
+
+function PART:SetArguments(str)
+	self.Arguments = str
+	if pace.IsActive() and pac.LocalPlayer == self:GetPlayerOwner() then
+		pace.PopulateProperties(self)
+	end
+end
+
 function PART:Initialize()
+	self.found_cached_parts = {}
 	self.specialtrackedparts = {}
 	self.ExtraHermites = {}
 	if self:GetPlayerOwner() == LocalPlayer() then
@@ -234,13 +273,21 @@ function PART:Initialize()
 			end
 		end)
 	end
+	--force refresh
+	timer.Simple(10, function()
+		self.found_cached_parts = {}
+	end)
 
 end
 
 function PART:GetOrFindCachedPart(uid_or_name)
 	local part = nil
-	self.found_cached_parts = self.found_cached_parts or {}
-	if self.found_cached_parts[uid_or_name] then return self.found_cached_parts[uid_or_name] end
+	local existing_part = self.found_cached_parts[uid_or_name]
+	if existing_part then
+		if existing_part ~= NULL and existing_part:IsValid() then
+			return existing_part
+		end
+	end
 
 	local owner = self:GetPlayerOwner()
 	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
@@ -574,6 +621,36 @@ PART.OldEvents = {
 			self.number = time - self.time
 
 			return self:NumberOperator(self.number, seconds)
+		end,
+	},
+
+	timerx2 = {
+		operator_type = "none",
+		tutorial_explanation = "timerx2 is a dual timerx, a stopwatch that counts time since it's shown and determines whether it fits within the window defined by StartTime and EndTime",
+		arguments = {{StartTime = "number"}, {EndTime = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
+		userdata = {
+			{default = 0.5, timerx_property = "StartTime"},
+			{default = 1, timerx_property = "EndTime"},
+			{default = true, timerx_property = "reset_on_hide"}
+		},
+		nice = function(self, ent, seconds, seconds2)
+			return "timerx2: " .. ("%.2f"):format(self.number or 0, 2) .. " between " .. seconds .. " and " .. seconds2 .. " seconds"
+		end,
+		callback = function(self, ent, StartTime, EndTime, reset_on_hide, synced_time)
+
+			local time = synced_time and CurTime() or RealTime()
+
+			self.time = self.time or time
+			self.timerx_reset = reset_on_hide
+
+			if self.AffectChildrenOnly and self:IsHiddenBySomethingElse() then
+				return false
+			end
+			self.number = time - self.time
+
+			return self.number > StartTime and self.number < EndTime
+
+			--return self:NumberOperator(self.number, seconds)
 		end,
 	},
 
@@ -1549,9 +1626,32 @@ PART.OldEvents = {
 		end,
 	},
 
+	ratio_timer = {
+		operator_type = "none",
+		arguments = {{interval = "number"}, {offset = "number"}, {ratio = "number"}, {reset_on_hide = "boolean"}},
+		userdata = {{default = 1}, {default = 0}, {default = 0.5}, {default = false}},
+		callback = function(self, ent, interval, offset, ratio, reset_on_hide)
+			interval = interval or 1
+			offset = offset or 0
+			final_offset = offset
+			ratio = math.Clamp(math.abs(ratio or 0.5), 0, 1)
+
+			if interval == 0 or interval < FrameTime() then
+				self.timer_hack = not self.timer_hack
+				return self.timer_hack
+			end
+
+			if reset_on_hide then
+				final_offset = -self.showtime + offset
+			end
+			return (CurTime() + final_offset) % interval < (interval * ratio)
+		end,
+	},
+
 	timer = {
 		operator_type = "none",
 		arguments = {{interval = "number"}, {offset = "number"}},
+		userdata = {{default = 1}, {default = 0}},
 		callback = function(self, ent, interval, offset)
 			interval = interval or 1
 			offset = offset or 0
@@ -2358,7 +2458,7 @@ PART.OldEvents = {
 	damage_zone_hit = {
 		operator_type = "number", preferred_operator = "above",
 		arguments = {{time = "number"}, {damage = "number"}, {uid = "string"}},
-		userdata = {{default = 1}, {default = 0}, {enums = function(part)
+		userdata = {{default = 1}, {default = 0}, {default = "", enums = function(part)
 			local output = {}
 			local parts = pac.GetLocalParts()
 
@@ -2408,7 +2508,7 @@ PART.OldEvents = {
 	damage_zone_kill = {
 		operator_type = "mixed", preferred_operator = "above",
 		arguments = {{time = "number"}, {uid = "string"}},
-		userdata = {{default = 1}, {enums = function(part)
+		userdata = {{default = 1}, {default = "", enums = function(part)
 			local output = {}
 			local parts = pac.GetLocalParts()
 
@@ -2635,8 +2735,8 @@ PART.OldEvents = {
 	or_gate = {
 		operator_type = "none", preferred_operator = "find simple",
 		tutorial_explanation = "combines multiple events into an OR gate, the event will activate as soon as one of the events listed is activated (taking inverts into account)",
-		arguments = {{uids = "string"}},
-		userdata = {{enums = function(part)
+		arguments = {{uids = "string"}, {ignore_inverts = "boolean"}},
+		userdata = {{default = "", enums = function(part)
 			local output = {}
 			local parts = pac.GetLocalParts()
 			for i, part in pairs(parts) do
@@ -2646,20 +2746,108 @@ PART.OldEvents = {
 			end
 			return output
 		end}},
-		callback = function(self, ent, uids)
+		callback = function(self, ent, uids, ignore_inverts)
+			if uids == "" then return false end
+			local uid_splits = string.Split(uids, ";")
+			local true_count = 0
+			for i,uid in ipairs(uid_splits) do
+				local part = self:GetOrFindCachedPart(uid)
+				if part:IsValid() then
+					local raw = part.raw_event_condition
+					local b = false
+					if ignore_inverts then
+						b = raw
+					else
+						b = not part.event_triggered
+					end
+					if b then
+						true_count = true_count + 1
+					end
+				end
+			end
+			return true_count > 0
+		end,
+	},
+	xor_gate = {
+		operator_type = "none", preferred_operator = "find simple",
+		tutorial_explanation = "combines multiple events into an XOR gate, the event will activate if one (and only one) of the two events is activated (taking inverts into account)",
+		arguments = {{uid1 = "string"},{uid2 = "string"}},
+		userdata = {
+			{default = "", enums = function(part)
+				local output = {}
+				local parts = pac.GetLocalParts()
+				for i, part in pairs(parts) do
+					if part.ClassName == "event" then
+						output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
+					end
+				end
+				return output
+			end},
+			{default = "", enums = function(part)
+				local output = {}
+				local parts = pac.GetLocalParts()
+				for i, part in pairs(parts) do
+					if part.ClassName == "event" then
+						output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
+					end
+				end
+				return output
+			end}
+		},
+		callback = function(self, ent, uid1, uid2)
+			if uid1 == "" then return false end
+			if uid2 == "" then return false end
+			local part1 = self:GetOrFindCachedPart(uid1)
+			local part2 = self:GetOrFindCachedPart(uid2)
+			if not IsValid(part1) or not IsValid(part2) then return false end
+			local b1 = part1.event_triggered if part1.Invert then b1 = not b1 end
+			local b2 = part2.event_triggered if part2.Invert then b2 = not b2 end
+			return ((b1 and not b2) or (b2 and not b1)) and not (b1 and b2)
+		end,
+		nice = function(self, ent, uid1, uid2)
+			local part1 = self:GetOrFindCachedPart(uid1)
+			local part2 = self:GetOrFindCachedPart(uid2)
+			if not IsValid(part1) or not IsValid(part2) then return "xor_gate : [" .. uid1 .. ", " .. uid2 .. "] <ERROR>" end
+			local str = "xor_gate : [" .. part1:GetName() .. ", " .. part2:GetName() .. "]"
+			return str
+		end
+	},
+	and_gate = {
+		operator_type = "none", preferred_operator = "find simple",
+		tutorial_explanation = "combines multiple events into an AND gate, the event will activate when all the events listed are activated (taking inverts into account)",
+		arguments = {{uids = "string"}, {ignore_inverts = "boolean"}},
+		userdata = {{default = "", enums = function(part)
+			local output = {}
+			local parts = pac.GetLocalParts()
+			for i, part in pairs(parts) do
+				if part.ClassName == "event" then
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
+				end
+			end
+			return output
+		end}},
+		callback = function(self, ent, uids, ignore_inverts)
 			if uids == "" then return false end
 			local uid_splits = string.Split(uids, ";")
 			for i,uid in ipairs(uid_splits) do
 				local part = self:GetOrFindCachedPart(uid)
-				if part then
-					local b = part.event_triggered
-					if part.Invert then b = not b end
-					if b then
-						return true
+				if part:IsValid() then
+					local raw = part.raw_event_condition
+					local b = false
+					if ignore_inverts then
+						b = raw
+					else
+						b = not part.event_triggered
 					end
+
+					if not b then
+						return false
+					end
+				else
+					return false
 				end
 			end
-			return false
+			return true
 		end,
 	}
 
@@ -3263,6 +3451,7 @@ local function should_trigger(self, ent, eventObject)
 	else
 		b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
 	end
+	self.raw_event_condition = b
 
 	if self.Invert then
 		b = not b
