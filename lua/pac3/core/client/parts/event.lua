@@ -244,6 +244,7 @@ function PART:SetProperty(key, val)
 			info.set(val)
 			if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
 			if pace.IsActive() then
+				if self ~= pace.current_part then return end
 				self.pace_properties["Arguments"]:SetText("  " .. self.Arguments)
 				self.pace_properties["Arguments"].original_str = self.Arguments
 			end
