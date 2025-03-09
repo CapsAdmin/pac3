@@ -255,6 +255,7 @@ end
 function PART:SetArguments(str)
 	self.Arguments = str
 	if pace.IsActive() and pac.LocalPlayer == self:GetPlayerOwner() then
+		if not self:GetShowInEditor() then return end
 		pace.PopulateProperties(self)
 	end
 end
