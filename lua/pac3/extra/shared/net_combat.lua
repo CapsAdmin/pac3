@@ -1316,10 +1316,20 @@ if SERVER then
 			if v.CPPICanPickup and not v:CPPICanPickup(ply) then ents_hits[i] = nil end
 			if v.CPPICanPunt and not v:CPPICanPunt(ply) then ents_hits[i] = nil end
 			if v:IsConstraint() then ents_hits[i] = nil end
-			if pre_excluded_ent_classes[v:GetClass()] or (Is_NPC(v) and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectSelf)) then ents_hits[i] = nil
-			else ent_count = ent_count + 1 end
+
+			if v == ply then
+				if not tbl.AffectPlayerOwner then ents_hits[i] = nil end
+			elseif v == tbl.RootPartOwner then
+				if (not tbl.AffectSelf) and v == tbl.RootPartOwner then ents_hits[i] = nil end
+			end
+
+			if pre_excluded_ent_classes[v:GetClass()] or (Is_NPC(v) and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectPlayerOwner)) then ents_hits[i] = nil
+			end
+			if ents_hits[i] ~= nil then
+				ent_count = ent_count + 1
+			end
 		end
-		if TooManyEnts(ent_count, ply) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
+		if TooManyEnts(ent_count, ply) and not ((tbl.AffectSelf or tbl.AffectPlayerOwner) and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
 		for _,ent in pairs(ents_hits) do
 			local phys_ent
 			local ent_getphysobj = ent:GetPhysicsObject()
@@ -1327,16 +1337,14 @@ if SERVER then
 			local is_player = ent:IsPlayer()
 			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
 			local is_npc = Is_NPC(ent)
-
-
-			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
+			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner) or (tbl.AffectPlayerOwner and ent == ply))
 					and (
 						is_player
 						or is_npc
 						or is_physics
 						or IsValid( ent_getphysobj )
 					) then
-
+				
 				local is_phys = true
 				if ent_getphysobj ~= nil then
 					phys_ent = ent_getphysobj
@@ -1465,8 +1473,8 @@ if SERVER then
 				local unconsenting_owner = owner ~= ply and force_consents[owner] == false
 
 				if is_player then
-					if  tbl.Players or (ent == ply and tbl.AffectSelf) then
-						if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
+					if  tbl.Players or (ent == ply and tbl.AffectPlayerOwner) then
+						if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectPlayerOwner) then
 							oldvel = ent:GetVelocity()
 							phys_ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
 							ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
@@ -1513,7 +1521,7 @@ if SERVER then
 						end
 					end
 
-				elseif tbl.PointEntities then
+				elseif tbl.PointEntities or (tbl.AffectSelf and ent == tbl.RootPartOwner) then
 					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
 						phys_ent:SetVelocity(final_damping * oldvel + addvel)
 					end
@@ -1757,6 +1765,7 @@ if SERVER then
 			tbl.DampingReverseFalloff = net.ReadBool()
 			tbl.Levitation = net.ReadBool()
 			tbl.AffectSelf = net.ReadBool()
+			tbl.AffectPlayerOwner = net.ReadBool()
 			tbl.Players = net.ReadBool()
 			tbl.PhysicsProps = net.ReadBool()
 			tbl.PointEntities = net.ReadBool()

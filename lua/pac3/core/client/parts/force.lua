@@ -67,7 +67,9 @@ Radial gets the base directions from the targets to the force part]]})
 		:GetSet("DampingReverseFalloff", false, {description = "Whether the damping should fade with distance but reverse (closer is weaker influence)"})
 
 	:SetPropertyGroup("Targets")
-		:GetSet("AffectSelf",false)
+		:GetSet("AffectSelf", false, {description = "Affect Root Owner (i.e. it can be a projectile entity)"})
+		:GetSet("AlternateAffectSelf", false, {description = "'Affect Self' was split into two. For backward compatibility reasons, this must be a setting.\nif this is off, affect self will affect both player owner and root owner, which may not be desired"})
+		:GetSet("AffectPlayerOwner", false)
 		:GetSet("Players",true)
 		:GetSet("PhysicsProps", true)
 		:GetSet("PointEntities",true, {description = "other entities not covered by physics props but with potential physics"})
@@ -85,6 +87,9 @@ end
 function PART:Initialize()
 	self.next_impulse = CurTime() + 0.05
 	if not GetConVar("pac_sv_force"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("force parts are disabled on this server!") end
+	timer.Simple(0, function()
+		self.initialized = true
+	end)
 end
 
 function PART:OnShow()
@@ -213,9 +218,6 @@ local function ProcessForcesList(ents_hits, tbl, pos, ang, ply)
 	end
 	for _,ent in pairs(ents_hits) do
 		if ent:IsWeapon() or ent:GetClass() == "viewmodel" or ent:GetClass() == "func_physbox_multiplayer" then continue end
-		if ent:GetPos():Distance(ply:GetPos()) < 300 then
-			print(ent)
-		end
 		local phys_ent
 		local is_player = ent:IsPlayer()
 		local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
@@ -503,6 +505,8 @@ function PART:Impulse(on)
 		if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 	end
 
+	if not self.initialized then return end
+
 	local locus_pos = Vector(0,0,0)
 	if self.Locus ~= nil then
 		if self.Locus:IsValid() then
@@ -518,7 +522,8 @@ function PART:Impulse(on)
 		end
 	end
 
-	if not self.NPC and not self.Players and not self.AffectSelf and not self.PhysicsProps and not self.PointEntities then return end
+	if not self.NPC and not self.Players and not self.AffectSelf and not self.AffectPlayerOwner and not self.PhysicsProps and not self.PointEntities then return end
+
 	net.Start("pac_request_force", true)
 	net.WriteVector(self:GetWorldPosition())
 	net.WriteAngle(self:GetWorldAngles())
@@ -549,7 +554,14 @@ function PART:Impulse(on)
 	net.WriteBool(self.DampingFalloff)
 	net.WriteBool(self.DampingReverseFalloff)
 	net.WriteBool(self.Levitation)
-	net.WriteBool(self.AffectSelf)
+	if self.AlternateAffectSelf then
+		net.WriteBool(self.AffectSelf)
+		net.WriteBool(self.AffectPlayerOwner)
+	else
+		net.WriteBool(self.AffectSelf)
+		net.WriteBool(self.AffectPlayerOwner or self.AffectSelf)
+	end
+	
 	net.WriteBool(self.Players)
 	net.WriteBool(self.PhysicsProps)
 	net.WriteBool(self.PointEntities)
