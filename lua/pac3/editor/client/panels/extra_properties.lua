@@ -1256,7 +1256,9 @@ do -- script proxy
 		local old = pnl.Paint
 		pnl.Paint = function(...)
 			if not self:IsValid() then pnl:Remove() return end
-
+			local x, y = self:LocalToScreen()
+			y = math.Clamp(y,0,ScrH() - self:GetTall())
+			pnl:SetPos(x + 5 + inset_x, y)
 			surface.SetFont(pnl:GetFont())
 			local w = surface.GetTextSize(pnl:GetText()) + 6
 
