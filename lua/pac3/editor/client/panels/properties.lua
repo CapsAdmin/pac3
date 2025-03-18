@@ -839,7 +839,11 @@ do -- list
 				if prop.udata and prop.udata.editor_panel then
 					T = prop.udata.editor_panel or T
 				elseif pace.PanelExists("properties_" .. prop.key:lower()) then
-					T = prop.key:lower()
+					--is it code bloat to fix weird edge cases like bodygroups on specific models???
+					--idk but it's more egregious to allow errors just because of what bodygroups the model has
+					if prop.key:lower() ~= "container" then
+						T = prop.key:lower()
+					end
 				elseif not pace.PanelExists("properties_" .. T) then
 					T = "string"
 				end
@@ -2072,6 +2076,7 @@ do -- base editable
 		local hookID = tostring({})
 		local textEntry = pnl
 		local delay = os.clock() + 0.1
+		local inset_x = self:GetTextInset()
 
 		pac.AddHook('Think', hookID, function(code)
 			if not IsValid(self) or not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
@@ -2090,7 +2095,6 @@ do -- base editable
 		--pnl:SetPos(x+3,y-4)
 		--pnl:Dock(FILL)
 		local x, y = self:LocalToScreen()
-		local inset_x = self:GetTextInset()
 		pnl:SetPos(x+5 + inset_x, y)
 		pnl:SetSize(self:GetSize())
 		pnl:SetWide(ScrW())
@@ -2109,6 +2113,11 @@ do -- base editable
 		local old = pnl.Paint
 		pnl.Paint = function(...)
 			if not self:IsValid() then pnl:Remove() return end
+			local x, y = self:LocalToScreen()
+			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
+
+			pnl:SetPos(x + 5 + inset_x, y)
 
 			surface.SetFont(pnl:GetFont())
 			local w = surface.GetTextSize(pnl:GetText()) + 6
@@ -2121,6 +2130,34 @@ do -- base editable
 
 			old(...)
 		end
+
+		local skincolor = self:GetSkin().Colours.Category.Line.Button
+		local col = Color(skincolor.r,skincolor.g,skincolor.b, 255)
+
+		--draw a rectangle with property key's name and arrows to show where the line is scrolling out of bounds
+		pac.AddHook('PostRenderVGUI', hookID .. "2", function(code)
+			if not IsValid(self) or not IsValid(pnl) then pac.RemoveHook('Think', hookID .. "2") return end
+			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			local x, y = self:LocalToScreen()
+			local overflow = y < prop_y or y > ScrH() - self:GetTall()
+			if overflow then
+				local str = ""
+				if y > ScrH() then
+					str = "↓↓ " .. " " .. self.CurrentKey .. " " .. " ↓↓"
+				else
+					str = "↑↑ " .. " " .. self.CurrentKey .. " " .. " ↑↑"
+				end
+				y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
+				surface.SetFont(pnl:GetFont())
+				local w2 = surface.GetTextSize(str)
+				
+				surface.SetDrawColor(col)
+				surface.DrawRect(x - w2, y, w2, pnl:GetTall())
+				surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
+				surface.SetTextPos(x - w2, y)
+				surface.DrawText(str)
+			end
+		end)
 
 		pace.BusyWithProperties = pnl
 	end
@@ -2197,6 +2234,13 @@ do -- vector
 			local left = pace.CreatePanel("properties_number", self)
 			local middle = pace.CreatePanel("properties_number", self)
 			local right = pace.CreatePanel("properties_number", self)
+			--a hack so that the scrolling out-of-bounds indicator rectangle with arrows has the key
+			timer.Simple(0, function()
+				if not IsValid(left) then return end
+				left.CurrentKey = self.CurrentKey
+				middle.CurrentKey = self.CurrentKey
+				right.CurrentKey = self.CurrentKey
+			end)
 
 			left.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
 			middle.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
