@@ -675,6 +675,9 @@ end
 function pac.UpdateButtonEvents(ply, key, down)
 	local button_events = ply.pac_part_cache_button_events or {}
 	for _,part in pairs(button_events) do
+		if part:GetProperty("ignore_if_hidden") then
+			if part:IsHidden() then continue end
+		end
 		if key ~= string.Split(part.Arguments, "@@")[1]:lower() then continue end
 		part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
 		part.toggleimpulsekey = part.toggleimpulsekey or {}

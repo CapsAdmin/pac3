@@ -2736,7 +2736,7 @@ PART.OldEvents = {
 
 	or_gate = {
 		operator_type = "none", preferred_operator = "find simple",
-		tutorial_explanation = "combines multiple events into an OR gate, the event will activate as soon as one of the events listed is activated (taking inverts into account)",
+		tutorial_explanation = "combines multiple events into an OR gate, the event will activate as soon as one of the events listed is activated (taking inverts into account).\n\nuids is a list (separated by semicolons) of part identifiers (UniqueIDs or names)\n\nAn easy way to gather them is to use bulk select (ctrl+click) and to right click back on the or_gate",
 		arguments = {{uids = "string"}, {ignore_inverts = "boolean"}},
 		userdata = {{default = "", enums = function(part)
 			local output = {}
@@ -2772,7 +2772,7 @@ PART.OldEvents = {
 	},
 	xor_gate = {
 		operator_type = "none", preferred_operator = "find simple",
-		tutorial_explanation = "combines multiple events into an XOR gate, the event will activate if one (and only one) of the two events is activated (taking inverts into account)",
+		tutorial_explanation = "combines multiple events into an XOR gate, the event will activate if one (and only one) of the two events is activated (taking inverts into account).\n\nuid1 and uid2 are part identifiers (UniqueID or names) for events",
 		arguments = {{uid1 = "string"},{uid2 = "string"}},
 		userdata = {
 			{default = "", enums = function(part)
@@ -2816,7 +2816,7 @@ PART.OldEvents = {
 	},
 	and_gate = {
 		operator_type = "none", preferred_operator = "find simple",
-		tutorial_explanation = "combines multiple events into an AND gate, the event will activate when all the events listed are activated (taking inverts into account)",
+		tutorial_explanation = "combines multiple events into an AND gate, the event will activate when all the events listed are activated (taking inverts into account)\n\nuids is a list (separated by semicolons) of part identifiers (UniqueIDs or names)\n\nAn easy way to gather them is to use bulk select (ctrl+click) and to right click back on the and_gate",
 		arguments = {{uids = "string"}, {ignore_inverts = "boolean"}},
 		userdata = {{default = "", enums = function(part)
 			local output = {}
@@ -2965,7 +2965,7 @@ do
 
 	PART.OldEvents.button = {
 		operator_type = "none",
-		arguments = {{button = "string"}, {holdtime = "number"}, {toggle = "boolean"}},
+		arguments = {{button = "string"}, {holdtime = "number"}, {toggle = "boolean"}, {ignore_if_hidden = "boolean"}},
 		userdata = {{enums = function()
 			return enums
 		end, default = "mouse_left"}, {default = 0}, {default = false}},
@@ -2988,7 +2988,7 @@ do
 
 			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
 		end,
-		callback = function(self, ent, button, holdtime, toggle)
+		callback = function(self, ent, button, holdtime, toggle, ignore_if_hidden)
 			self.holdtime = holdtime or 0
 			local toggle = toggle or false
 			self.togglestate = self.togglestate or false
