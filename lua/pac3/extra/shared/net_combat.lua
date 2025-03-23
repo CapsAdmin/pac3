@@ -44,6 +44,9 @@ local healthmod_allow = CreateConVar("pac_sv_health_modifier", master_default, C
 local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_bars", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars")
 local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
 local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_damagescaling", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Minimum health modifier amount. Negative values can heal.")
+local healthmod_allowed_counted_hits = CreateConVar("pac_sv_health_modifier_allow_counted_hits", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars counted hits mode (one hit = 1 HP)")
+local healthmod_max_value = CreateConVar("pac_sv_health_modifier_max_hp_armor", 1000000, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "health modifier maximum value for health and armor")
+local healthmod_max_extra_bars_value = CreateConVar("pac_sv_health_modifier_max_extra_bars_value", 1000000, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "health modifier maximum value for extra health bars (bars x amount)")
 
 local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
 cvars.AddChangeCallback("pac_sv_block_combat_features_on_next_restart", function() print("Remember that pac_sv_block_combat_features_on_next_restart is applied on server startup! Only do it if you know what you're doing. You'll need to restart the server.") end)
@@ -649,8 +652,9 @@ if SERVER then
 		end
 	end
 
-	local function GatherExtraHPBars(ply)
+	local function GatherExtraHPBars(ply, filter)
 		if ply.pac_healthbars == nil then return 0,nil end
+
 		local built_tbl = {}
 		local total_hp_value = 0
 
@@ -658,6 +662,7 @@ if SERVER then
 			built_tbl[layer] = {}
 			local layer_total = 0
 			for uid,value in pairs(tbl) do
+				if uid == filter then continue end
 				built_tbl[layer][uid] = value
 				total_hp_value = total_hp_value + value
 				layer_total = layer_total + value
@@ -2529,6 +2534,7 @@ if SERVER then
 			if action == "MaxHealth" then
 				if not healthmod_allow:GetBool() then return end
 				local num = net.ReadUInt(32)
+				num = math.Clamp(num,0,healthmod_max_value:GetInt())
 				local follow = net.ReadBool()
 				if not healthmod_allow_change_maxhp:GetBool() then return end
 				if ply:Health() == ply:GetMaxHealth() and follow then
@@ -2544,6 +2550,7 @@ if SERVER then
 			elseif action == "MaxArmor" then
 				if not healthmod_allow:GetBool() then return end
 				local num = net.ReadUInt(32)
+				num = math.Clamp(num,0,healthmod_max_value:GetInt())
 				local follow = net.ReadBool()
 				if not healthmod_allow_change_maxhp:GetBool() then return end
 				if ply:Armor() == ply:GetMaxArmor() and follow then
@@ -2570,7 +2577,23 @@ if SERVER then
 				local counted_hits = net.ReadBool()
 				local no_overflow = net.ReadBool()
 
-				UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow, counted_hits, no_overflow)
+				if counted_hits and not healthmod_allowed_counted_hits:GetBool() then return end
+
+				local requested_amount = num * barsize
+
+				local current_bars_amount_without_this = GatherExtraHPBars(ply, part_uid)
+				local allowed_amount_without_this = healthmod_max_extra_bars_value:GetInt() - current_bars_amount_without_this
+
+				if requested_amount >= allowed_amount_without_this then
+					requested_amount = math.Clamp(requested_amount,0,allowed_amount_without_this)
+
+					barsize = math.floor(requested_amount / num)
+					num = math.floor(requested_amount / barsize)
+
+					UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow, counted_hits, no_overflow)
+				else
+					UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow, counted_hits, no_overflow)
+				end
 
 			elseif action == "OnRemove" then
 				if ply.pac_damage_scalings then

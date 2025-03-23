@@ -43,6 +43,42 @@ local function register_UID(self, str, ply)
 	pac.healthmod_part_UID_caches[ply][str] = self
 end
 
+function PART:GetNiceName()
+	ply = self:GetPlayerOwner()
+	local str = "health_modifier"
+
+	if self.DamageMultiplier ~= 1 then
+		str = str .. " [dmg " .. self.DamageMultiplier .. "x]"
+	end
+
+	if self.ChangeHealth then
+		if ply:Health() ~= self.MaxHealth then
+			str = str .. " [" .. ply:Health() .. " / " .. self.MaxHealth .. " health]"
+		else
+			str = str .. " [" .. self.MaxHealth .. " health]"
+		end
+	end
+
+	if self.ChangeArmor then
+		if ply:Armor() ~= self.MaxArmor then
+			str = str .. " [" .. ply:Armor() .. " / " .. self.MaxArmor .. " armor]"
+		else
+			str = str .. " [" .. self.MaxArmor .. " armor]"
+		end
+	end
+
+	if ply.pac_healthbars_uidtotals then
+		if ply.pac_healthbars_uidtotals[self.UniqueID] then
+			if self.HealthBars == 1 then
+				str = str .. " [" .. ply.pac_healthbars_uidtotals[self.UniqueID] .. " / " .. self.BarsAmount .. " EX]"
+			elseif self.HealthBars >= 1 then
+				str = str .. " [" .. ply.pac_healthbars_uidtotals[self.UniqueID] .. " EX (" .. (self.healthbar_index or "0") .. " / " .. self.HealthBars .. ")]"
+			end
+		end
+	end
+	return str
+end
+
 function PART:SendModifier(str)
 	--pac.healthmod_part_UID_caches[string.sub(self.UniqueID,1,8)] = self
 	register_UID(self, string.sub(self.UniqueID,1,8), self:GetPlayerOwner())

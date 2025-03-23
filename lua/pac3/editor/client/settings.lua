@@ -60,8 +60,11 @@ local convar_params_projectile = {
 local convar_params_health_modifier = {
 	{"pac_sv_health_modifier", "Allow health modifier part", "", -1, 0, 200},
 	{"pac_sv_health_modifier_allow_maxhp", "Allow changing max health and max armor", "", -1, 0, 200},
+	{"pac_sv_health_modifier_max_hp_armor", "Maximum value for max health / armor modification", "", 0, 0, 100000000},
 	{"pac_sv_health_modifier_min_damagescaling", "Minimum combined damage multiplier allowed.\nNegative values lead to healing from damage.", "", 2, -10, 1},
 	{"pac_sv_health_modifier_extra_bars", "Allow extra healthbars", "What are those? It's like an armor layer that takes damage before it gets applied to the entity.", -1, 0, 200},
+	{"pac_sv_health_modifier_allow_counted_hits", "Allow extra healthbars counted hits mode", "1 EX HP absorbs 1 whole hit.", -1, 0, 200},
+	{"pac_sv_health_modifier_max_extra_bars_value", "Maximum combined value for extra healthbars", "", 0, 0, 100000000},
 }
 
 local convar_params_modifiers = {

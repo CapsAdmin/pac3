@@ -161,6 +161,7 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Allow entity model modifier", "pac_modifier_model")
 		self:CheckBox(L"Allow entity size modifier", "pac_modifier_size")
 		self:CheckBox(L"Allow blood color modifier", "pac_allow_blood_color")
+		self:NumSlider(L"Allow prop / other player outfits", "pac_sv_prop_outfits", 0, 2, 0)
 	self:Help(""):SetFont("DermaDefaultBold")--spacers
 	self:Help(""):SetFont("DermaDefaultBold")
 
@@ -182,6 +183,7 @@ function pace.AdminSettingsMenu(self)
 		self:NumSlider(L"Max radius", "pac_sv_damage_zone_max_radius", 0, 32767, 0)
 		self:NumSlider(L"Max length", "pac_sv_damage_zone_max_length", 0, 32767, 0)
 		self:CheckBox(L"Enable damage zone dissolve", "pac_sv_damage_zone_allow_dissolve")
+		self:CheckBox(L"Enable ragdoll hitparts", "pac_sv_damage_zone_allow_ragdoll_hitparts")
 		
 		self:Help(L"Hitscan"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable hitscan part", "pac_sv_hitscan")
@@ -193,19 +195,22 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Allow grab", "pac_sv_lock_grab")
 		self:CheckBox(L"Allow teleport", "pac_sv_lock_teleport")
 		self:CheckBox(L"Allow aiming", "pac_sv_lock_aim")
-
+		
 		self:Help(L"Force part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable force part", "pac_sv_force")
 		self:NumSlider(L"Max amount", "pac_sv_force_max_amount", 0, 10000000, 0)
 		self:NumSlider(L"Max radius", "pac_sv_force_max_radius", 0, 32767, 0)
 		self:NumSlider(L"Max length", "pac_sv_force_max_length", 0, 32767, 0)
 		
-		self:Help(L"Health Modifier part"):SetFont("DermaDefaultBold")
+		self:Help(L"Health Modifier"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable health modifier", "pac_sv_health_modifier")
 		self:CheckBox(L"Allow changing max health or armor", "pac_sv_health_modifier_allow_maxhp")
+		self:NumSlider(L"Maximum modified health or armor", "pac_sv_health_modifier_max_hp_armor", 0, 100000000, 0)
 		self:NumSlider(L"Minimum combined damage scaling", "pac_sv_health_modifier_min_damagescaling", -10, 1, 2)
 		self:CheckBox(L"Allow extra health bars", "pac_sv_health_modifier_extra_bars")
-		
+		self:CheckBox(L"Allow counted hits mode", "pac_sv_health_modifier_allow_counted_hits")
+		self:NumSlider(L"Maximum combined extra health value", "pac_sv_health_modifier_max_extra_bars_value", 0, 100000000, 0)
+
 		self:Help(L"Projectile part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable physical projectiles", "pac_sv_projectiles")
 		self:CheckBox(L"Enable custom collide meshes for physical projectiles", "pac_sv_projectile_allow_custom_collision_mesh")

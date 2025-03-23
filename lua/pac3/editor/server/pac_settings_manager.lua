@@ -18,6 +18,7 @@ local pac_server_cvars = {
 	{"pac_sv_lock", "Allow lock part", "", -1, 0, 200},
 	{"pac_sv_lock_teleport", "Allow lock part teleportation", "", -1, 0, 200},
 	{"pac_sv_lock_grab", "Allow lock part grabbing", "", -1, 0, 200},
+	{"pac_sv_lock_aim", "Allow lock part aiming", "", -1, 0, 200},
 	{"pac_sv_lock_allow_grab_ply", "Allow grabbing players", "", -1, 0, 200},
 	{"pac_sv_lock_allow_grab_npc", "Allow grabbing NPCs", "", -1, 0, 200},
 	{"pac_sv_lock_allow_grab_ent", "Allow grabbing other entities", "", -1, 0, 200},
@@ -28,11 +29,12 @@ local pac_server_cvars = {
 	{"pac_sv_damage_zone_max_length", "Max damage zone length", "", 0, 0, 32767},
 	{"pac_sv_damage_zone_max_damage", "Max damage zone damage", "", 0, 0, 268435455},
 	{"pac_sv_damage_zone_allow_dissolve", "Allow damage entity dissolvers", "", -1, 0, 200},
+	{"pac_sv_damage_zone_allow_ragdoll_hitparts", "Allow ragdoll hitparts", "", -1, 0, 200},
 
 	{"pac_sv_force", "Allow force part", "", -1, 0, 200},
 	{"pac_sv_force_max_radius", "Max force radius", "", 0, 0, 32767},
 	{"pac_sv_force_max_length", "Max force length", "", 0, 0, 32767},
-	{"pac_sv_force_max_length", "Max force amount", "", 0, 0, 10000000},
+	{"pac_sv_force_max_amount", "Max force amount", "", 0, 0, 10000000},
 
 	{"pac_sv_hitscan", "allow serverside bullets", "", -1, 0, 200},
 	{"pac_sv_hitscan_max_damage", "Max hitscan damage (per bullet, per multishot,\ndepending on the next setting)", "", 0, 0, 268435455},
@@ -50,8 +52,11 @@ local pac_server_cvars = {
 
 	{"pac_sv_health_modifier", "Allow health modifier part", "", -1, 0, 200},
 	{"pac_sv_health_modifier_allow_maxhp", "Allow changing max health and max armor", "", -1, 0, 200},
+	{"pac_sv_health_modifier_max_hp_armor", "Maximum value for max health / armor modification", "", 0, 0, 100000000},
 	{"pac_sv_health_modifier_min_damagescaling", "Minimum combined damage multiplier allowed.\nNegative values lead to healing from damage.", "", 2, -10, 1},
 	{"pac_sv_health_modifier_extra_bars", "Allow extra healthbars", "What are those? It's like an armor layer that takes damage before it gets applied to the entity.", -1, 0, 200},
+	{"pac_sv_health_modifier_allow_counted_hits", "Allow extra healthbars counted hits mode", "1 EX HP absorbs 1 whole hit.", -1, 0, 200},
+	{"pac_sv_health_modifier_max_extra_bars_value", "Maximum combined value for extra healthbars", "", 0, 0, 100000000},
 
 
 	{"pac_modifier_blood_color", "Blood", "", -1, 0, 200},
@@ -70,6 +75,7 @@ local pac_server_cvars = {
 	{"pac_submit_spam", "Limit pac_submit to prevent spam", "", -1, 0, 200},
 	{"pac_submit_limit", "limit of pac_submits", "", 0, 0, 100},
 	{"pac_onuse_only_force", "Players need to +USE on others to reveal outfits", "", -1, 0, 200},
+	{"pac_sv_prop_outfits", "allow prop / other player outfits", "0 = don't allow\n1 = allow applying outfits on props/npcs\n2 = allow applying outfits on other players", 0, 0, 2},
 
 	{"sv_pac_webcontent_allow_no_content_length", "Players need to +USE on others to reveal outfits", "", -1, 0, 200},
 	{"pac_to_contraption_allow", "Allow PAC to contraption tool", "", -1, 0, 200},
@@ -102,5 +108,5 @@ net.Receive("pac_request_sv_cvars", function (len, ply)
 		net.WriteTable(cvars_tbl)
 		net.Send(ply)
 	end)
-
+	
 end)
