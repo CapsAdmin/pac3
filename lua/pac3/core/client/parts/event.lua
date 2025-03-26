@@ -261,6 +261,7 @@ function PART:SetArguments(str)
 end
 
 function PART:Initialize()
+	self.showtime = 0
 	self.found_cached_parts = {}
 	self.specialtrackedparts = {}
 	self.ExtraHermites = {}
