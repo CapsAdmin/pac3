@@ -8,6 +8,7 @@ PART.ClassName = "sound2"
 PART.Icon = 'icon16/music.png'
 PART.Group = 'effects'
 
+PART.ImplementsDoubleClickSpecified = true
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
@@ -357,6 +358,16 @@ function PART:OnShow(from_rendering)
 		self:PlaySound()
 	end
 	self.stopsound = false
+end
+
+function PART:OnDoubleClickSpecified()
+	if self.playing then
+		self:StopSound(true)
+		self.playing = false
+	else
+		self:PlaySound()
+		self.playing = true
+	end
 end
 
 function PART:OnHide()

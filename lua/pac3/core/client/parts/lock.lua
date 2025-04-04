@@ -40,6 +40,7 @@ PART.ClassName = "lock"
 PART.Group = "combat"
 PART.Icon = "icon16/lock.png"
 
+PART.ImplementsDoubleClickSpecified = true
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("Behaviour")
@@ -433,6 +434,12 @@ function PART:OnShow()
 		set_eyeang(self:GetPlayerOwner(), self)
 	elseif self.Mode == "AimToPos" then
 		set_eyeang(self:GetPlayerOwner(), self)
+	end
+end
+
+function PART:OnDoubleClickSpecified()
+	if self.Mode ~= "Grab" then
+		self:OnShow()
 	end
 end
 

@@ -201,6 +201,24 @@ local function populate_options(menu)
 	menu:AddCVar(L"remember divider position", "pac_editor_remember_divider_height", "1", "0")
 	menu:AddCVar(L"remember editor width", "pac_editor_remember_width", "1", "0")
 
+	menu:AddSpacer()
+
+	local menu1, pnl = menu:AddSubMenu(L"double click actions") pnl:SetIcon("icon16/cursor.png")
+		menu1.GetDeleteSelf = function() return false end
+		local menu2, pnl = menu1:AddSubMenu(L"generic") pnl:SetIcon("icon16/world.png")
+		menu2.GetDeleteSelf = function() return false end
+		menu2:AddOption("expand / collapse", function() RunConsoleCommand("pac_doubleclick_action", "expand") end):SetImage('icon16/arrow_down.png')
+		menu2:AddOption("rename", function() RunConsoleCommand("pac_doubleclick_action", "rename") end):SetImage('icon16/text_align_center.png')
+		menu2:AddOption("write notes", function() RunConsoleCommand("pac_doubleclick_action", "notes") end):SetImage('icon16/page_white_edit.png')
+		menu2:AddOption("show / hide", function() RunConsoleCommand("pac_doubleclick_action", "showhide") end):SetImage('icon16/clock_red.png')
+		menu2:AddOption("only when specifed actions exist", function() RunConsoleCommand("pac_doubleclick_action", "specific_only") end):SetImage('icon16/application_xp_terminal.png')
+		menu2:AddOption("none", function() RunConsoleCommand("pac_doubleclick_action", "none") end):SetImage('icon16/collision_off.png')
+		local menu2, pnl = menu1:AddSubMenu(L"specific") pnl:SetIcon("icon16/application_xp_terminal.png")
+		menu2.GetDeleteSelf = function() return false end
+		menu2:AddOption("use generic actions only", function() RunConsoleCommand("pac_doubleclick_action_specified", "0") end):SetImage('icon16/world.png')
+		menu2:AddOption("use specific actions when available", function() RunConsoleCommand("pac_doubleclick_action_specified", "1") end):SetImage('icon16/cog.png')
+		menu2:AddOption("use even more specific actions (events)", function() RunConsoleCommand("pac_doubleclick_action_specified", "2") end):SetImage('icon16/clock.png')
+
 	menu:AddCVar(L"ask before loading autoload", "pac_prompt_for_autoload", "1", "0")
 
 	local prop_pac_load_mode, pnlpplm = menu:AddSubMenu("(singleplayer only) How to handle prop/npc outfits", function() end)

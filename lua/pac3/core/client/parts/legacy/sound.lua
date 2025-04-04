@@ -8,6 +8,8 @@ PART.ThinkTime = 0
 PART.Group = 'effects'
 PART.Icon = 'icon16/sound.png'
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 BUILDER:SetPropertyGroup("generic")
 	BUILDER:GetSet("Sound", "")
@@ -326,6 +328,16 @@ function PART:StopSound(force_stop)
 				end
 			end
 		end
+	end
+end
+
+function PART:OnDoubleClickSpecified()
+	if self.playing then
+		self:StopSound(true)
+		self.playing = false
+	else
+		self:PlaySound()
+		self.playing = true
 	end
 end
 

@@ -18,6 +18,8 @@ PART.ClassName = "projectile"
 PART.Group = {"advanced", "combat"}
 PART.Icon = "icon16/bomb.png"
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("Firing")
 		BUILDER:GetSet("Speed", 1)
@@ -444,6 +446,10 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			timer.Simple(self.Delay, spawn)
 		end
 	end
+end
+
+function PART:OnDoubleClickSpecified()
+	self:Shoot()
 end
 
 function PART:SetRadius(val)

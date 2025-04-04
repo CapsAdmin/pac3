@@ -606,6 +606,135 @@ do -- scene graph
 		end
 	end
 
+	local pac_doubleclick_type = CreateClientConVar("pac_doubleclick_action", "expand", true, true, "What function should be run if you double-click on a part node.\n\nexpand : expand or collapse the node\nrename : rename the part\nnotes : write notes for the part\nshowhide : shows or hides the part\nspecific_only : only trigger class-specific actions, such as playing sounds, triggering hitscans, etc.\nnone : disable double-click actions")
+
+	function PART:OnDoubleClickBaseClass()
+		pace.doubleclickfunc = pac_doubleclick_type:GetString()
+		if pace.doubleclickfunc == "specific_only" then return end
+
+		pace.FlashNotification("double click action : " .. pace.doubleclickfunc)
+
+		if pace.doubleclickfunc == "expand" then
+			if not self:HasChildren() then return end
+			self:SetEditorExpand(not self:GetEditorExpand())
+			pace.RefreshTree()
+		elseif pace.doubleclickfunc == "rename" then
+			local pnl = vgui.Create("DTextEntry")
+			pnl:SetFont(pace.CurrentFont)
+			pnl:SetDrawBackground(false)
+			pnl:SetDrawBorder(false)
+			pnl:SetText(self:GetName())
+			pnl:SetKeyboardInputEnabled(true)
+			pnl:RequestFocus()
+			pnl:SelectAllOnFocus(true)
+
+			local hookID = tostring({})
+			local textEntry = pnl
+			local delay = os.clock() + 0.3
+
+			local old_name = self:GetName()
+
+			pac.AddHook('Think', hookID, function(code)
+				if not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
+				if textEntry:IsHovered() then return end
+				if delay > os.clock() then return end
+				if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
+				pac.RemoveHook('Think', hookID)
+				textEntry:Remove()
+				pnl:OnEnter()
+			end)
+
+			--local x,y = pnl:GetPos()
+			--pnl:SetPos(x+3,y-4)
+			--pnl:Dock(FILL)
+			local x, y = self.pace_tree_node.Label:LocalToScreen()
+			local inset_x = self.pace_tree_node.Label:GetTextInset()
+			pnl:SetPos(x + inset_x, y)
+			pnl:SetSize(self.pace_tree_node.Label:GetSize())
+			pnl:SetWide(ScrW())
+			pnl:MakePopup()
+
+			pnl.OnEnter = function()
+				local input_text = pnl:GetText()
+				pnl:Remove()
+				if old_name == input_text then return end
+				self:SetName(input_text)
+				if self.pace_tree_node then
+					if input_text ~= "" then
+						self.pace_tree_node:SetText(input_text)
+					else
+						timer.Simple(0, function()
+							self.pace_tree_node:SetText(self:GetName())
+						end)
+					end
+				end
+				pace.PopulateProperties(self)
+			end
+
+			local old = pnl.Paint
+			pnl.Paint = function(...)
+				if not self:IsValid() then pnl:Remove() return end
+
+				surface.SetFont(pnl:GetFont())
+				local w = surface.GetTextSize(pnl:GetText()) + 6
+
+				surface.DrawRect(0, 0, w, pnl:GetTall())
+				surface.SetDrawColor(self.pace_tree_node:GetSkin().Colours.Properties.Border)
+				surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
+
+				pnl:SetWide(w)
+
+				old(...)
+			end
+		elseif pace.doubleclickfunc == "notes" then
+			if IsValid(pace.notes_pnl) then
+				pace.notes_pnl:Remove()
+			end
+			local pnl = vgui.Create("DFrame")
+			pace.notes_pnl = pnl
+			local DText = vgui.Create("DTextEntry", pnl)
+			local DButtonOK = vgui.Create("DButton", pnl)
+			DText:SetMaximumCharCount(50000)
+
+			pnl:SetSize(1200,800)
+			pnl:SetTitle("Long text with newline support for Notes.")
+			pnl:Center()
+			DButtonOK:SetText("OK")
+			DButtonOK:SetSize(80,20)
+			DButtonOK:SetPos(500, 775)
+			DText:SetPos(5,25)
+			DText:SetSize(1190,700)
+			DText:SetMultiline(true)
+			DText:SetContentAlignment(7)
+			pnl:MakePopup()
+			DText:RequestFocus()
+			DText:SetText(self:GetNotes())
+
+			DButtonOK.DoClick = function()
+				self:SetNotes(DText:GetText())
+				pace.RefreshTree(true)
+				pnl:Remove()
+			end
+		elseif pace.doubleclickfunc == "showhide" then
+			self:SetHide(not self:GetHide())
+		end
+	end
+
+	local pac_doubleclick_specified = CreateClientConVar("pac_doubleclick_action_specified", "2", true, true, "Whether the base_part functions for double-click should be replaced by specific functions when available.\n\nset to 0 : only use base_class actions (expand, rename, notes, showhide)\nset to 1 : Use specific actions. most single-shot parts will trigger (sounds play, commands run, hitscans fire etc.), and events will invert\nset to 2 : When appropriate, some event types will have even more specific actions. command events trigger or toggle (depending on the time), is_flashlight_on will toggle the flashlight, timerx events will reset\n\nIf your selected base action is none, These won't trigger.\n\nIf you only want specific actions, you may select specific_only in the pac_doubleclick_action command if you only want specifics")
+	function PART:OnDoubleClickSpecified()
+		--override
+	end
+
+	function PART:DoDoubleClick()
+		pace.doubleclickfunc = pac_doubleclick_type:GetString()
+		if pace.doubleclickfunc == "none" or pace.doubleclickfunc == "" then return end
+		if pac_doubleclick_specified:GetInt() ~= 0 and self.ImplementsDoubleClickSpecified then
+			pace.FlashNotification("double click action : class-specific")
+			self:OnDoubleClickSpecified()
+		else
+			self:OnDoubleClickBaseClass()
+		end
+	end
 end
 
 do -- hidden / events

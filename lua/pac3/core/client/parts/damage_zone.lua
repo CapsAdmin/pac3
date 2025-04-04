@@ -6,6 +6,8 @@ PART.ClassName = "damage_zone"
 PART.Group = "combat"
 PART.Icon = "icon16/package.png"
 
+PART.ImplementsDoubleClickSpecified = true
+
 local renderhooks = {
 	"PostDraw2DSkyBox",
 	"PostDrawOpaqueRenderables",
@@ -680,6 +682,10 @@ function PART:OnShow()
 	else
 		self:SendNetMessage()
 	end
+end
+
+function PART:OnDoubleClickSpecified()
+	self:SendNetMessage()
 end
 
 local dmgzone_requesting_corpses = {}

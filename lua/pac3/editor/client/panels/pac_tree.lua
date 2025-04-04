@@ -143,7 +143,10 @@ function PANEL:Init()
 	self.Label = vgui.Create("pac_dtree_node_button", self)
 	self.Label:SetDragParent(self)
 	self.Label.DoClick = function() self:InternalDoClick() end
-	self.Label.DoDoubleClick = function() self:InternalDoClick() end
+	self.Label.DoDoubleClick = function()
+		self:InternalDoClick()
+		self.part:DoDoubleClick()
+	end
 	self.Label.DoRightClick = function() self:InternalDoRightClick() end
 	self.Label.DragHover = function(s, t) self:DragHover(t) end
 

@@ -17,6 +17,8 @@ PART.ThinkTime = 0
 PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Event", "", {enums = function(part)
 		local output = {}
@@ -44,6 +46,36 @@ PART.Tutorials = {}
 
 local registered_command_event_series = {}
 local event_series_bounds = {}
+
+function PART:OnDoubleClickSpecified()
+	if GetConVar("pac_doubleclick_specified"):GetInt() == 1 then
+		self:SetInvert(not self:GetInvert())
+		pace.PopulateProperties(self)
+		return
+	end
+
+	if self.Event == "command" then
+		local cmd, time, hide = self:GetParsedArgumentsForObject(self.Events.command)
+		if time == 0 then --toggling mode
+			pac.LocalPlayer.pac_command_events[cmd] = pac.LocalPlayer.pac_command_events[cmd] or {name = cmd, time = pac.RealTime, on = 0}
+			----MORE PAC JANK?? SOMETIMES, THE 2 NOTATION DOESN'T CHANGE THE STATE YET
+			if pac.LocalPlayer.pac_command_events[cmd].on == 1 then
+				RunConsoleCommand("pac_event", cmd, "0")
+			else
+				RunConsoleCommand("pac_event", cmd, "1")
+			end
+		else
+			RunConsoleCommand("pac_event", cmd)
+		end
+	elseif self.Event == "is_flashlight_on" then
+		RunConsoleCommand("impulse", "100")
+	elseif self.Event == "timerx" or self.Event == "timerx2" then
+		self.time = nil
+	else
+		self:SetInvert(not self:GetInvert())
+		pace.PopulateProperties(self)
+	end
+end
 
 function PART:register_command_event(str,b)
 	local ply = self:GetPlayerOwner()
@@ -3411,12 +3443,27 @@ function PART:GetParentEx()
 	return self:GetParent()
 end
 
+function PART:GetTargetingModePrefix()
+	local modes = {}
+	if self.AffectChildrenOnly then
+		table.insert(modes, "ACO")
+	end
+	if IsValid(self:GetDestinationPart()) then
+		table.insert(modes, "TP")
+	end
+	if self.MultiTargetPart then
+		table.insert(modes, "MTP")
+	end
+	if table.IsEmpty(modes) then return "" end
+	return "[" .. table.concat(modes, " ") .. "] "
+end
+
 function PART:GetNiceName()
 	local event_name = self:GetEvent()
 
 	if not PART.Events[event_name] then return "unknown event" end
 
-	return PART.Events[event_name]:GetNiceName(self, get_owner(self))
+	return self:GetTargetingModePrefix() .. PART.Events[event_name]:GetNiceName(self, get_owner(self))
 end
 
 local function is_hidden_by_something_else(part, ignored_part)

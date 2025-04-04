@@ -5,6 +5,8 @@ PART.ClassName = "command"
 PART.Group = "advanced"
 PART.Icon = "icon16/application_xp_terminal.png"
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 
 BUILDER:SetPropertyGroup("generic")
@@ -311,5 +313,7 @@ function PART:Execute(commandstring)
 		end
 	end
 end
+
+PART.OnDoubleClickSpecified = PART.Execute
 
 BUILDER:Register()

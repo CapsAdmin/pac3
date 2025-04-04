@@ -7,6 +7,8 @@ PART.Icon = "icon16/database_go.png"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("AreaShape")
 		:GetSet("HitboxMode", "Box", {enums = {
@@ -94,6 +96,10 @@ end
 
 function PART:OnShow()
 	self.next_impulse = CurTime() + 0.05
+	self:Impulse(true)
+end
+
+function PART:OnDoubleClickSpecified()
 	self:Impulse(true)
 end
 

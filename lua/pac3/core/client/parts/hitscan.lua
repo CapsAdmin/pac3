@@ -9,6 +9,8 @@ PART.ClassName = "hitscan"
 PART.Group = "combat"
 PART.Icon = "icon16/user_gray.png"
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 	:GetSet("ServerBullets", true, {description = "serverside bullets can do damage and exert a physical impact force"})
 	:SetPropertyGroup("bullet properties")
@@ -128,6 +130,10 @@ function PART:Shoot()
 
 		if IsValid(self.ent) then self.ent:FireBullets(self.bulletinfo) end
 	end
+end
+
+function PART:OnDoubleClickSpecified()
+	self:Shoot()
 end
 
 
