@@ -46,17 +46,10 @@ local function make_copy(tbl, input)
 end
 
 local function net_write_table(tbl)
-
 	local buffer = pac.StringStream()
 	buffer:writeTable(tbl)
-
 	local data = buffer:getString()
-	local ok, err = pcall(net.WriteStream, data)
-
-	if not ok then
-		return ok, err
-	end
-
+	net.WriteStream(data)
 	return #data
 end
 
@@ -272,17 +265,18 @@ function pace.SubmitPartNow(data, filter)
 		local ret = pac.CallHook("SendData", players, data)
 		if ret == nil then
 			net.Start("pac_submit")
-			local bytes, err = net_write_table(data)
+			local ok, err = pcall(net_write_table, data)
 
-			if not bytes then
+			if ok then
+				net.Send(players)
+			else
+				net.Abort()
 				local errStr = tostring(err)
 				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(owner) .. ": " .. errStr .. "\n")
 
 				if owner and owner:IsValid() then
 					owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. errStr)
 				end
-			else
-				net.Send(players)
 			end
 		end
 
@@ -402,7 +396,10 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 			return
 		end
 		local buffer = pac.StringStream(data)
-		pace.HandleReceivedData(ply, buffer:readTable())
+		local ok,tbl = pcall(buffer.readTable, buffer)
+		if ok then
+			pace.HandleReceivedData(ply, tbl)
+		end
 	end)
 end)
 
