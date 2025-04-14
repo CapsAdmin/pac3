@@ -48,7 +48,7 @@ local registered_command_event_series = {}
 local event_series_bounds = {}
 
 function PART:OnDoubleClickSpecified()
-	if GetConVar("pac_doubleclick_specified"):GetInt() == 1 then
+	if GetConVar("pac_doubleclick_action_specified"):GetInt() == 1 then
 		self:SetInvert(not self:GetInvert())
 		pace.PopulateProperties(self)
 		return
