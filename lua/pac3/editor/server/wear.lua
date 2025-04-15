@@ -410,10 +410,7 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 end)
 
 function pace.ClearOutfit(ply)
-	local uid = pac.Hash(ply)
-
 	pace.RemovePart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
-	pace.CallHook("RemoveOutfit", ply)
 end
 
 function pace.RequestOutfits(ply)
