@@ -295,7 +295,7 @@ end
 
 -- Inserts the given part into the StreamQueue
 function pace.SubmitPart(data, filter, callback)
-	if not (istable(data.part) and IsValid(data.owner)) then return end
+	if not ((istable(data.part) or isstring(data.part)) and IsValid(data.owner)) then return end
 	local owner = data.owner
 	local count = 0
 	for _, v in ipairs(pace.StreamQueue) do
