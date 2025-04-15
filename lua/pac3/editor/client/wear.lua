@@ -231,6 +231,13 @@ end
 net.Receive("pac_submit", function()
 	if not pac.IsEnabled() then return end
 
+	local owner = net.ReadEntity()
+	if owner:IsValid() and owner:IsPlayer() then
+		pac.Message("Receiving outfit from ", owner)
+	else
+		return
+	end
+
 	net.ReadStream(ply, function(data)
 		if not data then
 			pac.Message("message from server timed out")

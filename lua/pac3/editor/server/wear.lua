@@ -265,6 +265,7 @@ function pace.SubmitPartNow(data, filter)
 		local ret = pac.CallHook("SendData", players, data)
 		if ret == nil then
 			net.Start("pac_submit")
+			net.WriteEntity(owner)
 			local ok, err = pcall(net_write_table, data)
 
 			if ok then
