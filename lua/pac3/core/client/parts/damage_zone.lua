@@ -792,8 +792,10 @@ net.Receive("pac_hit_results", function(len)
 
 		if not recycle_hitmark:GetBool() then
 			local ent = parent_ent
+			local cs_ent = false
 			if not self.AttachPartsToTargetEntity then
 				ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
+				cs_ent = true
 				ent:SetNoDraw(true)
 				ent:SetPos(pos)
 			end
@@ -805,9 +807,9 @@ net.Receive("pac_hit_results", function(len)
 						ent.pac_hitmark_part:Remove()
 					end
 
-					timer.Simple(0.5, function()
-						SafeRemoveEntity(ent)
-					end)
+					if cs_ent then
+						SafeRemoveEntityDelayed(ent, 0.5)
+					end
 				end
 			end)
 			return
