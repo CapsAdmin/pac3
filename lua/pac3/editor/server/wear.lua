@@ -7,6 +7,7 @@ local isfunction = isfunction
 local ProtectedCall = ProtectedCall
 
 pace.StreamQueue = pace.StreamQueue or {}
+pace.MaxStreamQueue = 32 -- Max queued outfits per player
 
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	local item = table.remove(pace.StreamQueue)
@@ -294,18 +295,22 @@ end
 
 -- Inserts the given part into the StreamQueue
 function pace.SubmitPart(data, filter, callback)
-	if istable(data.part) then
-		pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
-		table.insert(pace.StreamQueue, {
-			data = data,
-			filter = filter,
-			callback = callback
-		})
-
-		return "queue"
+	if not (istable(data.part) and IsValid(data.owner)) then return end
+	local owner = data.owner
+	local count = 0
+	for _, v in ipairs(pace.StreamQueue) do
+		if v.data.owner == owner then
+			if count == pace.MaxStreamQueue then return end
+			count = count + 1
+		end
 	end
 
-	return pace.SubmitPartNow(data, filter)
+	pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
+	table.insert(pace.StreamQueue, {
+		data = data,
+		filter = filter,
+		callback = callback
+	})
 end
 
 -- Inserts the given part into the StreamQueue, and notifies when it completes
@@ -407,7 +412,7 @@ end)
 function pace.ClearOutfit(ply)
 	local uid = pac.Hash(ply)
 
-	pace.SubmitPart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
+	pace.RemovePart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
 	pace.CallHook("RemoveOutfit", ply)
 end
 
