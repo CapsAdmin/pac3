@@ -305,7 +305,7 @@ function pace.SubmitPart(data, filter, callback)
 		end
 	end
 
-	pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
+	if data.part.self then pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner)) end
 	table.insert(pace.StreamQueue, {
 		data = data,
 		filter = filter,
