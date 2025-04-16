@@ -7,6 +7,7 @@ local isfunction = isfunction
 local ProtectedCall = ProtectedCall
 
 pace.StreamQueue = pace.StreamQueue or {}
+pace.MaxStreamQueue = 32 -- Max queued outfits per player
 
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	local item = table.remove(pace.StreamQueue)
@@ -46,17 +47,10 @@ local function make_copy(tbl, input)
 end
 
 local function net_write_table(tbl)
-
 	local buffer = pac.StringStream()
 	buffer:writeTable(tbl)
-
 	local data = buffer:getString()
-	local ok, err = pcall(net.WriteStream, data)
-
-	if not ok then
-		return ok, err
-	end
-
+	net.WriteStream(data)
 	return #data
 end
 
@@ -272,17 +266,19 @@ function pace.SubmitPartNow(data, filter)
 		local ret = pac.CallHook("SendData", players, data)
 		if ret == nil then
 			net.Start("pac_submit")
-			local bytes, err = net_write_table(data)
+			net.WriteEntity(owner)
+			local ok, err = pcall(net_write_table, data)
 
-			if not bytes then
+			if ok then
+				net.Send(players)
+			else
+				net.Abort()
 				local errStr = tostring(err)
 				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(owner) .. ": " .. errStr .. "\n")
 
 				if owner and owner:IsValid() then
 					owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. errStr)
 				end
-			else
-				net.Send(players)
 			end
 		end
 
@@ -299,18 +295,22 @@ end
 
 -- Inserts the given part into the StreamQueue
 function pace.SubmitPart(data, filter, callback)
-	if istable(data.part) then
-		pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
-		table.insert(pace.StreamQueue, {
-			data = data,
-			filter = filter,
-			callback = callback
-		})
-
-		return "queue"
+	if not ((istable(data.part) or isstring(data.part)) and IsValid(data.owner)) then return end
+	local owner = data.owner
+	local count = 0
+	for _, v in ipairs(pace.StreamQueue) do
+		if v.data.owner == owner then
+			if count == pace.MaxStreamQueue then return end
+			count = count + 1
+		end
 	end
 
-	return pace.SubmitPartNow(data, filter)
+	if data.part.self then pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner)) end
+	table.insert(pace.StreamQueue, {
+		data = data,
+		filter = filter,
+		callback = callback
+	})
 end
 
 -- Inserts the given part into the StreamQueue, and notifies when it completes
@@ -402,15 +402,15 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 			return
 		end
 		local buffer = pac.StringStream(data)
-		pace.HandleReceivedData(ply, buffer:readTable())
+		local ok,tbl = pcall(buffer.readTable, buffer)
+		if ok then
+			pace.HandleReceivedData(ply, tbl)
+		end
 	end)
 end)
 
 function pace.ClearOutfit(ply)
-	local uid = pac.Hash(ply)
-
-	pace.SubmitPart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
-	pace.CallHook("RemoveOutfit", ply)
+	pace.RemovePart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
 end
 
 function pace.RequestOutfits(ply)

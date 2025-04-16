@@ -63,17 +63,10 @@ end
 
 do -- to server
 	local function net_write_table(tbl)
-
 		local buffer = pac.StringStream()
 		buffer:writeTable(tbl)
-
 		local data = buffer:getString()
-		local ok, err = pcall(net.WriteStream, data)
-
-		if not ok then
-			return ok, err
-		end
-
+		net.WriteStream(data)
 		return #data
 	end
 
@@ -104,10 +97,11 @@ do -- to server
 
 		net.Start("pac_submit")
 
-		local bytes, err = net_write_table(data)
+		local ok, bytes = pcall(net_write_table, data)
 
-		if not bytes then
-			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
+		if not ok then
+			net.Abort()
+			pace.Notify(false, "unable to transfer data to server: " .. tostring(bytes or "too big"), pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			return false
 		end
 
@@ -127,8 +121,9 @@ do -- to server
 		end
 
 		net.Start("pac_submit")
-			local ret, err = net_write_table(data)
-			if ret == nil then
+			local ok, err = pcall(net_write_table, data)
+			if not ok then
+				net.Abort()
 				pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), name)
 				return false
 			end
@@ -236,6 +231,13 @@ end
 net.Receive("pac_submit", function()
 	if not pac.IsEnabled() then return end
 
+	local owner = net.ReadEntity()
+	if owner:IsValid() and owner:IsPlayer() then
+		pac.Message("Receiving outfit from ", owner)
+	else
+		return
+	end
+
 	net.ReadStream(ply, function(data)
 		if not data then
 			pac.Message("message from server timed out")
@@ -243,7 +245,11 @@ net.Receive("pac_submit", function()
 		end
 
 		local buffer = pac.StringStream(data)
-		local data = buffer:readTable()
+		local ok, data = pcall(buffer.readTable, buffer)
+		if not ok then
+			pac.Message("received invalid message from server!?")
+			return
+		end
 
 		if type(data.owner) ~= "Player" or not data.owner:IsValid() then
 			pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. " || ", data.owner)
