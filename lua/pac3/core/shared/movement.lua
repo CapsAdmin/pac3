@@ -1,24 +1,31 @@
 local movementConvar = CreateConVar("pac_free_movement", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
+local allowMass = CreateConVar("pac_player_movement_allow_mass", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "enables changing player mass in player movement. 1 to enable, 0 to disable", 0, 1)
+local massUpperLimit = CreateConVar("pac_player_movement_max_mass", 50000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "restricts the maximum mass that players can use with player movement", 85, 50000)
+local massLowerLimit = CreateConVar("pac_player_movement_min_mass", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "restricts the minimum mass that players can use with player movement", 0, 85)
+local massDamageScale = CreateConVar("pac_player_movement_physics_damage_scaling", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "restricts the damage scaling applied to players by modified mass values. 1 to enable, 0 to disable", 0, 1)
 
 local default = {
 	JumpHeight = 200,
 	StickToGround = true,
 	GroundFriction = 0.12,
 	AirFriction = 0.01,
+	HorizontalAirFrictionMultiplier = 1,
+	StrafingStrengthMultiplier = 1,
 	Gravity = Vector(0,0,-600),
+	Mass = 85,
 	Noclip = false,
 	MaxGroundSpeed = 750,
-	MaxAirSpeed = 1,
+	MaxAirSpeed = 750,
 	AllowZVelocity = false,
 	ReversePitch = false,
 	UnlockPitch = false,
 	VelocityToViewAngles = 0,
 	RollAmount = 0,
 
-	SprintSpeed = 750,
-	RunSpeed = 300,
+	SprintSpeed = 400,
+	RunSpeed = 200,
 	WalkSpeed = 100,
-	DuckSpeed = 25,
+	DuckSpeed = 50,
 
 	FinEfficiency = 0,
 	FinLiftMode = "normal",
@@ -35,6 +42,8 @@ if SERVER then
 		local str = net.ReadString()
 		if str == "disable" then
 			ply.pac_movement = nil
+			ply:GetPhysicsObject():SetMass(default.Mass)
+			ply.scale_mass = 1
 		else
 			if default[str] ~= nil then
 				local val = net.ReadType()
@@ -113,7 +122,9 @@ local function badMovetype(ply)
 end
 
 local frictionConvar = GetConVar("sv_friction")
+local lasttime = 0
 pac.AddHook("Move", "custom_movement", function(ply, mv)
+	lasttime = SysTime()
 	local self = ply.pac_movement
 
 	if not self then
@@ -145,6 +156,25 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 
 	ply:SetJumpPower(self.JumpHeight)
 
+	if SERVER then
+		if allowMass:GetInt() == 1 then
+			ply:GetPhysicsObject():SetMass(math.Clamp(self.Mass, massLowerLimit:GetFloat(), massUpperLimit:GetFloat()))
+		end
+	end
+
+	if (movementConvar:GetInt() == 1 or (movementConvar:GetInt() == -1 and hook.Run("PlayerNoClip", ply, true) == true)) and massDamageScale:GetInt() == 1 then
+		ply.scale_mass = 85/math.Clamp(self.Mass, math.max(massLowerLimit:GetFloat(), 0.01), massUpperLimit:GetFloat())
+	else
+		ply.scale_mass = 1
+	end
+
+	pac.AddHook("EntityTakeDamage", "PAC3MassDamageScale", function(target, dmginfo)
+		if (target:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH or DMG_VEHICLE)) then
+			dmginfo:ScaleDamage(target.scale_mass or 1)
+		end
+	end)
+
+
 	if self.Noclip then
 		ply:SetMoveType(MOVETYPE_NONE)
 	else
@@ -173,7 +203,11 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		speed = self.DuckSpeed
 	end
 
---	speed = speed * FrameTime()
+	if not on_ground and not self.AllowZVelocity then
+		speed = speed * self.StrafingStrengthMultiplier
+	end
+
+  --speed = speed * FrameTime()
 
 	local ang = mv:GetAngles()
 	local vel = Vector()
@@ -194,6 +228,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		vel = vel - ang:Right()
 	end
 
+
 	vel = vel:GetNormalized() * speed
 
 	if self.AllowZVelocity then
@@ -208,15 +243,19 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		vel.z = 0
 	end
 
-	local speed = vel
+	local speed = vel --That makes speed the driver (added velocity)
+	if not on_ground and not self.AllowZVelocity then
+		speed = speed * self.StrafingStrengthMultiplier
+	end
 
 	local vel = mv:GetVelocity()
 
+	--@note ground friction
 	if on_ground and not self.Noclip and self.StickToGround then -- work against ground friction
 		local sv_friction = frictionConvar:GetInt()
-
+		--ice and glass go too fast? what do?
 		if sv_friction > 0 then
-			sv_friction = 1 - (sv_friction * 15) / 1000
+			sv_friction = 1 - (sv_friction * 15) / 1000 --default is 8, and the formula ends up being equivalent to 0.12 groundfriction variable multiplying vel by 0.88
 			vel = vel / sv_friction
 		end
 	end
@@ -226,14 +265,64 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	-- todo: don't allow adding more velocity to existing velocity if it exceeds
 	-- but allow decreasing
 	if not on_ground then
-		local friction = self.AirFriction
-		friction = -(friction) + 1
 
-		vel = vel * friction
+		if ply:WaterLevel() >= 2 then
+			local ground_speed = self.RunSpeed
 
-		vel = vel + self.Gravity * 0.015
-		speed = speed:GetNormalized() * math.Clamp(speed:Length(), 0, self.MaxAirSpeed)
-		vel = vel + (speed * FrameTime()*(66.666*(-friction+1)))
+			if mv:KeyDown(IN_SPEED) then
+				ground_speed = self.SprintSpeed
+			end
+
+			if mv:KeyDown(IN_WALK) then
+				ground_speed = self.WalkSpeed
+			end
+
+			if mv:KeyDown(IN_DUCK) then
+				ground_speed = self.DuckSpeed
+			end
+			if self.MaxGroundSpeed == 0 then self.MaxGroundSpeed = 400 end
+			if self.MaxAirSpeed == 0 then self.MaxAirSpeed = 400 end
+			local water_speed = math.min(ground_speed, self.MaxAirSpeed, self.MaxGroundSpeed)
+			--print("water speed " .. water_speed)
+
+			ang = ply:EyeAngles()
+			local vel2 = Vector()
+
+			if mv:KeyDown(IN_FORWARD) then
+				vel2 = water_speed*ang:Forward()
+			elseif mv:KeyDown(IN_BACK) then
+				vel2 = -water_speed*ang:Forward()
+			end
+
+			if mv:KeyDown(IN_MOVERIGHT) then
+				vel2 = vel2 + ang:Right()
+			elseif mv:KeyDown(IN_MOVELEFT) then
+				vel2 = vel2 - ang:Right()
+			end
+
+			vel = vel + vel2 * math.min(FrameTime(),0.3) * 2
+
+		else
+			local friction = self.AirFriction
+			local friction_mult = -(friction) + 1
+
+			local hfric = friction * self.HorizontalAirFrictionMultiplier
+			local hfric_mult = -(hfric) + 1
+
+			vel.x = vel.x * hfric_mult
+			vel.y = vel.y * hfric_mult
+			vel.z = vel.z * friction_mult
+			vel = vel + self.Gravity * 0.015
+
+			speed = speed:GetNormalized() * math.Clamp(speed:Length(), 0, self.MaxAirSpeed) --base driver speed but not beyond max?
+			--why should the base driver speed depend on friction?
+
+			--reminder: vel is the existing speed, speed is the driver (added velocity)
+			--vel = vel + (speed * FrameTime()*(66.666*friction))
+			vel.x = vel.x  + (speed.x * math.min(FrameTime(),0.3)*(66.666*hfric))
+			vel.y = vel.y  + (speed.y * math.min(FrameTime(),0.3)*(66.666*hfric))
+			vel.z = vel.z  + (speed.z * math.min(FrameTime(),0.3)*(66.666*friction))
+		end
 	else
 		local friction = self.GroundFriction
 		friction = -(friction) + 1
@@ -241,7 +330,24 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		vel = vel * friction
 
 		speed = speed:GetNormalized() * math.min(speed:Length(), self.MaxGroundSpeed)
-		vel = vel + (speed * FrameTime()*(75.77*(-friction+1)))
+
+		local trace = {
+			start = mv:GetOrigin(),
+			endpos = mv:GetOrigin() + Vector(0, 0, -20),
+			mask = MASK_SOLID_BRUSHONLY
+		}
+		local trc = util.TraceLine(trace)
+		local special_surf_fric = 1
+		--print(trc.MatType)
+		if trc.MatType == MAT_GLASS then
+			special_surf_fric = 0.6
+		elseif trc.MatType == MAT_SNOW then
+			special_surf_fric = 0.4
+		end
+
+		--vel = vel + (special_surf_fric * speed * FrameTime()*(75.77*(-friction+1)))
+		vel = vel + (special_surf_fric * speed * math.min(FrameTime(),0.3)*(75.77*(-friction+1)))
+
 		vel = vel + self.Gravity * 0.015
 	end
 

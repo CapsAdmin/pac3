@@ -18,6 +18,25 @@ local zoom_persistent = CreateClientConVar("pac_zoom_persistent", 0, true, false
 local zoom_mousewheel = CreateClientConVar("pac_zoom_mousewheel", 0, true, false, 'Enable zooming with mouse wheel.')
 local zoom_smooth = CreateClientConVar("pac_zoom_smooth", 0, true, false, 'Enable smooth zooming.')
 
+local remember_divider = CreateConVar("pac_editor_remember_divider_height", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's vertical divider position")
+local remember_width = CreateConVar("pac_editor_remember_width", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's width")
+
+function pace.RefreshZoomBounds(zoomslider)
+	if pace.Editor then
+		if not zoomslider then
+			zoomslider = pace.Editor.zoomslider
+		end
+		if pace.camera_orthographic then
+			zoomslider:SetMin(-10000)
+			zoomslider:SetMax(10000)
+		else
+			zoomslider:SetMin(0)
+			zoomslider:SetMax(pace.max_fov)
+			timer.Simple(0, function() zoomslider:SetValue(math.Clamp(pace.ViewFOV, 0, pace.max_fov)) end)
+		end
+	end
+end
+
 function PANEL:Init()
 	self:SetTitle("")
 	self:SetSizable(true)
@@ -101,6 +120,54 @@ function PANEL:Init()
 			self.smoothlabel:SetWrap(true)
 			self.smoothlabel:SetAutoStretchVertical(true)
 
+			self.limitfovcheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.limitfovcheckbox:SetText("Expanded FOV")
+			self.limitfovcheckbox:SetChecked(pace.max_fov ~= 100)
+			self.limitfovcheckbox:Dock(TOP)
+			self.limitfovcheckbox:SetDark(true)
+			self.limitfovcheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+
+
+			self.orthocheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.orthocheckbox:SetText("Orthographic")
+			self.orthocheckbox:Dock(TOP)
+			self.orthocheckbox:SetDark(true)
+			self.orthocheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+			self.orthocheckbox:SetConVar("pac_camera_orthographic")
+			self.orthocheckbox:SetTooltip("Orthographic view projects parallel rays perpendicular to a rectangle. Instead of degrees, it is in terms of distance units (Hammer Units)\n\nThere are still —possibly engine-related— issues where objects and world geometry can disapear if looking from the wrong angle due to culling. Especially worse in tight spaces.")
+
+			self.ortholabel = vgui.Create("DLabel", self.zoomsettings)
+			self.ortholabel:Dock(TOP)
+			self.ortholabel:SetDark(true)
+			self.ortholabel:SetText("Enable orthographic view.")
+			self.ortholabel:SetWrap(true)
+			self.ortholabel:SetAutoStretchVertical(true)
+
+			self.ortho_nearz = vgui.Create("DNumSlider", self.zoomsettings)
+			self.ortho_nearz:Dock(TOP)
+			self.ortho_nearz:SetMin( 0 )
+			self.ortho_nearz:SetMax( 5000 )
+			self.ortho_nearz:SetDecimals( 1 )
+			self.ortho_nearz:SetText("NearZ")
+			self.ortho_nearz:SetDark(true)
+			self.ortho_nearz:SetDefaultValue( 0 )
+			self.ortho_nearz:SetValue( 0 )
+
+			self.ortho_farz = vgui.Create("DNumSlider", self.zoomsettings)
+			self.ortho_farz:Dock(TOP)
+			self.ortho_farz:SetMin( 0 )
+			self.ortho_farz:SetMax( 64000 )
+			self.ortho_farz:SetDecimals( 1 )
+			self.ortho_farz:SetText("FarZ")
+			self.ortho_farz:SetDark(true)
+			self.ortho_farz:SetDefaultValue( 64000 )
+			self.ortho_farz:SetValue( 64000 )
+			if not pace.camera_orthographic then
+				self.ortho_nearz:Hide()
+				self.ortho_farz:Hide()
+			end
+
+
 		self.sliderpanel = vgui.Create("DPanel", self.zoomframe)
 		self.sliderpanel:SetSize(180, 20)
 		self.sliderpanel:Dock(TOP)
@@ -108,10 +175,12 @@ function PANEL:Init()
 			self.zoomslider = vgui.Create("DNumSlider", self.sliderpanel)
 			self.zoomslider:DockPadding(4,0,0,0)
 			self.zoomslider:SetSize(200, 20)
-			self.zoomslider:SetMin( 0 )
-			self.zoomslider:SetMax( 100 )
 			self.zoomslider:SetDecimals( 0 )
 			self.zoomslider:SetText("Camera FOV")
+			if pace.camera_orthographic then
+				self.zoomslider:SetText("Ortho. Width")
+			end
+			pace.RefreshZoomBounds(self.zoomslider)
 			self.zoomslider:SetDark(true)
 			self.zoomslider:SetDefaultValue( 75 )
 
@@ -120,6 +189,15 @@ function PANEL:Init()
 			else
 				self.zoomslider:SetValue( 75 )
 			end
+			local zoomslider = self.zoomslider
+			function self.limitfovcheckbox:OnChange(b)
+				if b then
+					pace.max_fov = 179
+				else
+					pace.max_fov = 100
+				end
+				pace.RefreshZoomBounds(zoomslider)
+			end
 
 	self.btnClose.Paint = function() end
 
@@ -127,6 +205,13 @@ function PANEL:Init()
 
 	self:SetCookieName("pac3_editor")
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
+
+	if remember_width:GetBool() then
+		self.init_w = math.max(self:GetCookieNumber("width"), 200)
+	end
+	if remember_divider:GetBool() then
+		pace.vertical_div_height = self:GetCookieNumber("y_divider")
+	end
 
 	self:MakeBar()
 	self.lastTopBarHover = 0
@@ -172,6 +257,14 @@ function PANEL:MakeBar()
 end
 
 function PANEL:OnRemove()
+	if remember_divider:GetBool() then
+		pace.vertical_div_height = self.div:GetTopHeight()
+	end
+
+	if remember_width:GetBool() then
+		pace.editor_width = math.max(self:GetWide(), 200)
+	end
+
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
@@ -183,6 +276,10 @@ function PANEL:OnRemove()
 	if self.zoomframe:IsValid() then
 		self.zoomframe:Remove()
 	end
+end
+
+function PANEL:IsLeft() --which side the editor is on.
+	return self:GetPos() + self:GetWide() / 2 < ScrW() / 2
 end
 
 function PANEL:Think(...)
@@ -200,19 +297,34 @@ function PANEL:Think(...)
 
 	local bar = self.menu_bar
 
-	self:SetTall(ScrH())
+
+	self:SetTall(ScrH() - (self.y_offset or 0))
 	local w = math.max(self:GetWide(), 200)
+
+	--wtf the GetWide isn't saved on Init??? I have to do this?
+	if self.init_w then
+		w = self.init_w
+		self.init_w = nil
+	end
 	self:SetWide(w)
-	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
+	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), (self.y_offset or 0))
 
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
 		self.last_x = x
 	end
+	if w ~= self.last_w then
+		self:SetCookie("width", w)
+		self.last_w = w
+	end
+	if pace.vertical_div_height ~= self.last_vertical_div_height then
+		self:SetCookie("y_divider", pace.vertical_div_height)
+		self.last_vertical_div_height = pace.vertical_div_height
+	end
 
 	if self.exit_button:IsValid() then
 
-		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
+		if self:IsLeft() then
 			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
 		else
 			self.exit_button:SetPos(-4, -4)
@@ -244,6 +356,9 @@ function PANEL:Think(...)
 			self.zoomslider:SetValue(75)
 			pace.zoom_reset = nil
 		end
+		if pace.OverridingFOVSlider then
+			self.zoomslider:SetValue(pace.ViewFOV)
+		end
 
 		if zoom_smooth:GetInt() == 1 then
 			pace.SetZoom(self.zoomslider:GetValue(),true)
@@ -261,6 +376,8 @@ function PANEL:Think(...)
 		else
 			self.zoomsettings:SetVisible(false)
 		end
+
+
 	end
 end
 
@@ -278,6 +395,9 @@ function PANEL:PerformLayout()
 	end
 
 	if self.old_part ~= pace.current_part then
+		if remember_divider:GetBool() then
+			pace.vertical_div_height = self.div:GetTopHeight()
+		end
 		self.div:InvalidateLayout()
 		self.bottom:PerformLayout()
 		pace.properties:PerformLayout()
@@ -292,10 +412,23 @@ function PANEL:PerformLayout()
 				local oldh = self.div:GetTopHeight()
 
 				if newh<oldh then
-					self.div:SetTopHeight(newh)
+					if remember_divider:GetBool() then
+						self.div:SetTopHeight(pace.vertical_div_height)
+					else
+						self.div:SetTopHeight(newh)
+					end
 				end
 			elseif sz >= 1 then
-				self.div:SetTopHeight(newh)
+
+				if remember_divider:GetBool() then
+					if remember_divider:GetBool() then
+						self.div:SetTopHeight(pace.vertical_div_height)
+					else
+						self.div:SetTopHeight(newh)
+					end
+				else
+					self.div:SetTopHeight(newh)
+				end
 			end
 		end
 	end

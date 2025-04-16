@@ -180,34 +180,35 @@ function pac.ResetBoneCache(ent)
 	end
 end
 
-local UP = Vector(0,0,1):Angle()
+local viewmodelClassName = "viewmodel"
 
 local function GetBonePosition(ent, id)
-	local pos, ang = ent:GetBonePosition(id)
+	local mat = ent:GetBoneMatrix(id)
+	if not mat then return end
 
-	if not pos then return end
+	local pos, ang = mat:GetTranslation(), mat:GetAngles()
 
 	if ang.p ~= ang.p then ang.p = 0 end
 	if ang.y ~= ang.y then ang.y = 0 end
 	if ang.r ~= ang.r then ang.r = 0 end
 
-	if pos == ent:GetPos() then
-		local mat = ent:GetBoneMatrix(id)
-		if mat then
-			pos = mat:GetTranslation()
-			ang = mat:GetAngles()
-		end
-	end
+	if ent == pac.LocalHands or ent:GetClass() == viewmodelClassName then
+		local owner = ent:GetOwner()
 
-	if (ent:GetClass() == "viewmodel" or ent == pac.LocalHands) and
-		ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
-		ang.r = -ang.r
+		if owner:IsPlayer() then
+			local ownerwep = owner:GetActiveWeapon()
+
+			if ownerwep:IsValid() and ownerwep.ViewModelFlip then
+				ang.r = -ang.r
+			end
+		end
 	end
 
 	return pos, ang
 end
 
 local angle_origin = Angle(0,0,0)
+local UP = Vector(0,0,1):Angle()
 
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
@@ -222,8 +223,15 @@ function pac.GetBonePosAng(ent, id, parent)
 			if enabled then
 				if target:IsValid() then
 					if bone ~= 0 then
-						local wpos, wang = target:GetBonePosition(target:TranslatePhysBoneToBone(bone))
-						endpos = LocalToWorld(hitpos, Angle(), wpos, wang)
+						local mat = target:GetBoneMatrix(target:TranslatePhysBoneToBone(bone))
+						local wpos, wang
+
+						if mat then
+							wpos, wang = mat:GetTranslation(), mat:GetAngles()
+							endpos = LocalToWorld(hitpos, Angle(), wpos, wang)
+						else
+							endpos = target:LocalToWorld(hitpos)
+						end
 					else
 						endpos = target:LocalToWorld(hitpos)
 					end

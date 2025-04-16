@@ -23,6 +23,7 @@ BUILDER:StartStorableVars()
 			return tbl
 		end,
 	})
+	BUILDER:GetSet("UnlitMaterialHack", false, {description = "hacky fix if the material comes from a material part with unlitgeneric shader.\nBut it will break raw url textures!"})
 	BUILDER:GetSet("RootOwner", false, { hide_in_editor = true })
 BUILDER:EndStorableVars()
 
@@ -63,6 +64,7 @@ function PART:UpdateSubMaterialId(id, material)
 	ent.pac_submaterials = ent.pac_submaterials or {}
 
 	local mat = self.Materialm
+	if self.UnlitMaterialHack then mat = pac.Material(self.Material, self) end
 
 	if not material then
 		if self.Material and self.Material ~= "" and mat and not mat:IsError() then
@@ -77,6 +79,11 @@ function PART:UpdateSubMaterialId(id, material)
 		ent.pac_submaterials[id] = material
 		ent:SetSubMaterial(id - 1, material)
 	end
+end
+
+function PART:SetUnlitMaterialHack(b)
+	self.UnlitMaterialHack = b
+	self:UpdateSubMaterialId()
 end
 
 function PART:PostApplyFixes()

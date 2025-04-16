@@ -44,6 +44,7 @@ local ent_parts = _G.pac_local_parts or {}
 local all_parts = _G.pac_all_parts or {}
 local uid_parts = _G.pac_uid_parts or {}
 
+
 if game.SinglePlayer() or (player.GetCount() == 1 and LocalPlayer():IsSuperAdmin()) then
 	_G.pac_local_parts = ent_parts
 	_G.pac_all_parts = all_parts
@@ -250,7 +251,7 @@ function pac.UnhookEntityRender(ent, part)
 end
 
 pac.AddHook("Think", "events", function()
-	for _, ply in ipairs(player.GetAll()) do
+	for _, ply in player.Iterator() do
 		if not ent_parts[ply] then continue end
 		if pac.IsEntityIgnored(ply) then continue end
 
@@ -348,8 +349,8 @@ pac.AddHook("Think", "events", function()
 		lamp:SetAngles( pac.LocalPlayer:EyeAngles() )
 		lamp:Update()
 
-		hook.Add("PostRender", "pac_flashlight_stuck_fix", function()
-			hook.Remove("PostRender", "pac_flashlight_stuck_fix")
+		pac.AddHook("PostRender", "flashlight_stuck_fix", function()
+			pac.RemoveHook("PostRender", "flashlight_stuck_fix")
 			lamp:Remove()
 		end)
 
@@ -498,6 +499,33 @@ function pac.GetPartFromUniqueID(owner_id, id)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or NULL
 end
 
+function pac.FindPartByPartialUniqueID(owner_id, crumb)
+	if not crumb then return NULL end
+	if not isstring(crumb) then return NULL end
+	if #crumb <= 3 then return NULL end
+	local closest_match
+	local length_of_closest_match = 0
+	if uid_parts[owner_id] then
+		if uid_parts[owner_id][crumb] then
+			return uid_parts[owner_id][crumb]
+		end
+
+		for _, part in pairs(uid_parts[owner_id]) do
+			local start_i,end_i = string.find(part.UniqueID, crumb)
+			if start_i or end_i then
+				closest_match = part
+				if length_of_closest_match < end_i - start_i + 1 then
+					closest_match = part
+					length_of_closest_match = end_i - start_i + 1
+				end
+
+			end
+		end
+
+	end
+	return closest_match or NULL
+end
+
 function pac.FindPartByName(owner_id, str, exclude)
 	if uid_parts[owner_id] then
 		if uid_parts[owner_id][str] then
@@ -613,6 +641,79 @@ function pac.EnablePartsByClass(classname, enable)
 	for _, part in pairs(all_parts) do
 		if part.ClassName == classname then
 			part:SetEnabled(enable)
+		end
+	end
+end
+
+function pac.LinkSpecialTrackedPartsForEvent(part, ply)
+	part.erroring_cached_parts = {}
+	part.found_cached_parts = {}
+
+	part.specialtrackedparts = {}
+	local tracked_classes = {
+		["damage_zone"] = true,
+		["lock"] = true
+	}
+	for _,part2 in pairs(all_parts) do
+		if ply == part2:GetPlayerOwner() and tracked_classes[part2.ClassName] then
+			table.insert(part.specialtrackedparts,part2)
+		end
+	end
+end
+
+--a centralized function to cache a part in a prebuilt list so we can access relevant parts already narrowed down instead of searching through all parts / localparts
+function pac.RegisterPartToCache(ply, name, part, remove)
+	if not IsValid(ply) then return end
+	ply["pac_part_cache_"..name] = ply["pac_part_cache_"..name] or {}
+	if remove then
+		ply["pac_part_cache_"..name][part] = nil
+	else
+		ply["pac_part_cache_"..name][part] = part
+	end
+end
+
+function pac.UpdateButtonEvents(ply, key, down)
+	local button_events = ply.pac_part_cache_button_events or {}
+	for _,part in pairs(button_events) do
+		if part:GetProperty("ignore_if_hidden") then
+			if part:IsHidden() then continue end
+		end
+		if key ~= string.Split(part.Arguments, "@@")[1]:lower() then continue end
+		part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
+		part.toggleimpulsekey = part.toggleimpulsekey or {}
+		part.toggleimpulsekey[key] = down
+		part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
+		ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
+
+		if part.holdtime == nil then part.holdtime = 0 end
+		part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
+
+		if part.togglestate == nil then part.togglestate = false end
+
+		if part.toggleimpulsekey[key] then
+			part.togglestate = not part.togglestate
+		end
+	end
+end
+
+function pac.StopSound()
+	for _,part in pairs(all_parts) do
+		if part.ClassName == "sound" or part.ClassName == "sound2" or part.ClassName == "ogg" or part.ClassName == "webaudio" then
+			part:StopSound(true)
+		end
+	end
+end
+
+function pac.ForceUpdateSoundVolumes()
+	for _,part in pairs(all_parts) do
+		if part.ClassName == "sound" then
+			if part.csptch then part.csptch:ChangeVolume(math.Clamp(part.Volume * pac.volume, 0.001, 1), 0) end
+		elseif part.ClassName == "sound2" or part.ClassName == "ogg" then
+			if part.last_stream and part.last_stream.SetVolume then part.last_stream:SetVolume(part.Volume * pac.volume) end
+		elseif part.ClassName == "webaudio" then
+			for key, stream in pairs(part.streams) do
+				if stream and stream.SetVolume then stream:SetVolume(part.Volume * pac.volume) end
+			end
 		end
 	end
 end

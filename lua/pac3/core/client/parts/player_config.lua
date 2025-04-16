@@ -29,6 +29,7 @@ BUILDER:SetPropertyGroup("generic")
 
 BUILDER:SetPropertyGroup("behavior")
 	BUILDER:GetSet("MuteFootsteps", false)
+	BUILDER:GetSet("AnimationRate", 1)
 
 BUILDER:SetPropertyGroup("death")
 	BUILDER:GetSet("FallApartOnDeath", false)

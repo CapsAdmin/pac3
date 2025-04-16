@@ -364,27 +364,24 @@ do -- hook helpers
 	pac.added_hooks = pac.added_hooks or {}
 
 	function pac.AddHook(event_name, id, func, priority)
-		id = "pac_" .. id
+		id = isstring(id) and "pac_" .. id or id
 
 		if not DLib and not ULib then
 			priority = nil
 		end
-
 		if pac.IsEnabled() then
 			hook.Add(event_name, id, func, priority)
+			pac.added_hooks[event_name .. tostring(id)] = {event_name = event_name, id = id, func = func, priority = priority}
 		end
-
-		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func, priority = priority}
 	end
 
 	function pac.RemoveHook(event_name, id)
-		id = "pac_" .. id
+		id = "pac_" .. tostring(id)
 
 		local data = pac.added_hooks[event_name .. id]
 
 		if data then
 			hook.Remove(data.event_name, data.id)
-
 			pac.added_hooks[event_name .. id] = nil
 		end
 	end
@@ -395,13 +392,21 @@ do -- hook helpers
 
 	function pac.EnableAddedHooks()
 		for _, data in pairs(pac.added_hooks) do
-			hook.Add(data.event_name, data.id, data.func, data.priority)
+			if ispanel(data.id) and not IsValid(data.id) then -- Panels can be NULL and are (probably) already removed
+				pac.added_hooks[data.event_name .. tostring(data.id)] = nil
+			else
+				hook.Add(data.event_name, data.id, data.func, data.priority)
+			end
 		end
 	end
 
 	function pac.DisableAddedHooks()
 		for _, data in pairs(pac.added_hooks) do
-			hook.Remove(data.event_name, data.id)
+			if ispanel(data.id) and not IsValid(data.id) then -- Panels can be NULL and are already removed
+				pac.added_hooks[data.event_name .. tostring(data.id)] = nil
+			else
+				hook.Remove(data.event_name, data.id)
+			end
 		end
 	end
 end

@@ -145,12 +145,26 @@ function pace.MessagePrompt( strText, strTitle, strButtonText )
 	local DScrollPanel = vgui.Create( "DScrollPanel", Window )
 	DScrollPanel:Dock( FILL )
 
-	local Text = DScrollPanel:Add("DLabel")
-	Text:SetText( strText or "Message Text" )
-	Text:SetTextColor( color_white )
-	Text:Dock(FILL)
-	Text:SetAutoStretchVertical(true)
-	Text:SetWrap(true)
+	if not pace.alternate_message_prompts and (strText and (#strText < 800)) then
+		local Text = DScrollPanel:Add("DLabel")
+		Text:SetText( strText or "Message Text" )
+		Text:SetTextColor( color_white )
+		Text:Dock(FILL)
+		Text:SetAutoStretchVertical(true)
+		Text:SetWrap(true)
+	else --hack for more text length / alternative style using RichText
+		local Text = DScrollPanel:Add("RichText")
+		Text:SetText("")
+		Text:AppendText(strText or "Message Text")
+		Text:SetBGColor(0,0,0,0)
+		Text:Dock(FILL)
+		Text:SetTall(240)
+		Text:SetFGColor(255,255,255,255)
+		function Text:PerformLayout()
+			Text:SetBGColor(0,0,0,0)
+			Text:SetFGColor(255,255,255,255)
+		end
+	end
 
 	local Button = vgui.Create( "DButton", Window )
 	Button:SetText( strButtonText or "OK" )
@@ -194,7 +208,7 @@ function pace.MultilineStringRequest( strTitle, strText, strDefaultText, fnEnter
 	TextEntry:SetMultiline(true)
 	TextEntry:Dock(FILL)
 	TextEntry:SetUpdateOnType(true)
-	TextEntry.OnChange = function(self) self:SetText(self:GetValue():gsub("\t", "    ")) end
+	TextEntry.OnChange = function(self) local caret = self:GetCaretPos() self:SetText(self:GetValue():gsub("\t", "    ")) self:SetCaretPos(caret) end
 	TextEntry.OnEnter = function() Window:Close() fnEnter( TextEntry:GetValue() ) end
 
 	local ButtonPanel = vgui.Create( "DPanel", Window )

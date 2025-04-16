@@ -8,9 +8,12 @@ PART.ClassName = "sound2"
 PART.Icon = 'icon16/music.png'
 PART.Group = 'effects'
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("Path", "", {editor_panel = "sound"})
+		BUILDER:GetSet("AllPaths", "", {hide_in_editor = true})
 		BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
 		BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
 		BUILDER:GetSet("Radius", 1500)
@@ -128,13 +131,29 @@ BIND("VolumeLFOTime")
 
 BIND("Doppler")
 
+function PART:Silence(b)
+	if b then
+		if self.last_stream and self.last_stream.SetVolume then self.last_stream:SetVolume(0) end
+	else
+		if self.last_stream and self.last_stream.SetVolume then self.last_stream:SetVolume(self.Volume * pac.volume) end
+	end
+end
+
 function PART:OnThink()
 	local owner = self:GetRootPart():GetOwner()
+	local pos = self:GetWorldPosition()
+	if pos:DistToSqr(pac.EyePos) > pac.sounds_draw_dist_sqr then
+		self.out_of_range = true
+		self:Silence(true)
+	else
+		if self.out_of_range then self:Silence(false) end
+		self.out_of_range = false
+	end
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
-		if self.PlayCount == 0 then
+		if self.PlayCount == 0 and not self.stopsound then
 			stream:Resume()
 		end
 
@@ -166,6 +185,15 @@ function PART:OnThink()
 end
 
 function PART:SetPath(path)
+	if #path > 1024 then
+		self:AttachEditorPopup("This part has more sounds than the 1024-letter limit! Please do not touch the path field now!")
+		self:SetInfo("This part has more sounds than the 1024-letter limit! Please do not touch the path field now!")
+		if self.Name == "" then
+			self:SetName("big sound list")
+			pace.RefreshTree()
+		end
+	end
+
 	self.seq_index = 1
 	self.Path = path
 
@@ -180,10 +208,13 @@ function PART:SetPath(path)
 		if min and max then
 			for i = min, max do
 				table.insert(paths, (path:gsub("%[.-%]", i)))
+				self.AllPaths = self.AllPaths .. ";" .. path
 			end
 		else
 			table.insert(paths, path)
+			self.AllPaths = self.AllPaths .. ";" .. path
 		end
+
 	end
 
 	for _, stream in pairs(self.streams) do
@@ -245,13 +276,20 @@ function PART:SetPath(path)
 		end
 	end
 	self.paths = paths
+
 end
 
 PART.last_stream = NULL
 
+function PART:UpdateSoundsFromAll()
+	self:SetPath(self.AllPaths)
+end
+
 function PART:PlaySound(_, additiveVolumeFraction)
 	--PrintTable(self.streams)
 	additiveVolumeFraction = additiveVolumeFraction or 0
+	local pos = self:GetWorldPosition()
+	if pos:DistToSqr(pac.EyePos) > pac.sounds_draw_dist_sqr then return end
 
 	local stream = table.Random(self.streams) or NULL
 	if not stream:IsValid() then return end
@@ -271,7 +309,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 
 		if self.streams[snd]:IsValid() then
 			stream = self.streams[snd]
-			print(snd,self.seq_index)
+			--print(snd,self.seq_index)
 		end
 		self.seq_index = self.seq_index + self.SequentialStep
 		if self.seq_index > #self.paths then
@@ -302,7 +340,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	self.last_stream = stream
 end
 
-function PART:StopSound()
+function PART:StopSound(force_stop)
 	for key, stream in pairs(self.streams) do
 		if stream:IsValid() then
 			if self.PauseOnHide then
@@ -310,6 +348,7 @@ function PART:StopSound()
 			elseif self.StopOnHide then
 				stream:Stop()
 			end
+			if force_stop then stream:Stop() self.stopsound = true end
 		end
 	end
 end
@@ -317,6 +356,17 @@ end
 function PART:OnShow(from_rendering)
 	if not from_rendering then
 		self:PlaySound()
+	end
+	self.stopsound = false
+end
+
+function PART:OnDoubleClickSpecified()
+	if self.playing then
+		self:StopSound(true)
+		self.playing = false
+	else
+		self:PlaySound()
+		self.playing = true
 	end
 end
 

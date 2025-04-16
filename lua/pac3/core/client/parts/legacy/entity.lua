@@ -605,14 +605,15 @@ do
 	end
 
 	pac.AddHook("CreateMove", "legacy_entity_part_speed_modifier", function(cmd)
+		local plyTable = pac.LocalPlayer:GetTable()
 		if cmd:KeyDown(IN_SPEED) then
-			mod_speed(cmd, pac.LocalPlayer.pac_sprint_speed)
+			mod_speed(cmd, plyTable.pac_sprint_speed)
 		elseif cmd:KeyDown(IN_WALK) then
-			mod_speed(cmd, pac.LocalPlayer.pac_walk_speed)
+			mod_speed(cmd, plyTable.pac_walk_speed)
 		elseif cmd:KeyDown(IN_DUCK) then
-			mod_speed(cmd, pac.LocalPlayer.pac_crouch_speed)
+			mod_speed(cmd, plyTable.pac_crouch_speed)
 		else
-			mod_speed(cmd, pac.LocalPlayer.pac_run_speed)
+			mod_speed(cmd, plyTable.pac_run_speed)
 		end
 	end)
 end

@@ -409,7 +409,7 @@ surface.CreateFont("pac_urlobj_loading",
 -- ugh lol
 local function RealDrawModel(self, ent, pos, ang)
 	if self.Mesh then
-		ent:SetModelScale(0,0)
+		ent:SetModelScale(0.001, 0)
 		ent:DrawModel()
 
 		local matrix = Matrix()
@@ -662,13 +662,13 @@ do
 		self.Mesh = nil
 
 		local real_model = modelPath
-		local ret = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
+		local ret = pac.CallHook("model:SetModel", self, modelPath, self.ModelFallback)
 		if ret == nil then
-			real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
+			real_model = pac.FilterInvalidModel(real_model, self.ModelFallback)
 		else
 			modelPath = ret or modelPath
 			real_model = modelPath
-			real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
+			real_model = pac.FilterInvalidModel(real_model, self.ModelFallback)
 		end
 
 		self.Model = modelPath
@@ -682,7 +682,7 @@ do
 	end
 end
 
-local NORMAL = Vector(1,1,1)
+local NORMAL = Vector(1, 1, 1)
 
 function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
@@ -704,7 +704,7 @@ function PART:SetAlternativeScaling(b)
 end
 
 function PART:SetScale(var)
-	var = var or Vector(1,1,1)
+	var = var or Vector(1, 1, 1)
 
 	self.Scale = var
 

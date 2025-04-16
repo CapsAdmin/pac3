@@ -17,9 +17,6 @@ BUILDER:StartStorableVars()
 		BUILDER:PropertyOrder("ParentName")
 		BUILDER:GetSet("Follow", false)
 		BUILDER:GetSet("Additive", false)
-		BUILDER:GetSet("FireOnce", false)
-		BUILDER:GetSet("FireDelay", 0.2)
-		BUILDER:GetSet("NumberParticles", 1)
 		BUILDER:GetSet("PositionSpread", 0)
 		BUILDER:GetSet("PositionSpread2", Vector(0,0,0))
 		BUILDER:GetSet("DieTime", 3)
@@ -29,9 +26,17 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("EndLength", 0)
 		BUILDER:GetSet("ParticleAngle", Angle(0,0,0))
 		BUILDER:GetSet("AddFrametimeLife", false)
+
+	BUILDER:SetPropertyGroup("particle emissions")
+		BUILDER:GetSet("FireDelay", 0.2)
+		BUILDER:GetSet("FireOnce", false)
+		BUILDER:GetSet("NumberParticles", 1, {editor_onchange = function(self,num) return math.Clamp(num,0,2000) end})
+		BUILDER:GetSet("FireDuration", 0, {description = "how long to fire particles\n0 = infinite"})
+		BUILDER:GetSet("Decay", 0, {description = "rate of decay for particle count, in particles per second\n0 = no decay\na positive number means simple decay starting at showtime\na negative number means delayed decay so that it reaches 0 at the time of 'fire duration'"})
+		BUILDER:GetSet("FractionalChance", false, {description = "If 'number particles' has decimals, there is a chance to emit another particle\ne.g. 0.5 is 50% chance to emit a particle\ne.g. 1.25 is 25% chance to fire two / 75% to fire one particle)"})
 	BUILDER:SetPropertyGroup("stick")
-		BUILDER:GetSet("AlignToSurface", true)
-		BUILDER:GetSet("StickToSurface", true)
+		BUILDER:GetSet("AlignToSurface", true, {description = "requires 3D set to true"})
+		BUILDER:GetSet("StickToSurface", true, {description = "requires 3D set to true, and sliding set to false"})
 		BUILDER:GetSet("StickLifetime", 2)
 		BUILDER:GetSet("StickStartSize", 20)
 		BUILDER:GetSet("StickEndSize", 0)
@@ -46,11 +51,11 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Color1", Vector(255, 255, 255), {editor_panel = "color"})
 		BUILDER:GetSet("RandomColor", false)
 		BUILDER:GetSet("Lighting", true)
-		BUILDER:GetSet("3D", false)
+		BUILDER:GetSet("3D", false, {description = "The particles are oriented relative to the part instead of the viewer.\nYou might want to set zero angle to false if you use this."})
 		BUILDER:GetSet("DoubleSided", true)
 		BUILDER:GetSet("DrawManual", false)
 	BUILDER:SetPropertyGroup("rotation")
-		BUILDER:GetSet("ZeroAngle",true)
+		BUILDER:GetSet("ZeroAngle",true, {description = "A workaround for non-3D particles' roll with certain oriented textures. Forces 0,0,0 angles when the particle is emitted\nWith round textures you don't notice, but the same cannot be said of textures which need to be upright rather than having strangely tilted copies."})
 		BUILDER:GetSet("RandomRollSpeed", 0)
 		BUILDER:GetSet("RollDelta", 0)
 		BUILDER:GetSet("ParticleAngleVelocity", Vector(50, 50, 50))
@@ -71,8 +76,14 @@ BUILDER:StartStorableVars()
 
 BUILDER:EndStorableVars()
 
+function PART:Initialize()
+	self.number_particles = 0
+end
+
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetMaterial()):match(".+/(.+)")) or "error"
+	local str = (self:GetMaterial()):match(".+/(.+)") or ""
+	--return pac.PrettifyName("/".. str) or "error"
+	return "[".. math.Round(self.number_particles or 0,2) .. "] " .. str
 end
 
 local function RemoveCallback(particle)
@@ -100,7 +111,7 @@ local function StickCallback(particle, hitpos, normal)
 	if particle.Align then
 		local ang = normal:Angle()
 		ang:RotateAroundAxis(normal, particle:GetAngles().y)
-		particle:SetAngles(ang)
+		particle:SetAngles(ang + particle.ParticleAngle + (particle.is_doubleside == true and Angle(180,0,0) or Angle(0,0,0)))
 	end
 
 	if particle.Stick then
@@ -133,8 +144,12 @@ function PART:SetDrawManual(b)
 	self:GetEmitter():SetNoDraw(b)
 end
 
+local max_active_particles = CreateClientConVar("pac_limit_particles_per_emitter", "8000")
+local max_emit_particles = CreateClientConVar("pac_limit_particles_per_emission", "100")
 function PART:SetNumberParticles(num)
-	self.NumberParticles = math.Clamp(num, 0, 100)
+	local max = max_emit_particles:GetInt()
+	if num > max or num > 100 then self:SetWarning("You're trying to set the number of particles beyond the pac_limit_particles_per_emission limit, the default limit is 100.\nFor reference, the default max active particles for the emitter is around 8000 but can be further limited with pac_limit_particles_per_emitter") else self:SetWarning() end
+	self.NumberParticles = math.Clamp(num, 0, max)
 end
 
 function PART:Set3D(b)
@@ -143,8 +158,10 @@ function PART:Set3D(b)
 end
 
 function PART:OnShow(from_rendering)
+	self.number_particles = self.NumberParticles
 	self.CanKeepFiring = true
 	self.FirstShot = true
+	self.FirstShotTime = RealTime()
 	if not from_rendering then
 		self.NextShot = 0
 		local pos, ang = self:GetDrawPosition()
@@ -153,7 +170,28 @@ function PART:OnShow(from_rendering)
 end
 
 function PART:OnDraw()
-	if not self.FireOnce then self.CanKeepFiring = true end
+	self.number_particles = self.NumberParticles or 0
+	if not self.FireOnce then
+		if self.Decay == 0 then
+			self.number_particles = self.NumberParticles or 0
+		elseif self.Decay > 0 then
+			self.number_particles = math.Clamp(self.NumberParticles - (RealTime() - self.FirstShotTime) * self.Decay,0,self.NumberParticles)
+		else
+			self.number_particles = math.Clamp(-self.FireDuration * self.Decay + self.NumberParticles - (RealTime() - self.FirstShotTime) * self.Decay,0,self.NumberParticles)
+		end
+		if self.FireDuration <= 0 then
+			self.CanKeepFiring = true
+		else
+			if RealTime() > self.FirstShotTime + self.FireDuration then self.number_particles = 0 end
+		end
+		if self.Decay ~= 0 then
+			if pace and pace.IsActive() and self.Name == "" then
+				if IsValid(self.pace_tree_node) then
+					self.pace_tree_node:SetText(self:GetNiceName())
+				end
+			end
+		end
+	end
 	local pos, ang = self:GetDrawPosition()
 	local emitter = self:GetEmitter()
 
@@ -210,6 +248,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
+	self.number_particles = self.number_particles or 0
 	if self.FireOnce and not self.FirstShot then self.CanKeepFiring = false end
 	local emt = self:GetEmitter()
 	if not emt then return end
@@ -226,7 +265,19 @@ function PART:EmitParticles(pos, ang, real_ang)
 			double = 2
 		end
 
-		for _ = 1, self.NumberParticles do
+		local free_particles = math.max(max_active_particles:GetInt() - emt:GetNumActiveParticles(),0)
+		local max = math.min(free_particles, max_emit_particles:GetInt())
+		--self.number_particles is self.NumberParticles with optional decay applied
+		local fractional_chance = 0
+		if self.FractionalChance then
+			--e.g. treat 0.5 as 50% chance to emit or not
+			local delta = self.number_particles - math.floor(self.number_particles)
+			if math.random() < delta then
+				self.number_particles = self.number_particles + 1
+			end
+		end
+
+		for _ = 1, math.min(self.number_particles,max) do
 			local mats = self.Material:Split(";")
 			if #mats > 1 then
 				self.Materialm = pac.Material(table.Random(mats), self)
@@ -336,18 +387,24 @@ function PART:EmitParticles(pos, ang, real_ang)
 
 				if self["3D"] then
 					if not self.Sliding then
-						if i == 1 then
+						if i == 1 and not self.StickToSurface then
 							particle:SetCollideCallback(RemoveCallback)
 						else
-							particle:SetCollideCallback(StickCallback)
+							if i == 1 then
+								particle:SetCollideCallback(StickCallback)
+							else
+								particle.is_doubleside = true
+								particle:SetCollideCallback(StickCallback)
+							end
 						end
 					end
 
 					particle:SetAngleVelocity(Angle(self.ParticleAngleVelocity.x, self.ParticleAngleVelocity.y, self.ParticleAngleVelocity.z))
 
-					particle.Align = self.Align
-					particle.Stick = self.Stick
-					particle.StickLifeTime = self.StickLifeTime
+					particle.ParticleAngle = self.ParticleAngle
+					particle.Align = self.AlignToSurface
+					particle.Stick = self.StickToSurface
+					particle.StickLifeTime = self.StickLifetime
 					particle.StickStartSize = self.StickStartSize
 					particle.StickEndSize = self.StickEndSize
 					particle.StickStartAlpha = self.StickStartAlpha

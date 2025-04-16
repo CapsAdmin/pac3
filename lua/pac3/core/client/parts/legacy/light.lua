@@ -22,7 +22,7 @@ local DynamicLight = DynamicLight
 
 function PART:OnDraw()
 	local pos = self:GetDrawPosition()
-	local light = self.light or DynamicLight(tonumber(self.UniqueID))
+	local light = self.light or DynamicLight(tonumber(string.sub(self:GetPrintUniqueID(),1,7), 16))
 
 	light.Pos = pos
 

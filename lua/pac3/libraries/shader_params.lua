@@ -159,6 +159,13 @@ return {
 			}
 		},
 		vertexlitgeneric = {
+			["environment map"] = {
+				envmapfresnel = {
+					type = "float",
+					friendly = "Fresnel",
+					description = "like $fresnelreflection. requires phong.",
+				},
+			},
 			wrinkle = {
 				compress = {
 					type = "texture",
@@ -624,6 +631,12 @@ return {
 					default = false,
 					description = "flag",
 				},
+				allowdiffusemodulation = {
+					type = "bool",
+					default = true,
+					friendly = "AllowDiffuseModulation",
+					description = "Prevents the material from being tinted.",
+				}
 			},
 			["bump map"] = {
 				bumpmap = {

@@ -16,4 +16,3 @@ Some links to check out:
 * [discord server](https://discord.gg/utpR3gJ "Join PAC3 Discord Server") 
 
 ---
-

@@ -24,6 +24,9 @@ BUILDER
 				["player eyes"] = "PLAYEREYES",
 				["local eyes yaw"] = "LOCALEYES_YAW",
 				["local eyes pitch"] = "LOCALEYES_PITCH",
+				["nearest npc or player (torso-level)"] = "NEAREST_LIFE",
+				["nearest npc or player (entity position)"] = "NEAREST_LIFE_POS",
+				["nearest npc or player (yaw only)"] = "NEAREST_LIFE_YAW"
 			}})
 			:GetSetPart("Parent")
 	:EndStorableVars()
@@ -37,7 +40,7 @@ do -- bones
 	function PART:GetBonePosition()
 		local parent = self:GetParent()
 		if parent:IsValid() then
-			if parent.ClassName == "jiggle" then
+			if parent.ClassName == "jiggle" or parent.ClassName == "interpolated_multibone" then
 				return parent.pos, parent.ang
 			elseif
 				not parent.is_model_part and
@@ -61,11 +64,13 @@ do -- bones
 
 	function PART:GetBoneMatrix()
 		local parent = self:GetParent()
-		if parent:IsValid() then
-			if parent.ClassName == "jiggle" then
+		if IsValid(parent) then
+			if parent.ClassName == "jiggle" or parent.ClassName == "interpolated_multibone" then
 				local bone_matrix = Matrix()
-				bone_matrix:SetTranslation(parent.pos)
-				bone_matrix:SetAngles(parent.ang)
+				if parent.pos then
+					bone_matrix:SetTranslation(parent.pos)
+					bone_matrix:SetAngles(parent.ang)
+				end
 				return bone_matrix
 			elseif
 				not parent.is_model_part and
@@ -183,6 +188,43 @@ function PART:CalcAngles(ang, wpos)
 		end
 
 		return self.Angles + (pac.EyePos - wpos):Angle()
+	end
+
+	local function get_nearest_ent(part)
+		local nearest_ent = part:GetRootPart():GetOwner()
+		local nearest_dist = math.huge
+		local owner_ent = part:GetRootPart():GetOwner()
+
+		for _,ent in pairs(ents.FindInSphere(wpos, 5000)) do
+			if (ent:IsNPC() or ent:IsPlayer()) and ent ~= owner_ent then
+				local dist = (wpos - ent:GetPos()):LengthSqr()
+				if dist < nearest_dist then
+					nearest_ent = ent
+					nearest_dist = dist
+				end
+			end
+		end
+
+		return nearest_ent
+	end
+
+	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_YAW", true, true) then
+		local nearest_ent = get_nearest_ent(self)
+		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
+		local ang = (nearest_ent:GetPos() - wpos):Angle()
+		return Angle(0,ang.y,0) + self.Angles
+	end
+
+	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_POS", true, true) then
+		local nearest_ent = get_nearest_ent(self)
+		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
+		return self.Angles + (nearest_ent:GetPos() - wpos):Angle()
+	end
+
+	if pac.StringFind(self.AimPartName, "NEAREST_LIFE", true, true) then
+		local nearest_ent = get_nearest_ent(self)
+		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
+		return self.Angles + ( nearest_ent:GetPos() + Vector(0,0,(nearest_ent:WorldSpaceCenter() - nearest_ent:GetPos()).z * 1.5) - wpos):Angle()
 	end
 
 	if self.AimPart:IsValid() and self.AimPart.GetWorldPosition then

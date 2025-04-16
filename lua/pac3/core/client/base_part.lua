@@ -31,6 +31,7 @@ BUILDER
 	:StartStorableVars()
 		:SetPropertyGroup("generic")
 			:GetSet("Name", "")
+			:GetSet("Notes", "", {editor_panel = "generic_multiline"})
 			:GetSet("Hide", false)
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
@@ -53,6 +54,7 @@ function PART:IsValid()
 end
 
 function PART:PreInitialize()
+	if pace == nil then pace = _G.pace end --I found that it is localized before pace was created
 	self.Children = {}
 	self.ChildrenMap = {}
 	self.modifiers = {}
@@ -141,6 +143,18 @@ function PART:SetUniqueID(id)
 	end
 end
 
+function PART:SetNotes(str)
+	self.Notes = str
+	if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
+	if self.pace_tree_node and self.pace_tree_node.Label then
+		if str ~= "" then
+			self.pace_tree_node.Label:SetTooltip(str)
+		else
+			self.pace_tree_node.Label:SetTooltip()
+		end
+	end
+end
+
 local function set_info(msg, info_type)
 	if not msg then return nil end
 	local msg = tostring(msg)
@@ -202,9 +216,11 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
+
 		if self.TargetEntity:IsValid() and self.TargetEntity ~= self then
 			return self.TargetEntity:GetOwner()
 		end
+
 
 		for _, parent in ipairs(self:GetParentList()) do
 
@@ -561,6 +577,164 @@ do -- scene graph
 		end
 	end
 
+	function PART:SetSmallIcon(str)
+		if str == "event" then str = "icon16/clock_red.png" end
+		if self.pace_tree_node then
+			if self.pace_tree_node.Icon then
+				if not self.pace_tree_node.Icon.event_icon then
+					local pnl = vgui.Create("DImage", self.pace_tree_node.Icon)
+					self.pace_tree_node.Icon.event_icon_alt = true
+					self.pace_tree_node.Icon.event_icon = pnl
+					pnl:SetSize(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+					pnl:SetPos(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+				end
+				self.pace_tree_node.Icon.event_icon_alt = true
+				self.pace_tree_node.Icon.event_icon:SetImage(str)
+				self.pace_tree_node.Icon.event_icon:SetVisible(true)
+			end
+		end
+	end
+	function PART:RemoveSmallIcon()
+		if self.pace_tree_node then
+			if self.pace_tree_node.Icon then
+				if self.pace_tree_node.Icon.event_icon then
+					self.pace_tree_node.Icon.event_icon_alt = false
+					self.pace_tree_node.Icon.event_icon:SetImage("icon16/clock_red.png")
+					self.pace_tree_node.Icon.event_icon:SetVisible(false)
+				end
+			end
+		end
+	end
+
+	local pac_doubleclick_type = CreateClientConVar("pac_doubleclick_action", "expand", true, true, "What function should be run if you double-click on a part node.\n\nexpand : expand or collapse the node\nrename : rename the part\nnotes : write notes for the part\nshowhide : shows or hides the part\nspecific_only : only trigger class-specific actions, such as playing sounds, triggering hitscans, etc.\nnone : disable double-click actions")
+
+	function PART:OnDoubleClickBaseClass()
+		pace.doubleclickfunc = pac_doubleclick_type:GetString()
+		if pace.doubleclickfunc == "specific_only" then return end
+
+		pace.FlashNotification("double click action : " .. pace.doubleclickfunc)
+
+		if pace.doubleclickfunc == "expand" then
+			if not self:HasChildren() then return end
+			self:SetEditorExpand(not self:GetEditorExpand())
+			pace.RefreshTree()
+		elseif pace.doubleclickfunc == "rename" then
+			local pnl = vgui.Create("DTextEntry")
+			pnl:SetFont(pace.CurrentFont)
+			pnl:SetDrawBackground(false)
+			pnl:SetDrawBorder(false)
+			pnl:SetText(self:GetName())
+			pnl:SetKeyboardInputEnabled(true)
+			pnl:RequestFocus()
+			pnl:SelectAllOnFocus(true)
+
+			local hookID = tostring({})
+			local textEntry = pnl
+			local delay = os.clock() + 0.3
+
+			local old_name = self:GetName()
+
+			pac.AddHook('Think', hookID, function(code)
+				if not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
+				if textEntry:IsHovered() then return end
+				if delay > os.clock() then return end
+				if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
+				pac.RemoveHook('Think', hookID)
+				textEntry:Remove()
+				pnl:OnEnter()
+			end)
+
+			--local x,y = pnl:GetPos()
+			--pnl:SetPos(x+3,y-4)
+			--pnl:Dock(FILL)
+			local x, y = self.pace_tree_node.Label:LocalToScreen()
+			local inset_x = self.pace_tree_node.Label:GetTextInset()
+			pnl:SetPos(x + inset_x, y)
+			pnl:SetSize(self.pace_tree_node.Label:GetSize())
+			pnl:SetWide(ScrW())
+			pnl:MakePopup()
+
+			pnl.OnEnter = function()
+				local input_text = pnl:GetText()
+				pnl:Remove()
+				if old_name == input_text then return end
+				self:SetName(input_text)
+				if self.pace_tree_node then
+					if input_text ~= "" then
+						self.pace_tree_node:SetText(input_text)
+					else
+						timer.Simple(0, function()
+							self.pace_tree_node:SetText(self:GetName())
+						end)
+					end
+				end
+				pace.PopulateProperties(self)
+			end
+
+			local old = pnl.Paint
+			pnl.Paint = function(...)
+				if not self:IsValid() then pnl:Remove() return end
+
+				surface.SetFont(pnl:GetFont())
+				local w = surface.GetTextSize(pnl:GetText()) + 6
+
+				surface.DrawRect(0, 0, w, pnl:GetTall())
+				surface.SetDrawColor(self.pace_tree_node:GetSkin().Colours.Properties.Border)
+				surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
+
+				pnl:SetWide(w)
+
+				old(...)
+			end
+		elseif pace.doubleclickfunc == "notes" then
+			if IsValid(pace.notes_pnl) then
+				pace.notes_pnl:Remove()
+			end
+			local pnl = vgui.Create("DFrame")
+			pace.notes_pnl = pnl
+			local DText = vgui.Create("DTextEntry", pnl)
+			local DButtonOK = vgui.Create("DButton", pnl)
+			DText:SetMaximumCharCount(50000)
+
+			pnl:SetSize(1200,800)
+			pnl:SetTitle("Long text with newline support for Notes.")
+			pnl:Center()
+			DButtonOK:SetText("OK")
+			DButtonOK:SetSize(80,20)
+			DButtonOK:SetPos(500, 775)
+			DText:SetPos(5,25)
+			DText:SetSize(1190,700)
+			DText:SetMultiline(true)
+			DText:SetContentAlignment(7)
+			pnl:MakePopup()
+			DText:RequestFocus()
+			DText:SetText(self:GetNotes())
+
+			DButtonOK.DoClick = function()
+				self:SetNotes(DText:GetText())
+				pace.RefreshTree(true)
+				pnl:Remove()
+			end
+		elseif pace.doubleclickfunc == "showhide" then
+			self:SetHide(not self:GetHide())
+		end
+	end
+
+	local pac_doubleclick_specified = CreateClientConVar("pac_doubleclick_action_specified", "2", true, true, "Whether the base_part functions for double-click should be replaced by specific functions when available.\n\nset to 0 : only use base_class actions (expand, rename, notes, showhide)\nset to 1 : Use specific actions. most single-shot parts will trigger (sounds play, commands run, hitscans fire etc.), and events will invert\nset to 2 : When appropriate, some event types will have even more specific actions. command events trigger or toggle (depending on the time), is_flashlight_on will toggle the flashlight, timerx events will reset\n\nIf your selected base action is none, These won't trigger.\n\nIf you only want specific actions, you may select specific_only in the pac_doubleclick_action command if you only want specifics")
+	function PART:OnDoubleClickSpecified()
+		--override
+	end
+
+	function PART:DoDoubleClick()
+		pace.doubleclickfunc = pac_doubleclick_type:GetString()
+		if pace.doubleclickfunc == "none" or pace.doubleclickfunc == "" then return end
+		if pac_doubleclick_specified:GetInt() ~= 0 and self.ImplementsDoubleClickSpecified then
+			pace.FlashNotification("double click action : class-specific")
+			self:OnDoubleClickSpecified()
+		else
+			self:OnDoubleClickBaseClass()
+		end
+	end
 end
 
 do -- hidden / events
@@ -695,9 +869,49 @@ do -- hidden / events
 			return "pac_hide_disturbing is set to 1"
 		end
 
+		for i,part in ipairs(self:GetParentList()) do
+			if part:IsHidden() then
+				table_insert(found, tostring(part) .. " is parent hiding")
+			end
+		end
+		if found[1] then
+			return table.concat(found, "\n")
+		end
+
 		return ""
 	end
 
+	function PART:GetReasonsHidden()
+		local found = {}
+
+		for part in pairs(self.active_events) do
+			found[part] = "event hiding"
+		end
+
+		if self.Hide then
+			found[self] = "self hiding"
+		end
+
+		if self.hide_disturbing then
+			if self.Hide then
+				found[self] = "self hiding and disturbing"
+			else
+				found[self] = "disturbing"
+			end
+		end
+
+		for i,part in ipairs(self:GetParentList()) do
+			if not found[part] then
+				if part:IsHidden() then
+					found[part] = "parent hidden"
+				end
+			end
+		end
+
+		return found
+	end
+
+	local extra_dynamic = CreateClientConVar("pac_special_property_update_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
 	function PART:CalcShowHide(from_rendering)
 		local b = self:IsHidden()
 
@@ -710,6 +924,24 @@ do -- hidden / events
 		end
 
 		self.last_hidden = b
+		if pace.IsActive() then
+			if self == pace.current_part then --update the hide property (show reasons why it's hidden)
+				if IsValid(self.hide_property_pnl) then
+					local reasons_hidden = self:GetReasonsHidden()
+					local pnl = self.hide_property_pnl:GetParent()
+					if not table.IsEmpty(reasons_hidden) and not self.reasons_hidden then
+						self.reasons_hidden = reasons_hidden
+						pnl:SetTooltip("Hidden by:" .. table.ToString(reasons_hidden, "", true))
+						if not extra_dynamic:GetBool() then return end
+						pnl:CreateAlternateLabel("hidden")
+					else
+						pnl:CreateAlternateLabel(nil) --remove it
+						self.reasons_hidden = nil
+						pnl:SetTooltip()
+					end
+				end
+			end
+		end
 	end
 
 	function PART:IsHiddenCached()
@@ -1147,6 +1379,104 @@ do
 
 	function PART:OnThink() end
 	function PART:AlwaysOnThink() end
+end
+
+function PART:GetTutorial()
+	if pace and pace.TUTORIALS and pace.TUTORIALS[self.ClassName] then
+		return pace.TUTORIALS.PartInfos[self.ClassName].popup_tutorial or ""
+	end
+end
+
+--the popup system
+function PART:SetupEditorPopup(str, force_open, tbl, x, y)
+	if pace.Editor == nil then return end
+	if self.pace_tree_node == nil then return end
+	local legacy_help_popup_hack = false
+	if not tbl then
+		legacy_help_popup_hack = false
+	elseif tbl.from_legacy then
+		legacy_help_popup_hack = true
+	end
+	if not IsValid(self) then return end
+
+	local popup_config_table = tbl or {
+		pac_part = self, obj_type = GetConVar("pac_popups_preferred_location"):GetString(),
+		hoverfunc = function() end,
+		doclickfunc = function() end,
+		panel_exp_width = 900, panel_exp_height = 400
+	}
+
+	local default_state = str == nil or str == ""
+	local info_string
+	if self.ClassName == "event" and default_state then
+		info_string = self:GetEventTutorialText()
+	end
+	info_string = info_string or str or self.ClassName .. "\nno special information available"
+
+	if default_state and pace then
+		local partsize_tbl = pace.GetPartSizeInformation(self)
+		info_string = info_string .. "\n" .. partsize_tbl.info .. ", " .. partsize_tbl.all_share_percent .. "% of all parts"
+	end
+
+	if self.Notes and self.Notes ~= "" then
+		info_string = info_string .. "\n\nNotes:\n\n" .. self.Notes
+	end
+
+	local tree_node = self.pace_tree_node
+	local part = self
+	self.killpopup = false
+	local pnl
+
+	--local pace = pace or {}
+	if tree_node and tree_node.Label then
+		local part = self
+
+		function tree_node:Think()
+			--if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or input.IsButtonDown(KEY_F1) or force_open) then
+			if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or force_open) then
+				if not self.popuppnl_is_up and not IsValid(self.popupinfopnl) and not part.killpopup and not legacy_help_popup_hack then
+					self.popupinfopnl = pac.InfoPopup(
+						info_string,
+						popup_config_table
+					)
+					self.popuppnl_is_up = true
+				end
+
+				--if IsValid(self.popupinfopnl) then self.popupinfopnl:MakePopup() end
+				pnl = self.popupinfopnl
+
+			end
+			if not IsValid(self.popupinfopnl) then self.popupinfopnl = nil self.popuppnl_is_up = false end
+		end
+		tree_node:Think()
+	end
+	if not pnl then
+		pnl = pac.InfoPopup(info_string,popup_config_table, x, y)
+		if IsValid(self.pace_tree_node) then self.pace_tree_node.popupinfopnl = pnl end
+	end
+	if pace then
+		pace.legacy_floating_popup_reserved = pnl
+	end
+
+	return pnl
+end
+
+function PART:AttachEditorPopup(str, flash, tbl, x, y)
+	local pnl = self:SetupEditorPopup(str, flash, tbl, x, y)
+	if flash and pnl then
+		pnl:MakePopup()
+	end
+	return pnl
+end
+
+function PART:DetachEditorPopup()
+	local tree_node = self.pace_tree_node
+	if tree_node then
+		if tree_node.popupinfopnl then
+			tree_node.popupinfopnl:Remove()
+		end
+		if not IsValid(tree_node.popupinfopnl) then tree_node.popupinfopnl = nil end
+	end
 end
 
 BUILDER:Register()

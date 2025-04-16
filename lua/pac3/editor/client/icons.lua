@@ -31,6 +31,7 @@ pace.MiscIcons = {
 pace.GroupsIcons = {
 	effects = 'icon16/wand.png',
 	model = 'icon16/shape_square.png',
+	combat = 'icon16/joystick.png',
 	entity = 'icon16/brick.png',
 	modifiers = 'icon16/disconnect.png',
 	advanced = 'icon16/page_white_gear.png',

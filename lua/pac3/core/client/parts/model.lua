@@ -5,25 +5,26 @@ CreateConVar( "pac_model_max_scales", "10000", FCVAR_ARCHIVE, "Maximum scales mo
 
 local pac = pac
 
-local render_SetColorModulation = render.SetColorModulation
-local render_SetBlend = render.SetBlend
-local render_CullMode = render.CullMode
-local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
-local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
-local render_MaterialOverride = render.ModelMaterialOverride
-local cam_PushModelMatrix = cam.PushModelMatrix
-local cam_PopModelMatrix = cam.PopModelMatrix
-local Vector = Vector
-local EF_BONEMERGE = EF_BONEMERGE
-local NULL = NULL
-local Color = Color
-local Matrix = Matrix
-local vector_origin = vector_origin
-local render = render
 local cam = cam
-local surface = surface
+local cam_PopModelMatrix = cam.PopModelMatrix
+local cam_PushModelMatrix = cam.PushModelMatrix
+local Color = Color
+local EF_BONEMERGE = EF_BONEMERGE
+local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
+local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
+local Matrix = Matrix
+local NULL = NULL
+local render = render
+local render_CullMode = render.CullMode
+local render_MaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverrideByIndex = render.MaterialOverrideByIndex
+local render_RenderFlashlights = render.RenderFlashlights
+local render_SetBlend = render.SetBlend
+local render_SetColorModulation = render.SetColorModulation
 local render_SuppressEngineLighting = render.SuppressEngineLighting
+local surface = surface
+local Vector = Vector
+local vector_origin = vector_origin
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
@@ -32,10 +33,10 @@ PART.ClassName = "model2"
 PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
-PART.Icon = 'icon16/shape_square.png'
+PART.Icon = "icon16/shape_square.png"
 PART.is_model_part = true
 PART.ProperColorRange = true
-PART.Group = 'model'
+PART.Group = "model"
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("generic")
@@ -96,23 +97,6 @@ function PART:GetDynamicProperties()
 		}
 	end
 
-	for _, info in ipairs(ent:GetBodyGroups()) do
-		if info.num > 1 then
-			tbl[info.name] = {
-				key = info.name,
-				set = function(val)
-					local tbl = self:ModelModifiersToTable(self:GetModelModifiers())
-					tbl[info.name] = val
-					self:SetModelModifiers(self:ModelModifiersToString(tbl))
-				end,
-				get = function()
-					return self:ModelModifiersToTable(self:GetModelModifiers())[info.name] or 0
-				end,
-				udata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
-			}
-		end
-	end
-
 	if ent:GetMaterials() and #ent:GetMaterials() > 1 then
 		for i, name in ipairs(ent:GetMaterials()) do
 			name = name:match(".+/(.+)") or name
@@ -133,6 +117,30 @@ function PART:GetDynamicProperties()
 					self:SetMaterials(table.concat(tbl, ";"))
 				end,
 				udata = {editor_panel = "material", editor_friendly = name, group = "sub materials"},
+			}
+		end
+	end
+
+	for _, info in ipairs(ent:GetBodyGroups()) do
+		if info.num > 1 then
+			local bodygroup_name = info.name
+			local exception = tbl[info.name] ~= nil --trouble! an existing material competes with the bodygroup, we should try renaming it?
+			if exception then
+				bodygroup_name = "_" .. info.name
+				self.bodygroup_exceptions[info.name] = true
+			end
+
+			tbl[bodygroup_name] = {
+				key = bodygroup_name,
+				set = function(val)
+					local tbl = self:ModelModifiersToTable(self:GetModelModifiers())
+					tbl[bodygroup_name] = val
+					self:SetModelModifiers(self:ModelModifiersToString(tbl))
+				end,
+				get = function()
+					return self:ModelModifiersToTable(self:GetModelModifiers())[bodygroup_name] or 0
+				end,
+				udata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
 			}
 		end
 	end
@@ -176,7 +184,7 @@ end
 
 function PART:ModelModifiersToString(tbl)
 	local str = ""
-	for k,v in pairs(tbl) do
+	for k, v in pairs(tbl) do
 		str = str .. k .. "=" .. v .. ";"
 	end
 	return str
@@ -198,11 +206,22 @@ function PART:SetModelModifiers(str)
 	if not owner:GetBodyGroups() then return end
 
 	self.draw_bodygroups = {}
+	self.bodygroup_exceptions = self.bodygroup_exceptions or {}
+	local dyn_props = self:GetDynamicProperties()
 
 	for i, info in ipairs(owner:GetBodyGroups()) do
 		local val = tbl[info.name]
-		if val then
-			table.insert(self.draw_bodygroups, {info.id, val})
+		if self.bodygroup_exceptions[info.name] then
+			if dyn_props["_"..info.name] then
+				val = dyn_props["_"..info.name].get()
+			end
+			if val then
+				table.insert(self.draw_bodygroups, {info.id, val})
+			end
+		else
+			if val then
+				table.insert(self.draw_bodygroups, {info.id, val})
+			end
 		end
 	end
 end
@@ -289,6 +308,7 @@ function PART:Initialize()
 	self.Owner:SetNoDraw(true)
 	self.Owner.PACPart = self
 	self.material_count = 0
+	self.bodygroup_exceptions = {}
 end
 
 function PART:OnShow()
@@ -304,7 +324,7 @@ end
 
 function PART:OnRemove()
 	if not self.loading then
-		SafeRemoveEntityDelayed(self.Owner,0.1)
+		SafeRemoveEntityDelayed(self.Owner, 0.1)
 	end
 end
 
@@ -433,12 +453,11 @@ end
 
 
 local matrix = Matrix()
-local IDENT_SCALE = Vector(1,1,1)
 local _self, _ent, _pos, _ang
 
 local function ent_draw_model(self, ent, pos, ang)
 	if self.obj_mesh then
-		ent:SetModelScale(0,0)
+		ent:SetModelScale(0.001, 0)
 		ent:DrawModel()
 
 		matrix:Identity()
@@ -485,14 +504,12 @@ function PART:DrawModel(ent, pos, ang)
 	_self, _ent, _pos, _ang = self, ent, pos, ang
 
 	if self.ClassName ~= "entity2" then
-		render.PushFlashlightMode(true)
-
-		material_bound = self:BindMaterials(ent) or material_bound
-		ent.pac_drawing_model = true
-		ProtectedCall(protected_ent_draw_model)
-		ent.pac_drawing_model = false
-
-		render.PopFlashlightMode()
+		render_RenderFlashlights(function()
+			material_bound = self:BindMaterials(ent) or material_bound
+			ent.pac_drawing_model = true
+			ProtectedCall(protected_ent_draw_model)
+			ent.pac_drawing_model = false
+		end)
 	end
 
 	if self.NoCulling then
@@ -536,7 +553,7 @@ function PART:DrawLoadingText(ent, pos)
 	cam.End2D()
 end
 
-local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
+local ALLOW_TO_MDL = CreateConVar("pac_allow_mdl", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow to use custom MDLs")
 
 function PART:RefreshModel()
 	if self.refreshing_model then return end
@@ -578,7 +595,7 @@ end
 
 local function RealDrawModel(self, ent, pos, ang)
 	if self.Mesh then
-		ent:SetModelScale(0,0)
+		ent:SetModelScale(0.001, 0)
 		ent:DrawModel()
 
 		local matrix = Matrix()
@@ -607,7 +624,7 @@ function PART:ProcessModelChange()
 
 	if path:find("://", nil, true) then
 		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:match("%.obj%p?") or self.ForceObjUrl then
-			path = path:gsub("^objhttp","http"):gsub("^obj:http","http")
+			path = path:gsub("^objhttp", "http"):gsub("^obj:http", "http")
 			self.loading = "downloading obj"
 
 			pac.urlobj.GetObjFromURL(path, false, false,
@@ -669,7 +686,7 @@ function PART:ProcessModelChange()
 				end
 			)
 		else
-			local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+			local status, reason = hook.Run("PAC3AllowMDLDownload", self:GetPlayerOwner(), self, path)
 
 			if ALLOW_TO_MDL:GetBool() and status ~= false then
 				self.loading = "downloading mdl zip"
@@ -722,7 +739,7 @@ function PART:SetModel(path)
 	self:ProcessModelChange()
 end
 
-local NORMAL = Vector(1,1,1)
+local NORMAL = Vector(1, 1, 1)
 
 function PART:CheckScale()
 	local owner = self:GetOwner()
@@ -756,7 +773,7 @@ function PART:SetScale(vec)
 	if largest_scale > 10000 then --warn about the default max scale
 		self:SetError("Scale is being limited due to having an excessive component. Default maximum values are 10000")
 	else self:SetError() end --if ok, clear the warning
-	vec = vec or Vector(1,1,1)
+	vec = vec or Vector(1, 1, 1)
 
 	self.Scale = vec
 
@@ -765,7 +782,7 @@ function PART:SetScale(vec)
 	end
 end
 
-local vec_one = Vector(1,1,1)
+local vec_one = Vector(1, 1, 1)
 
 function PART:ApplyMatrix()
 	local ent = self:GetOwner()

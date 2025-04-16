@@ -64,7 +64,7 @@ function PART:OnDraw()
 
 	local shouldMute = snd_mute_losefocus:GetBool()
 	local focus = system.HasFocus()
-	local volume = shouldMute and not focus and 0 or self:GetVolume()
+	local volume = shouldMute and not focus and 0 or self:GetVolume() *  pac.volume --we need to hack it into here because OnDraw is called often
 
 	for url, streamdata in pairs(self.streams) do
 		local stream = streamdata.stream
@@ -264,7 +264,7 @@ function PART:PlaySound()
 	self.last_stream = stream
 end
 
-function PART:StopSound()
+function PART:StopSound(force_stop)
 	local toremove
 
 	for key, streamdata in pairs(self.streams) do
@@ -280,6 +280,7 @@ function PART:StopSound()
 				pcall(function() stream:SetTime(0) end)
 				stream:Pause()
 			end
+			if force_stop then stream:Stop() end
 		elseif stream then
 			toremove = toremove or {}
 			table.insert(toremove, key)

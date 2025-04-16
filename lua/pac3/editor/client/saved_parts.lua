@@ -1,10 +1,11 @@
 local L = pace.LanguageString
 
 -- load only when hovered above
-local function add_expensive_submenu_load(pnl, callback)
+local function add_expensive_submenu_load(pnl, callback, subdir)
+
 	local old = pnl.OnCursorEntered
 	pnl.OnCursorEntered = function(...)
-		callback()
+		callback(subdir)
 		pnl.OnCursorEntered = old
 		return old(...)
 	end
@@ -57,7 +58,7 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 		end
 	end
 
-	data = hook.Run("pac_pace.SaveParts", data) or data
+	data = pac.CallHook("pace.SaveParts", data) or data
 
 	if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
 		pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
@@ -95,6 +96,10 @@ end
 
 local last_backup
 local maxBackups = CreateConVar("pac_backup_limit", "100", {FCVAR_ARCHIVE}, "Maximal amount of backups")
+local autoload_prompt = CreateConVar("pac_prompt_for_autoload", "1", {FCVAR_ARCHIVE}, "Whether to ask before loading autoload. The prompt can let you choose to not load, pick autoload or the newest backup")
+local auto_spawn_prop = CreateConVar("pac_autoload_preferred_prop", "2", {FCVAR_ARCHIVE}, "When loading a pac with an owner name suggesting a prop, notify you and then wait before auto-applying the outfit next time you spawn a prop.\n" ..
+																								"0 : do not check\n1 : check if only 1 such group is present\n2 : check if multiple such groups are present and queue one group at a time")
+
 
 function pace.Backup(data, name)
 	name = name or ""
@@ -132,13 +137,34 @@ function pace.Backup(data, name)
 		local str = pace.luadata.Encode(data)
 
 		if str ~= last_backup then
-			file.Write("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", str)
+			file.Write("pac3/__backup/" .. (name == "" and name or (name .. "_")) .. date .. ".txt", str)
 			last_backup = str
 		end
 	end
 end
 
+local latestprop
+local latest_uid
+if game.SinglePlayer() then
+	pac.AddHook("OnEntityCreated", "queue_proppacs", function( ent )
+		if ( ent:GetClass() == "prop_physics" or ent:IsNPC()) and not ent:CreatedByMap() and LocalPlayer().pac_propload_queuedparts then
+			if not table.IsEmpty(LocalPlayer().pac_propload_queuedparts) then
+				ent:EmitSound( "buttons/button4.wav" )
+				local root = LocalPlayer().pac_propload_queuedparts[next(LocalPlayer().pac_propload_queuedparts)]
+				root.self.OwnerName = ent:EntIndex()
+				latest_uid = root.self.UniqueID
+				pace.LoadPartsFromTable(root, false, false)
+				LocalPlayer().pac_propload_queuedparts[next(LocalPlayer().pac_propload_queuedparts)] = nil
+				latestprop = ent
+			end
+
+		end
+	end)
+end
+
+
 function pace.LoadParts(name, clear, override_part)
+
 	if not name then
 		local frm = vgui.Create("DFrame")
 		frm:SetTitle(L"parts")
@@ -175,6 +201,11 @@ function pace.LoadParts(name, clear, override_part)
 		end
 
 	else
+		if name ~= "autoload.txt" and not string.find(name, "pac3/__backup") then
+			if file.Exists("pac3/" .. name .. ".txt", "DATA") then
+				cookie.Set( "pac_last_loaded_outfit", name .. ".txt" )
+			end
+		end
 		if hook.Run("PrePACLoadOutfit", name) == false then
 			return
 		end
@@ -184,13 +215,13 @@ function pace.LoadParts(name, clear, override_part)
 		if name:find("https?://") then
 			local function callback(str)
 				if string.find( str, "<!DOCTYPE html>" ) then
-					pace.MessagePrompt("Invalid URL, the website returned a HTML file. If you're using Github then use the RAW option.", "URL Failed", "OK")
+					pace.MessagePrompt("Invalid URL, .txt expected, but the website returned a HTML file. If you're using Github then use the RAW option.", "URL Failed", "OK")
 					return
 				end
 
 				local data, err = pace.luadata.Decode(str)
 				if not data then
-					local message = string.format("URL fail: %s : %s\n", name, err)
+					local message = string.format("Failed to load pac3 outfit from url: %s : %s\n", name, err)
 					pace.MessagePrompt(message, "URL Failed", "OK")
 					return
 				end
@@ -204,32 +235,69 @@ function pace.LoadParts(name, clear, override_part)
 		else
 			name = name:gsub("%.txt", "")
 
-			local data,err = pace.luadata.ReadFile("pac3/" .. name .. ".txt")
+			local data, err = pace.luadata.ReadFile("pac3/" .. name .. ".txt")
+			local has_possible_prop_pacs = false
 
-			if name == "autoload" and (not data or not next(data)) then
-				local err
-				data,err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
-				if not data then
-					if err then
-						ErrorNoHalt(("Autoload failed: %s\n"):format(err))
+			if data and istable(data) then
+				for i, part in pairs(data) do
+					if part.self and isnumber(tonumber(part.self.OwnerName)) then
+						has_possible_prop_pacs = true
 					end
-					return
 				end
-			elseif not data then
-				ErrorNoHalt(("Decoding %s failed: %s\n"):format(name,err))
-				return
 			end
 
-			pace.LoadPartsFromTable(data, clear, override_part)
+			--queue up prop pacs for the next prop or npc you spawn when in singleplayer
+			if (auto_spawn_prop:GetInt() == 2 or (auto_spawn_prop:GetInt() == 1 and #data == 1)) and game.SinglePlayer() and has_possible_prop_pacs then
+				if clear then pace.ClearParts() end
+				LocalPlayer().pac_propload_queuedparts = LocalPlayer().pac_propload_queuedparts or {}
+
+				--check all root parts from data. format: each data member is a {self, children} table of the part and the list of children
+				for i, part in pairs(data) do
+					local possible_prop_pac = isnumber(tonumber(part.self.OwnerName))
+					if part.self.ClassName == "group" and possible_prop_pac then
+
+						part.self.ModelTracker = part.self.ModelTracker or ""
+						part.self.ClassTracker = part.self.ClassTracker or ""
+						local str = ""
+						if part.self.ClassTracker == "" or part.self.ClassTracker == "" then
+							str = "But the class or model is unknown"
+						else
+							str = part.self.ClassTracker .. " : " .. part.self.ModelTracker
+						end
+						--notify which model / entity should be spawned with the class tracker
+						notification.AddLegacy( "You have queued a pac part (" .. i .. ":" .. part.self.Name .. ") for a prop or NPC! " .. str, NOTIFY_HINT, 10 )
+						LocalPlayer().pac_propload_queuedparts[i] = part
+
+					else
+						pace.LoadPartsFromTable(part, false, false)
+					end
+				end
+
+			else
+				if name == "autoload" and (not data or not next(data)) then
+					data, err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt", nil, true)
+					if not data then
+						if err then
+							pace.MessagePrompt(err, "Autoload failed", "OK")
+						end
+						return
+					end
+				elseif not data then
+					pace.MessagePrompt(err, ("Decoding %s failed"):format(name), "OK")
+					return
+				end
+
+				pace.LoadPartsFromTable(data, clear, override_part)
+			end
 		end
 	end
 end
 
-concommand.Add('pac_load_url', function(ply, cmd, args)
-	if not args[1] then return print('[PAC3] No URL specified') end
+concommand.Add("pac_load_url", function(ply, cmd, args)
+	if not args[1] then return print("[PAC3] No URL specified") end
 	local url = args[1]:Trim()
-	if not url:find("https?://") then return print('[PAC3] Invalid URL specified') end
-	pac.Message('Loading specified URL')
+	if not url:find("https?://") then return print("[PAC3] Invalid URL specified") end
+	pac.Message("Loading specified URL")
 	if args[2] == nil then args[2] = '1' end
 	pace.LoadParts(url, tobool(args[2]))
 end)
@@ -274,8 +342,8 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 	pace.RefreshTree(true)
 
 	for i, part in ipairs(partsLoaded) do
-		part:CallRecursive('OnOutfitLoaded')
-		part:CallRecursive('PostApplyFixes')
+		part:CallRecursive("OnOutfitLoaded")
+		part:CallRecursive("PostApplyFixes")
 	end
 
 	pac.LocalPlayer.pac_fix_show_from_render = SysTime() + 1
@@ -288,10 +356,9 @@ local function add_files(tbl, dir)
 
 	if folders then
 		for key, folder in pairs(folders) do
-			if folder == "__backup" or folder == "objcache" or folder == "__animations" or folder == "__backup_save" then goto CONTINUE end
+			if folder == "__backup" or folder == "objcache" or folder == "__animations" or folder == "__backup_save" then continue end
 			tbl[folder] = {}
 			add_files(tbl[folder], dir .. "/" .. folder)
-			::CONTINUE::
 		end
 	end
 
@@ -311,13 +378,13 @@ local function add_files(tbl, dir)
 						data.Path = path
 						data.RelativePath = (dir .. "/" .. data.Name):sub(2)
 
-					local dat,err=pace.luadata.ReadFile(path)
+					local dat, err = pace.luadata.ReadFile(path)
 						data.Content = dat
 
 					if dat then
 						table.insert(tbl, data)
 					else
-						pac.dprint(("Decoding %s failed: %s\n"):format(path,err))
+						pac.dprint(("Decoding %s failed: %s\n"):format(path, err))
 						chat.AddText(("Could not load: %s\n"):format(path))
 					end
 
@@ -326,7 +393,7 @@ local function add_files(tbl, dir)
 		end
 	end
 
-	table.sort(tbl, function(a,b)
+	table.sort(tbl, function(a, b)
 		if a.Time and b.Time then
 			return a.Name < b.Name
 		end
@@ -383,7 +450,7 @@ end
 local function populate_parts(menu, tbl, override_part, clear)
 	for key, data in pairs(tbl) do
 		if not data.Path then
-			local menu, pnl = menu:AddSubMenu(key, function()end, data)
+			local menu, pnl = menu:AddSubMenu(key, function() end, data)
 			pnl:SetImage(pace.MiscIcons.load)
 			menu.GetDeleteSelf = function() return false end
 			local old = menu.Open
@@ -425,6 +492,39 @@ local function populate_parts(menu, tbl, override_part, clear)
 	end
 end
 
+function pace.AddOneDirectorySavedPartsToMenu(menu, subdir, nicename)
+	if not subdir then return end
+	local subdir_head = subdir .. "/"
+
+	local exp_submenu, pnl = menu:AddSubMenu(L"" .. subdir)
+	pnl:SetImage(pace.MiscIcons.load)
+	exp_submenu.GetDeleteSelf = function() return false end
+	subdir = "pac3/" .. subdir
+	if nicename then exp_submenu:SetText(nicename) end
+
+	add_expensive_submenu_load(pnl, function(subdir)
+		local files = file.Find(subdir .. "/*", "DATA")
+		local files2 = {}
+		--PrintTable(files)
+		for i, filename in ipairs(files) do
+			table.insert(files2, {filename, file.Time(subdir .. filename, "DATA")})
+		end
+
+		table.sort(files2, function(a, b)
+			return a[2] > b[2]
+		end)
+
+		for _, data in pairs(files2) do
+			local name = data[1]
+			local full_path = subdir .. "/" .. name
+			--print(full_path)
+			local friendly_name = name .. " " .. string.NiceSize(file.Size(full_path, "DATA"))
+			exp_submenu:AddOption(friendly_name, function() pace.LoadParts(subdir_head .. name, true) end)
+			:SetImage(pace.MiscIcons.outfit)
+		end
+	end, subdir)
+end
+
 function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu.GetDeleteSelf = function() return false end
 
@@ -447,7 +547,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			"",
 
 			function(name)
-				local data,err = pace.luadata.Decode(name)
+				local data, _ = pace.luadata.Decode(name)
 				if data then
 					pace.LoadPartsFromTable(data, clear, override_part)
 				end
@@ -461,7 +561,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 		examples.GetDeleteSelf = function() return false end
 
 		local sorted = {}
-		for k,v in pairs(pace.example_outfits) do sorted[#sorted + 1] = {k = k, v = v} end
+		for k, v in pairs(pace.example_outfits) do sorted[#sorted + 1] = {k = k, v = v} end
 		table.sort(sorted, function(a, b) return a.k < b.k end)
 
 		for _, data in pairs(sorted) do
@@ -481,7 +581,10 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
 
-	add_expensive_submenu_load(pnl, function()
+	local subdir = "pac3/__backup/*"
+
+	add_expensive_submenu_load(pnl, function(subdir)
+
 		local files = file.Find("pac3/__backup/*", "DATA")
 		local files2 = {}
 
@@ -500,14 +603,15 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
-	end)
+	end, subdir)
 
 	local backups, pnl = menu:AddSubMenu(L"outfit backups")
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
 
+	subdir = "pac3/__backup_save/*"
 	add_expensive_submenu_load(pnl, function()
-		local files = file.Find("pac3/__backup_save/*", "DATA")
+		local files = file.Find(subdir, "DATA")
 		local files2 = {}
 
 		for i, filename in ipairs(files) do
@@ -534,7 +638,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
-	end)
+	end, subdir)
 end
 
 local function populate_parts(menu, tbl, dir, override_part)
@@ -570,7 +674,7 @@ local function populate_parts(menu, tbl, dir, override_part)
 	menu:AddSpacer()
 	for key, data in pairs(tbl) do
 		if not data.Path then
-			local menu, pnl = menu:AddSubMenu(key, function()end, data)
+			local menu, pnl = menu:AddSubMenu(key, function() end, data)
 			pnl:SetImage(pace.MiscIcons.load)
 			menu.GetDeleteSelf = function() return false end
 			populate_parts(menu, data, dir .. "/" .. key, override_part)
@@ -607,11 +711,11 @@ local function populate_parts(menu, tbl, dir, override_part)
 					local function delete_directory(dir)
 						local files, folders = file.Find(dir .. "*", "DATA")
 
-						for k,v in ipairs(files) do
+						for k, v in ipairs(files) do
 							file.Delete(dir .. v)
 						end
 
-						for k,v in ipairs(folders) do
+						for k, v in ipairs(folders) do
 							delete_directory(dir .. v .. "/")
 						end
 
@@ -707,7 +811,7 @@ function pace.FixBadGrouping(data)
 			},
 		}
 
-		for k,v in pairs(other) do
+		for k, v in pairs(other) do
 			table.insert(out, v)
 		end
 

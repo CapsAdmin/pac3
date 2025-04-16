@@ -1,5 +1,6 @@
 local L = pace.LanguageString
 pace.Tools = {}
+include("parts.lua")
 
 function pace.AddToolsToMenu(menu)
 	menu.GetDeleteSelf = function() return false end
@@ -372,7 +373,7 @@ pace.AddTool(L"import editor tool from file...", function()
 		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
 			if file.Exists("pac3_editor/tools/" .. toolfile,"DATA") then
 				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
-				local ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
+				local ctoolstr = [[pace.AddTool("]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			else
@@ -390,7 +391,7 @@ pace.AddTool(L"import editor tool from url...", function()
 			local function ToolDLSuccess(body)
 				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
 				local toolstr = body
-				local ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
+				local ctoolstr = [[pace.AddTool("]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			end
@@ -782,6 +783,62 @@ pace.AddTool(L"dump player submaterials", function()
 	for id,mat in pairs(ply:GetMaterials()) do
 		chat.AddText(("%d %s"):format(id,tostring(mat)))
 	end
+end)
+
+pace.AddTool(L"dump model submaterials", function(part)
+	if part.ClassName ==  "model" or part.ClassName ==  "model2" then
+		for id,mat in pairs(part:GetOwner():GetMaterials()) do
+			chat.AddText(("%d %s"):format(id,tostring(mat)))
+		end
+	end
+end)
+
+pace.AddTool(L"proxy/event: Engrave targets", function(part)
+	local function reassign(part)
+		if part.ClassName == "proxy" then
+			if not IsValid(part.TargetPart) then
+				if part.AffectChildren and table.Count(part:GetChildren()) == 1 then
+					part:SetTargetPart(part:GetChildren()[1])
+					part:SetAffectChildren(nil)
+				else
+					part:SetTargetPart(part:GetParent())
+				end
+			end
+		elseif part.ClassName == "event" then
+			if not IsValid(part.DestinationPart) then
+				if part.AffectChildrenOnly == true and table.Count(part:GetChildren()) == 1 then
+					part:SetDestinationPart(part:GetChildren()[1])
+				elseif part.AffectChildrenOnly == false then
+					part:SetDestinationPart(part:GetParent())
+				end
+			end
+		end
+	end
+	if part ~= part:GetRootPart() then
+		reassign(part)
+	else
+		for i,part2 in pairs(pac.GetLocalParts()) do
+			reassign(part2)
+		end
+	end
+end)
+
+pace.AddTool(L"Process by Criteria", function(part)
+	pace.PromptProcessPartsByCriteria(part)
+end)
+
+--aka pace.UltraCleanup
+pace.AddTool(L"Destroy hidden parts, proxies and events", function(part)
+
+	if not part then part = pace.current_part end
+	root = part:GetRootPart()
+
+	pnl = Derma_Query("Only do this if you know what you're doing!\nMark parts as important in their notes to protect them.", "Warning",
+		"Destroy!", function() pace.UltraCleanup( root ) end,
+		"cancel", nil
+	)
+	pnl:SetWidth(300)
+
 end)
 
 pace.AddTool(L"stop all custom animations", function()
