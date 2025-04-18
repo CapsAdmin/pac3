@@ -290,12 +290,12 @@ function PART:GetBonePosition()
 	if not self.bone_index then return ent:GetPos(), ent:GetAngles() end
 
 	local m = ent:GetBoneMatrix(self.bone_index)
-	if not m then return ent:GetPos(), ent:GetAngles() end
 
-	local pos = m:GetTranslation()
-	local ang = m:GetAngles()
-
-	return pos, ang
+	if m then
+		return m:GetTranslation(), m:GetAngles()
+	else
+		return ent:GetPos(), ent:GetAngles()
+	end
 end
 
 function PART:GetBoneMatrix()
@@ -306,12 +306,15 @@ BUILDER:Register()
 
 pac.AddHook("OnEntityCreated", "hide_mesh_no_crash", function(ent)
 	local ply = ent:GetRagdollOwner()
+
 	if ply:IsPlayer() and ply.pac_inf_scale then
 		for i = 0, ply:GetBoneCount() - 1 do
 			local scale = ply:GetManipulateBoneScale(i)
+
 			if scale == inf_scale then
-				scale = Vector(0,0,0)
+				scale = vector_origin
 			end
+
 			ply:ManipulateBoneScale(i, scale)
 		end
 	end
