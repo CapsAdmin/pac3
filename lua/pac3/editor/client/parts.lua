@@ -1955,7 +1955,9 @@ do -- menu
 			parts_backup_properties_values[v] = {}
 			for _,prop in pairs(v:GetProperties()) do
 				if not excluded_properties[prop.key] then
-					parts_backup_properties_values[v][prop.key] = v["Get"..prop.key](v)
+					if v["Get"..prop.key] then
+						parts_backup_properties_values[v][prop.key] = v["Get"..prop.key](v)
+					end
 				end
 			end
 		end
@@ -3098,6 +3100,15 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				end)
 			end):SetIcon("icon16/text_align_center.png")
 
+		main:AddOption("clone model inside itself", function()
+			local copiable_properties = {
+				"Model", "Size", "Scale", "Alpha", "Material", "Materials", "NoLighting", "NoCulling", "Invert", "Skin", "IgnoreZ", "Translucent", "Brightness", "BlendMode"
+			}
+			local clone = obj:CreatePart("model2")
+			for i,v in ipairs(copiable_properties) do
+				clone:SetProperty(v, obj:GetProperty(v))
+			end
+		end):SetIcon("icon16/shape_group.png")
 	elseif obj.ClassName == "group" then
 		main:AddOption("Assign to viewmodel", function()
 			obj:SetParent()

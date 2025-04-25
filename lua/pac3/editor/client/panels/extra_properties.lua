@@ -1257,7 +1257,10 @@ do -- script proxy
 		pnl.Paint = function(...)
 			if not self:IsValid() then pnl:Remove() return end
 			local x, y = self:LocalToScreen()
-			y = math.Clamp(y,0,ScrH() - self:GetTall())
+			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			local overflow = y < prop_y or y > ScrH() - self:GetTall()
+			y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
+
 			pnl:SetPos(x + 5 + inset_x, y)
 			surface.SetFont(pnl:GetFont())
 			local w = surface.GetTextSize(pnl:GetText()) + 6
@@ -1270,6 +1273,34 @@ do -- script proxy
 
 			old(...)
 		end
+
+		local skincolor = self:GetSkin().Colours.Category.Line.Button
+		local col = Color(skincolor.r,skincolor.g,skincolor.b, 255)
+
+		pac.AddHook('PostRenderVGUI', hookID .. "2", function(code)
+			if not IsValid(self) or not IsValid(pnl) then pac.RemoveHook('Think', hookID .. "2") return end
+			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			local x, y = self:LocalToScreen()
+			local overflow = y < prop_y or y > ScrH() - self:GetTall()
+			if overflow then
+				local str = ""
+				if y > ScrH() then
+					str = "↓↓"
+				else
+					str = "↑↑"
+				end
+				local container = self:GetParent()
+				y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
+				surface.SetFont(pnl:GetFont())
+				local w2 = surface.GetTextSize(str .. " " .. self.CurrentKey .. " " .. str)
+				
+				surface.SetDrawColor(col)
+				surface.DrawRect(x - w2, y, w2, pnl:GetTall())
+				surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
+				surface.SetTextPos(x - w2, y)
+				surface.DrawText(str .. " " .. self.CurrentKey .. " " .. str)
+			end
+		end)
 
 		pace.BusyWithProperties = pnl
 	end
