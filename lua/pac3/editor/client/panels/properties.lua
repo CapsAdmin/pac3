@@ -1756,8 +1756,8 @@ do -- base editable
 					local files = get_files_recursively(nil, path, {"vmt"})
 
 					for i,file in ipairs(files) do
-						mat_no_ext = string.sub(file,11,#file) --"materials/"
-						menu3:AddOption(string.StripExtension(file), function()
+						local mat_no_ext = string.StripExtension(string.sub(file,11,#file)) --"materials/"
+						menu3:AddOption(mat_no_ext, function()
 							self:SetValue(mat_no_ext)
 							if self.CurrentKey == "Material" then
 								pace.current_part:SetMaterial(mat_no_ext)
