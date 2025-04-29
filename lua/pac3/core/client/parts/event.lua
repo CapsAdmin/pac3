@@ -384,7 +384,6 @@ function PART:SetMultipleTargetParts(str)
 		end
 		self.ExtraHermites_Property = "MultipleTargetParts"
 	end
-	
 end
 
 local function get_default(typ)
@@ -2884,8 +2883,42 @@ PART.OldEvents = {
 			end
 			return true
 		end,
-	}
+	},
 
+	is_no_draw = {
+		operator_type = "none",
+		tutorial = "activates when the current entity is flagged with nodraw",
+		callback = function(self, ent)
+			return ent:GetNoDraw()
+		end,
+	},
+
+	viewer_steamid = {
+		operator_type = "string", preferred_operator = "equal",
+		tutorial = "activates when the local player has the steamID specified",
+		arguments = {{find = "string"}, {include_owner = "boolean"}},
+		callback = function(self, ent, find, include_owner)
+			if include_owner then
+				find = find .. ";" .. self:GetOwner():SteamID()
+			end
+
+			return self:StringOperator(pac.LocalPlayer:SteamID(), find)
+		end,
+		nice = function(self, ent, find, include_owner)
+			local count = #string.Split(find, ";")
+
+			local idSumm
+			if count == 0 or find == "" then
+				idSumm = (include_owner and "owner id" or "\"\"")
+			elseif count == 1 then
+				idSumm = string.format("\"%s\"%s", find, include_owner and " + owner id" or "")
+			else
+				idSumm = string.format("1 of %d entries%s", count, include_owner and " + owner id" or "")
+			end
+
+			return string.format("steamid: [%s %s]", self.Operator, idSumm)
+		end
+	},
 }
 
 
@@ -4732,7 +4765,7 @@ net.Receive("pac_update_healthbars", function(len)
 			if cached_part then
 				tbl[i][cached_part.UniqueID] = value
 			end
-			
+
 		end
 	end
 	--PrintTable(tbl)
