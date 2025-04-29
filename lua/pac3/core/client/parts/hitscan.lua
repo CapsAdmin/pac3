@@ -14,7 +14,6 @@ PART.ImplementsDoubleClickSpecified = true
 BUILDER:StartStorableVars()
 	:GetSet("ServerBullets", true, {description = "serverside bullets can do damage and exert a physical impact force"})
 	:SetPropertyGroup("bullet properties")
-		:GetSet("BulletImpact", false)
 		:GetSet("Damage", 1, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,268435455)) end})
 		:GetSet("Force",1000, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,65535)) end})
 		:GetSet("AffectSelf", false, {description = "whether to allow to damage yourself"})
