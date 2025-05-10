@@ -89,10 +89,14 @@ net.Receive("pac_send_sv_cvar", function(len,ply)
 	local val = net.ReadString()
 	if not cmd then return end
 
-	if GetConVar(cmd) then
-		GetConVar(cmd):SetString(val)
+	for i,v in ipairs(pac_server_cvars) do
+		if v[1] == cmd then
+			if GetConVar(cmd) then
+				GetConVar(cmd):SetString(val)
+			end
+			return
+		end
 	end
-
 end)
 
 net.Receive("pac_request_sv_cvars", function (len, ply)
