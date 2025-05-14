@@ -138,7 +138,7 @@ function PART:fix_event_operator()
 			end
 
 		elseif event_type == "string" then
-			if self.Operator ~= "find" and self.Operator ~= "find simple" and self.Operator ~= "equal" then
+			if self.Operator ~= "find" and self.Operator ~= "find simple" and self.Operator ~= "equal" and self.Operator ~= "not equal" then
 				self.Operator = PART.Events[self.Event].preferred_operator --find simple
 				self:SetInfo("The operator was automatically changed to work with this event type, which handles strings (text)")
 			end
