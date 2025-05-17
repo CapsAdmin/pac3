@@ -942,7 +942,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 			play:SetImage("icon16/control_stop.png")
 
-			local snd = CreateSound(pac.LocalPlayer, sound)
+			local snd = CreateSound(LocalPlayer(), sound)
 			snd:Play()
 			pace.asset_browser_snd = snd
 
