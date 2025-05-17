@@ -334,6 +334,7 @@ function timeline.Open(part)
 	timeline.Stop()
 end
 
+local editing_part
 pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
 	if part.ClassName == "timeline_dummy_bone" then return end
 	if part.ClassName == "custom_animation" then
@@ -341,7 +342,17 @@ pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
 			timeline.Close()
 		end
 		timeline.Open(part)
+		editing_part = part
 	elseif timeline.editing then
+		if editing_part then
+			local part2 = editing_part
+			if part2.AnimationType ~= "gesture" and not part2:IsHidden() then
+				timer.Simple(0, function()
+					part2:OnHide()
+					part2:OnShow()
+				end)
+			end
+		end
 		timeline.Close()
 	end
 end)
