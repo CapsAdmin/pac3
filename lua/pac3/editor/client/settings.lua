@@ -93,6 +93,11 @@ local convar_params_misc = {
 	{"pac_to_contraption_allow", "Allow PAC to contraption tool", "", -1, 0, 200},
 	{"pac_max_contraption_entities", "Entity limit for PAC to contraption", "", 0, 0, 200},
 	{"pac_restrictions", "restrict PAC editor camera movement", "", -1, 0, 200},
+	{"pac_sv_nearest_life", "Allow nearest life aimparts or bones", "", -1, 0, 200},
+	{"pac_sv_nearest_life_allow_sampling_from_parts", "Allow NL sampling from anywhere", "", -1, 0, 200},
+	{"pac_sv_nearest_life_allow_bones", "Allow NL usage on bones", "", -1, 0, 200},
+	{"pac_sv_nearest_life_allow_targeting_players", "Allow NL targeting players", "", -1, 0, 200},
+	{"pac_sv_nearest_life_max_distance", "Max NL distance", "", 0, 0, 20000},
 }
 
 pace = pace

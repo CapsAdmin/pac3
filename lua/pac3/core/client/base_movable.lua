@@ -4,11 +4,13 @@ local Angle = Angle
 local NULL = NULL
 local Matrix = Matrix
 
-local allow_NL = GetConVar("pac_sv_nearest_life")
-local allow_NL_bone = GetConVar("pac_sv_nearest_life_allow_bones")
-local NL_allow_sampling_anywhere = GetConVar("pac_sv_nearest_life_allow_sampling_from_parts")
-local NL_allow_target_players = GetConVar("pac_sv_nearest_life_allow_targeting_players")
-local NL_max_distance = GetConVar("pac_sv_nearest_life_max_distance")
+local default = "0"
+if game.SinglePlayer() then default = "1" end
+local allow_NL = CreateConVar("pac_sv_nearest_life", default, {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Enables nearest_life aimparts and bones, abusable for aimbot-type setups (which would already be possible with CS lua)")
+local NL_allow_sampling_anywhere = CreateConVar("pac_sv_nearest_life_allow_sampling_from_parts", "1", {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Restricts nearest_life aimparts and bones search to the player itself to prevent sampling from arbitrary positions\n0=sampling can only start from the player itself")
+local allow_NL_bone = CreateConVar("pac_sv_nearest_life_allow_bones", default, {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Restricts nearest_life bones, preventing placement on external entities' position")
+local NL_allow_target_players = CreateConVar("pac_sv_nearest_life_allow_targeting_players", "1", {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Restricts nearest_life aimparts and bones to forbid targeting players\n0=no target players")
+local NL_max_distance = CreateConVar("pac_sv_nearest_life_max_distance", "5000", {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Restricts the radius for nearest_life aimparts and bones")
 
 local BUILDER, PART = pac.PartTemplate("base")
 
