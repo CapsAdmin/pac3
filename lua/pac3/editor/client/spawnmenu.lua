@@ -162,6 +162,11 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Allow entity size modifier", "pac_modifier_size")
 		self:CheckBox(L"Allow blood color modifier", "pac_allow_blood_color")
 		self:NumSlider(L"Allow prop / other player outfits", "pac_sv_prop_outfits", 0, 2, 0)
+		self:CheckBox(L"Allow Nearest Life", "pac_sv_nearest_life")
+		self:CheckBox(L"Allow NL sampling anywhere", "pac_sv_nearest_life_bones")
+		self:CheckBox(L"Allow NL on bones", "pac_sv_nearest_life_bones")
+		self:CheckBox(L"Allow NL targeting players", "pac_sv_nearest_life_allow_targeting_players")
+		self:NumSlider(L"Max NL distance", "pac_sv_nearest_life_max_distance", 0, 20000, 0)
 	self:Help(""):SetFont("DermaDefaultBold")--spacers
 	self:Help(""):SetFont("DermaDefaultBold")
 

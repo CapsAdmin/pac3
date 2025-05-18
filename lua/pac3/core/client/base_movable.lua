@@ -4,6 +4,12 @@ local Angle = Angle
 local NULL = NULL
 local Matrix = Matrix
 
+local allow_NL = GetConVar("pac_sv_nearest_life")
+local allow_NL_bone = GetConVar("pac_sv_nearest_life_allow_bones")
+local NL_allow_sampling_anywhere = GetConVar("pac_sv_nearest_life_allow_sampling_from_parts")
+local NL_allow_target_players = GetConVar("pac_sv_nearest_life_allow_targeting_players")
+local NL_max_distance = GetConVar("pac_sv_nearest_life_max_distance")
+
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "base_movable"
@@ -209,6 +215,7 @@ function PART:CalcAngles(ang, wpos)
 	end
 
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_YAW", true, true) then
+		if not allow_NL:GetBool() then self:SetWarning("nearest_life isn't allowed in this server\npac_sv_nearest_life") return ang or Angle(0,0,0) end
 		local nearest_ent = get_nearest_ent(self)
 		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
 		local ang = (nearest_ent:GetPos() - wpos):Angle()
@@ -216,12 +223,14 @@ function PART:CalcAngles(ang, wpos)
 	end
 
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_POS", true, true) then
+		if not allow_NL:GetBool() then self:SetWarning("nearest_life isn't allowed in this server\npac_sv_nearest_life") return ang or Angle(0,0,0) end
 		local nearest_ent = get_nearest_ent(self)
 		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
 		return self.Angles + (nearest_ent:GetPos() - wpos):Angle()
 	end
 
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE", true, true) then
+		if not allow_NL:GetBool() then self:SetWarning("nearest_life isn't allowed in this server\npac_sv_nearest_life") return ang or Angle(0,0,0) end
 		local nearest_ent = get_nearest_ent(self)
 		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
 		return self.Angles + ( nearest_ent:GetPos() + Vector(0,0,(nearest_ent:WorldSpaceCenter() - nearest_ent:GetPos()).z * 1.5) - wpos):Angle()
