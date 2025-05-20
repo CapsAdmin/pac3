@@ -7,7 +7,7 @@ pac.EffectsBlackList =
 	"citadel_shockwave",
 	"choreo_launch_rocket_start",
 	"choreo_launch_rocket_jet",
-	"eye_muzzle.pcf", -- E.Y.E: Divine Cybermancy effect that crashes gmod. https://github.com/CapsAdmin/pac3/issues/1410
+	"eye_muzzle", -- E.Y.E: Divine Cybermancy effect that crashes gmod. https://github.com/CapsAdmin/pac3/issues/1410
 }
 
 if not pac_loaded_particle_effects then
