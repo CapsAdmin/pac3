@@ -13,6 +13,7 @@ CreateConVar("pac_sv_draw_distance", 0, CLIENT and FCVAR_REPLICATED or bit.bor(F
 do
 	local tohash = {
 		-- Crash
+		'eye_muzzle.pcf',
 		'weapon_unusual_isotope.pcf',
 
 		-- Invalid
