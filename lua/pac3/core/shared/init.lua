@@ -13,6 +13,7 @@ CreateConVar("pac_sv_draw_distance", 0, CLIENT and FCVAR_REPLICATED or bit.bor(F
 do
 	local tohash = {
 		-- Crash
+		'eye_muzzle.pcf', -- E.Y.E: Divine Cybermancy effect that crashes gmod. https://github.com/CapsAdmin/pac3/issues/1410
 		'weapon_unusual_isotope.pcf',
 
 		-- Invalid

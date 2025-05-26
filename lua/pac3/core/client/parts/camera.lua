@@ -6,6 +6,8 @@ PART.ClassName = "camera"
 PART.Group = 'entity'
 PART.Icon = 'icon16/camera.png'
 
+PART.ImplementsDoubleClickSpecified = true
+
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("EyeAnglesLerp", 1)
 	BUILDER:GetSet("DrawViewModel", false)
@@ -75,6 +77,12 @@ function PART:CameraTakePriority(then_view)
 		self.priority = true
 	end)
 	if then_view then
+		pace.old_ViewAngles = pace.ViewAngles
+		pace.old_ViewPos = pace.ViewPos
+
+		--it should be relative if we use camera follow entity
+		pace.old_ViewPos_delta = pace.ViewPos - pace.GetViewEntity():GetPos()
+
 		timer.Simple(0.2, function() pace.CameraPartSwapView(true) end)
 	end
 end
@@ -349,6 +357,17 @@ function pac.HandleCameraPart(ply, pos, ang, fov, nearz, farz)
 	end
 	--only time to return to first person is if all camera parts are hidden AFTER we pass the buffer time filter
 	--until we make reversible first person a thing, letting some non-drawable parts think, this is the best solution I could come up with
+end
+
+function PART:OnDoubleClickSpecified()
+	if self ~= pac.active_camera then
+		self:CameraTakePriority(true)
+	else
+		pac.active_camera = nil
+		self.priority = false
+		self:RemoveSmallIcon()
+		pace.CameraPartSwapView()
+	end
 end
 
 function pac.HasRemainingCameraPart()

@@ -81,6 +81,12 @@ local pac_server_cvars = {
 	{"pac_to_contraption_allow", "Allow PAC to contraption tool", "", -1, 0, 200},
 	{"pac_max_contraption_entities", "Entity limit for PAC to contraption", "", 0, 0, 200},
 	{"pac_restrictions", "restrict PAC editor camera movement", "", -1, 0, 200},
+	
+	{"pac_sv_nearest_life", "Allow nearest life aimparts or bones", "", -1, 0, 200},
+	{"pac_sv_nearest_life_allow_sampling_from_parts", "Allow NL sampling from anywhere", "", -1, 0, 200},
+	{"pac_sv_nearest_life_allow_bones", "Allow NL usage on bones", "", -1, 0, 200},
+	{"pac_sv_nearest_life_allow_targeting_players", "Allow NL targeting players", "", -1, 0, 200},
+	{"pac_sv_nearest_life_max_distance", "Max NL distance", "", 0, 0, 20000},
 }
 
 net.Receive("pac_send_sv_cvar", function(len,ply)
@@ -89,10 +95,14 @@ net.Receive("pac_send_sv_cvar", function(len,ply)
 	local val = net.ReadString()
 	if not cmd then return end
 
-	if GetConVar(cmd) then
-		GetConVar(cmd):SetString(val)
+	for i,v in ipairs(pac_server_cvars) do
+		if v[1] == cmd then
+			if GetConVar(cmd) then
+				GetConVar(cmd):SetString(val)
+			end
+			return
+		end
 	end
-
 end)
 
 net.Receive("pac_request_sv_cvars", function (len, ply)

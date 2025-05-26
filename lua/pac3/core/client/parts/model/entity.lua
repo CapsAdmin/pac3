@@ -69,6 +69,12 @@ function PART:GetNiceName()
 		class_name = ent:GetClass()
 	end
 
+	if str ~= "" then
+		return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
+	elseif IsValid(self:GetOwner()) then
+		str = "[" .. string.GetFileFromFilename(string.StripExtension(self:GetOwner():GetModel())) .. "] "
+		return str .. class_name .. " model"
+	end
 	return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
 end
 

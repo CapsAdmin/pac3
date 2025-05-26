@@ -1747,7 +1747,26 @@ do -- base editable
 				mat = string.gsub(mat, "^materials/", "")
 				local mat_no_ext = string.StripExtension(mat)
 
-				if string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
+				if string.sub(mat, 1, 7) == "folder:" then
+					local path = string.sub(mat, 8, #mat)
+					local menu3, pnl2 = menu2:AddSubMenu(string.GetFileFromFilename(path), function()
+					end)
+					pnl2:SetImage("icon16/folder.png") pnl2:SetTooltip(mat)
+
+					local files = get_files_recursively(nil, path, {"vmt"})
+
+					for i,file in ipairs(files) do
+						local mat_no_ext = string.StripExtension(string.sub(file,11,#file)) --"materials/"
+						menu3:AddOption(mat_no_ext, function()
+							self:SetValue(mat_no_ext)
+							if self.CurrentKey == "Material" then
+								pace.current_part:SetMaterial(mat_no_ext)
+							elseif self.CurrentKey == "SpritePath" then
+								pace.current_part:SetSpritePath(mat_no_ext)
+							end
+						end):SetMaterial(mat_no_ext)
+					end
+				elseif string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
 					mat_no_ext = string.gsub(mat_no_ext, "%[%d+,%d+%]", "")
 					pace.AddSubmenuWithBracketExpansion(menu2, function(str)
 						str = str or ""

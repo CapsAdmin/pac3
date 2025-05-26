@@ -93,6 +93,7 @@ local showInEditor = CreateConVar("pac_show_in_editor", "1", {FCVAR_ARCHIVE}, "S
 pace.pac_show_uniqueid = CreateConVar("pac_show_uniqueid", "0", {FCVAR_ARCHIVE}, "Show uniqueids of parts inside editor")
 
 function pace.OpenEditor()
+	if not pac.LocalPlayer then pac.LocalPlayer = LocalPlayer() end
 	pace.CloseEditor()
 
 	if hook.Run("PrePACEditorOpen", pac.LocalPlayer) == false then return end

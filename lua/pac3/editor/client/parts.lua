@@ -369,7 +369,7 @@ function pace.OnPartSelected(part, is_selecting)
 	pace.delaybulkselect = pace.delaybulkselect or 0 --a time updated in shortcuts.lua to prevent common pac operations from triggering bulk selection
 	local bulk_key_pressed = input.IsKeyDown(input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString()))
 
-	if (not bulk_key_pressed) and bulk_select_deselect:GetBool() then
+	if (not bulk_key_pressed) and bulk_select_deselect:GetBool() and not IsValid(pace.bulk_apply_properties_active) then
 		if pace.last_mouse_code == MOUSE_LEFT then pace.ClearBulkList(true) end
 	end
 
@@ -1489,6 +1489,7 @@ do -- menu
 		Panel:SetSize( 500, 600 )
 		Panel:Center()
 		Panel:SetTitle("BULK SELECT PROPERTY EDIT - WARNING! EXPERIMENTAL FEATURE!")
+		pace.bulk_apply_properties_active = Panel
 
 		Panel:MakePopup()
 		surface.CreateFont("Font", {
@@ -1543,7 +1544,7 @@ do -- menu
 					end
 				end
 			end
-			if shared and not prop.udata.editor_friendly and basepart["Get" .. prop["key"]] ~= nil then
+			if shared and basepart["Get" .. prop["key"]] ~= nil then
 				shared_properties[#shared_properties + 1] = prop["key"]
 			elseif shared and prop.udata.editor_friendly and basepart["Get" .. prop["key"]] == nil then
 				if not table.HasValue(shared_udata_properties, "event_udata_"..prop["key"]) then
@@ -1575,6 +1576,7 @@ do -- menu
 		for i,v in ipairs(shared_properties) do
 			if excluded_vars[v] then table.remove(shared_properties,i) end
 		end
+		table.sort(shared_properties)
 
 		--populate panels for standard GetSet part properties
 		for i,v in pairs(shared_properties) do
@@ -1955,7 +1957,9 @@ do -- menu
 			parts_backup_properties_values[v] = {}
 			for _,prop in pairs(v:GetProperties()) do
 				if not excluded_properties[prop.key] then
-					parts_backup_properties_values[v][prop.key] = v["Get"..prop.key](v)
+					if v["Get"..prop.key] then
+						parts_backup_properties_values[v][prop.key] = v["Get"..prop.key](v)
+					end
 				end
 			end
 		end
@@ -3098,6 +3102,15 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				end)
 			end):SetIcon("icon16/text_align_center.png")
 
+		main:AddOption("clone model inside itself", function()
+			local copiable_properties = {
+				"Model", "Size", "Scale", "Alpha", "Material", "Materials", "NoLighting", "NoCulling", "Invert", "Skin", "IgnoreZ", "Translucent", "Brightness", "BlendMode"
+			}
+			local clone = obj:CreatePart("model2")
+			for i,v in ipairs(copiable_properties) do
+				clone:SetProperty(v, obj:GetProperty(v))
+			end
+		end):SetIcon("icon16/shape_group.png")
 	elseif obj.ClassName == "group" then
 		main:AddOption("Assign to viewmodel", function()
 			obj:SetParent()

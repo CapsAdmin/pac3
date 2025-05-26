@@ -142,6 +142,17 @@ function pace.ClientSettingsMenu(self)
 		self:NumSlider(L"Particles max per emitter: ", "pac_limit_particles_per_emitter", 0, 10000, 0)
 end
 
+local default = "0"
+if game.SinglePlayer() then default = "1" end
+CreateConVar("pac_sv_nearest_life", default, {FCVAR_REPLICATED}, "Enables nearest_life aimparts and bones, abusable for aimbot-type setups (which would already be possible with CS lua)")
+CreateConVar("pac_sv_nearest_life_allow_sampling_from_parts", "1", {FCVAR_REPLICATED}, "Restricts nearest_life aimparts and bones search to the player itself to prevent sampling from arbitrary positions\n0=sampling can only start from the player itself")
+CreateConVar("pac_sv_nearest_life_allow_bones", default, {FCVAR_REPLICATED}, "Restricts nearest_life bones, preventing placement on external entities' position")
+CreateConVar("pac_sv_nearest_life_allow_targeting_players", "1", {FCVAR_REPLICATED}, "Restricts nearest_life aimparts and bones to forbid targeting players\n0=no target players")
+CreateConVar("pac_sv_nearest_life_max_distance", "5000", {FCVAR_REPLICATED}, "Restricts the radius for nearest_life aimparts and bones")
+CreateConVar("pac_submit_spam", "1", {FCVAR_REPLICATED})
+CreateConVar("pac_allow_blood_color", "1", {FCVAR_REPLICATED})
+CreateConVar("pac_sv_prop_outfits", "1", {FCVAR_REPLICATED})
+
 function pace.AdminSettingsMenu(self)
 	if not LocalPlayer():IsAdmin() then return end
 	if not IsValid(self) then return end
@@ -162,6 +173,11 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Allow entity size modifier", "pac_modifier_size")
 		self:CheckBox(L"Allow blood color modifier", "pac_allow_blood_color")
 		self:NumSlider(L"Allow prop / other player outfits", "pac_sv_prop_outfits", 0, 2, 0)
+		self:CheckBox(L"Allow Nearest Life", "pac_sv_nearest_life")
+		self:CheckBox(L"Allow NL sampling anywhere", "pac_sv_nearest_life_allow_sampling_from_parts")
+		self:CheckBox(L"Allow NL on bones", "pac_sv_nearest_life_allow_bones")
+		self:CheckBox(L"Allow NL targeting players", "pac_sv_nearest_life_allow_targeting_players")
+		self:NumSlider(L"Max NL distance", "pac_sv_nearest_life_max_distance", 0, 20000, 0)
 	self:Help(""):SetFont("DermaDefaultBold")--spacers
 	self:Help(""):SetFont("DermaDefaultBold")
 

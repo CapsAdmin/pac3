@@ -208,6 +208,8 @@ function PANEL:Init()
 
 	if remember_width:GetBool() then
 		self.init_w = math.max(self:GetCookieNumber("width"), 200)
+	else
+		self.init_w = 280
 	end
 	if remember_divider:GetBool() then
 		pace.vertical_div_height = self:GetCookieNumber("y_divider")

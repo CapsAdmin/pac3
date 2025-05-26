@@ -768,7 +768,19 @@ function pace.EnableView(b)
 		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
 		pac.AddHook("PostRenderVGUI", "editor", pace.PostRenderVGUI)
 		pace.Focused = true
-		pace.ResetView()
+		if pace.old_ViewAngles and pace.old_ViewPos and pace.old_ViewPos_delta then
+			if follow_entity:GetBool() then
+				pace.ViewPos = pace.old_ViewPos_delta + pace.GetViewEntity():GetPos()
+			else
+				pace.ViewPos = pace.old_ViewPos
+			end
+			pace.ViewAngles = pace.old_ViewAngles
+			pace.old_ViewAngles = nil 
+			pace.old_ViewPos = nil
+			pace.old_ViewPos_delta = nil
+		else
+			pace.ResetView()
+		end
 	else
 		lastEntityPos = nil
 		pac.RemoveHook("GUIMousePressed", "editor")
