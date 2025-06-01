@@ -108,6 +108,7 @@ function PART:GetOrFindCachedPart(uid_or_name)
 	self.found_cached_parts = self.found_cached_parts or {}
 	if self.found_cached_parts[uid_or_name] then self.erroring_cached_parts[uid_or_name] = nil return self.found_cached_parts[uid_or_name] end
 	if self.erroring_cached_parts[uid_or_name] then return end
+	if self.bad_uid_search and self.bad_uid_search > 250 then return end
 
 	local owner = self:GetPlayerOwner()
 	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
@@ -119,6 +120,11 @@ function PART:GetOrFindCachedPart(uid_or_name)
 	end
 	if not part:IsValid() then
 		self.erroring_cached_parts[uid_or_name] = true
+		self.bad_uid_search = self.bad_uid_search or 0
+		self.bad_uid_search = self.bad_uid_search + 1
+		if self:GetPlayerOwner() == LocalPlayer() then
+			pace.FlashNotification("performance warning! " .. tostring(self) .. " keeps searching for parts not finding anything! " .. tostring(uid_or_name) .. " may be unused!")
+		end
 	else
 		self.found_cached_parts[uid_or_name] = part
 		return part
@@ -1596,6 +1602,10 @@ local allowed = {
 
 function PART:SetExpression(str, slot)
 	str = string.Trim(str,"\n")
+	self.bad_uid_search = nil
+	self.found_cached_parts = {}
+	self.erroring_cached_parts = {}
+
 	if self == pace.current_part and (pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad) and str ~= "" then
 		--update luapad text if we update the expression from the properties
 		if slot == pace.ActiveSpecialPanel.luapad.keynumber then --this check prevents cross-contamination
