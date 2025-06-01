@@ -125,10 +125,12 @@ BUILDER:StartStorableVars()
 		:GetSet("CriticalHealth",1, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,65535)) end})
 		:GetSet("MaxHpScaling", 0, {editor_clamp = {0,1}})
 	:SetPropertyGroup("DamageOverTime")
-		:GetSet("DOTMode", false, {editor_friendly = "DoT mode",
-		description = "Repeats your damage a few times. Subject to serverside convar."})
-		:GetSet("DOTTime", 0, {editor_friendly = "DoT time", editor_clamp = {0,32}, description = "delay between each repeated damage"})
-		:GetSet("DOTCount", 0, {editor_friendly = "DoT count", editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,127)) end, description = "number of repeated damage instances"})
+		:GetSet("DOTMode", false, {description = "Damage over Time\nRepeats your damage a few times. Subject to serverside convar."})
+		:GetSet("DOTMethod", "Debuff", {
+			enums = {["Debuff"] = "Debuff", ["RefreshZone"] = "RefreshZone"},
+			description = "Whether the DoT means to repeat the damage on the target (handled by the server, starting from one damagezone action), or it means to retrigger the zone (handled by you, the client, throughout multiple damagezone actions).\nDebuff is like the target is burning, RefreshZone is like the area is on fire (but doesn't \"ignite\" targets)"})
+		:GetSet("DOTTime", 0, {editor_clamp = {0,32}, description = "delay between each repeated damage"})
+		:GetSet("DOTCount", 0, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,127)) end, description = "number of repeated damage instances"})
 		:GetSet("NoInitialDOT", false, {description = "Skips the first instance (the instant one) of damage to achieve a delayed damage for example."})
 	:SetPropertyGroup("HitOutcome")
 		:GetSetPart("HitSoundPart")
@@ -221,6 +223,7 @@ local global_hitmarker_CSEnt_seed = 0
 local spawn_queue = {}
 local tick = 0
 
+local hitparts_dump = {}
 --multiple entities targeted + hit marker creating parts and setting up every time = FRAME DROPS
 --so we tried the budget method, it didn't change the fact that it costs a lot.
 
@@ -288,6 +291,8 @@ function PART:FindOrCreateFloatingPart(owner, ent, part_uid, id, parent_ent)
 	--what if we don't!
 	local tbl = pac.GetPartFromUniqueID(pac.Hash(owner), part_uid):ToTable()
 	local group = pac.CreatePart("group", owner) --print("\tcreated a group for " .. id)
+	table.insert(hitparts_dump, {self, group, ent})
+	self.force_cleanup_hitparts = CurTime() + math.max(self.HitMarkerLifetime, self.KillMarkerLifetime)
 
 	group:SetShowInEditor(false)
 
@@ -515,6 +520,21 @@ function PART:ClearHitMarkers()
 	end
 	ply.hitmarker_partpool = nil
 	ply.hitparts = nil
+	--second pass
+	local remaining_parts = {}
+	for i,v in ipairs(hitparts_dump) do
+		if v[2]:IsValid() then
+			if self == v[1] then
+				v[2]:Remove()
+				hitparts_dump[i] = nil
+			end
+		else
+			hitparts_dump[i] = nil
+		end
+		--if it survives, reinsert it
+		if hitparts_dump[i] then table.insert(remaining_parts, v) end
+	end
+	hitparts_dump = remaining_parts
 end
 
 local function RecursedHitmarker(part)
@@ -649,8 +669,8 @@ function PART:SendNetMessage()
 	net.WriteBool(self.ReverseDoNotKill)
 	net.WriteUInt(self.CriticalHealth, 16)
 	net.WriteBool(self.RemoveNPCWeaponsOnKill)
-	net.WriteBool(self.DOTMode)
-	net.WriteBool(self.NoInitialDOT)
+	net.WriteBool(self.DOTMode and (self.DOTMethod == "Debuff"))
+	net.WriteBool(self.NoInitialDOT and (self.DOTMethod == "Debuff"))
 	net.WriteUInt(self.DOTCount, 7)
 	net.WriteUInt(math.ceil(math.Clamp(64*self.DOTTime, 0, 2047)), 11)
 	net.WriteString(string.sub(self.UniqueID,0,6))
@@ -660,6 +680,9 @@ function PART:SendNetMessage()
 end
 
 function PART:OnShow()
+	self.remaining_DOT_count = self.DOTCount
+	self.next_DOT = self.NoInitialDOT and CurTime() + self.DOTTime or CurTime() - 1
+
 	if pace.still_loading_wearing then return end
 	if self.validTime > SysTime() then return end
 
@@ -669,6 +692,8 @@ function PART:OnShow()
 	self.stop_until = self.stop_until or 0
 	if self.stop_until then self:GetPlayerOwner().stop_hit_markers_admonishment_message_up = nil end
 	if (self:GetPlayerOwner().stop_hit_markers_admonishment_message_up) or self.stop_until > CurTime() then return end
+
+	if self.DOTMethod == "RefreshZone" then return end --handle with Think
 
 	if self:GetRootPart():GetOwner() ~= self:GetPlayerOwner() then --dumb workaround for when it activates before it realizes it needs to be hidden first
 		timer.Simple(0.01, function() --wait to check if needs to be hidden first
@@ -709,7 +734,6 @@ function PART:SetAttachPartsToTargetEntity(b)
 end
 
 --revertable to projectile part's version which wastes time creating new parts but has less issues
-local_hitmarks = {}
 function PART:LegacyAttachToEntity(part, ent)
 	if not part:IsValid() then return false end
 
@@ -718,6 +742,8 @@ function PART:LegacyAttachToEntity(part, ent)
 	local tbl = part:ToTable()
 
 	local group = pac.CreatePart("group", self:GetPlayerOwner())
+	table.insert(hitparts_dump, {self, group, ent})
+	self.force_cleanup_hitparts = CurTime() + math.max(self.HitMarkerLifetime, self.KillMarkerLifetime)
 	group:SetShowInEditor(false)
 
 	local part_clone = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
@@ -939,6 +965,14 @@ net.Receive("pac_hit_results", function(len)
 end)
 
 concommand.Add("pac_cleanup_damagezone_hitmarks", function()
+	print(hitparts_dump, #hitparts_dump .. " parts detected")
+	for i,v in ipairs(hitparts_dump) do
+		if v[2]:IsValid() then
+			v[2]:Remove()
+		end
+		hitparts_dump[i] = nil
+	end
+
 	if LocalPlayer().hitparts then
 		for i,v in pairs(LocalPlayer().hitparts) do
 			v.specimen_part:Remove()
@@ -963,6 +997,7 @@ function PART:OnRemove()
 	for _,v in pairs(renderhooks) do
 		pac.RemoveHook(v, "pace_draw_hitbox")
 	end
+	self:ClearHitMarkers()
 end
 
 local previousRenderingHook
@@ -1151,6 +1186,34 @@ end
 
 function PART:OnThink()
 	if self.Preview then self:PreviewHitbox() end
+	if self.DOTMethod == "RefreshZone" then
+		if self.DOTTime == 0 then return end --get outta here with those zero delays
+		if (CurTime() > self.next_DOT) and (self.remaining_DOT_count > 0) then
+			self:SendNetMessage()
+			self.remaining_DOT_count = self.remaining_DOT_count - 1
+			self.next_DOT = CurTime() + self.DOTTime
+		end
+	end
+	if self.force_cleanup_hitparts < CurTime() then self:ClearHitMarkers() end
+end
+
+function PART:GetNiceName()
+	local str = ""
+	if self.DOTMode then
+		str = str .. " [DoT " .. self.DOTCount .. "x : " .. self.DOTTime .. "s]"
+	end
+	str = str .. " " .. self.DamageType .. " " .. self.Damage
+	if self.MaxHpScaling ~= 0 then str = str .. " + " .. 100*self.MaxHpScaling .. "% max HP" end
+	if self.ReverseDoNotKill then
+		if self.DamageType == "heal" then
+			str = str .. " [if HP > " .. self.CriticalHealth .. "]"
+		else
+			str = str .. " [if HP < " .. self.CriticalHealth .. "]"
+		end
+	elseif self.DoNotKill then
+		str = str .. " [stop at " .. self.CriticalHealth .. " HP]"
+	end
+	return "damage zone" .. str
 end
 
 function PART:BuildCylinder(obj)
@@ -1219,6 +1282,7 @@ function PART:BuildCone(obj)
 end
 
 function PART:Initialize()
+	self.force_cleanup_hitparts = 0
 	self.hitmarkers = {}
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 5 --jank fix to try to stop activation on load
