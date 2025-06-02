@@ -3770,7 +3770,7 @@ end)]])
 			local group = pac.CreatePart("group")
 			group:SetParent(obj.Parent)
 			obj:SetParent(group)
-			local axismodel = pac.CreatePart("model2") axismodel:SetParent(obj) newnode:SetModel("models/editor/axis_helper_thick.mdl") newnode:SetSize(5)
+			local axismodel = pac.CreatePart("model2") axismodel:SetParent(obj) axismodel:SetModel("models/editor/axis_helper_thick.mdl") axismodel:SetSize(5)
 			for i=1,5,1 do
 				local newnode = pac.CreatePart("model2") newnode:SetParent(obj.Parent) newnode:SetModel("models/empty.mdl")
 				newnode:SetName("test_node_"..i)
