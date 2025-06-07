@@ -10,6 +10,7 @@ SWEP.PrintName      = "Hands"
 SWEP.DrawAmmo       = false
 SWEP.DrawCrosshair	= true
 SWEP.DrawWeaponInfoBox = true
+SWEP.IconOverride   = "gui/hand_human_left.png"
 
 SWEP.SlotPos      	= 1
 SWEP.Slot         	= 1
