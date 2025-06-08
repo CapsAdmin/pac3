@@ -721,10 +721,17 @@ do -- list
 				if not table.IsEmpty(reasons_hidden) then
 					pnl:SetTooltip("Hidden by:" .. table.ToString(reasons_hidden, "", true))
 					local label = pnl:CreateAlternateLabel("hidden")
-					label.DoRightClick = function()
+
+					local goto_btn = vgui.Create("DButton", pnl)
+					goto_btn:SetText("")
+					goto_btn:SetSize(self:GetItemHeight(), self:GetItemHeight())
+					goto_btn:Dock(RIGHT)
+					goto_btn:SetImage("icon16/arrow_turn_right.png")
+
+					goto_btn.DoClick = function()
 						local menu = DermaMenu()
 						menu:SetPos(input.GetCursorPos())
-						for part,reason in pairs(tbl) do
+						for part,reason in pairs(reasons_hidden) do
 							if part ~= pace.current_part then
 								menu:AddOption("jump to " .. tostring(part), function()
 									pace.GoToPart(part)
