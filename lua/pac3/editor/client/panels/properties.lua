@@ -251,6 +251,317 @@ local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 end
 
 local function populate_bookmarks(menu, mode, self)
+	if mode == "models" then
+		pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+		if not pace.bookmarked_ressources["models"] then
+			pace.bookmarked_ressources["models"] = {
+				"models/pac/default.mdl",
+				"models/pac/plane.mdl",
+				"models/pac/circle.mdl",
+				"models/hunter/blocks/cube025x025x025.mdl",
+				"models/editor/axis_helper.mdl",
+				"models/editor/axis_helper_thick.mdl"
+			}
+		end
+
+		local menu2, pnl = menu:AddSubMenu(L"Load favourite models", function()
+		end)
+		pnl:SetImage("icon16/cart_go.png")
+
+		local pm = pace.current_part:GetPlayerOwner():GetModel()
+		local pm_selected = player_manager.TranslatePlayerModel(GetConVar("cl_playermodel"):GetString())
+
+		if pm_selected ~= pm then
+			menu2:AddOption("Selected playermodel - " .. string.gsub(string.GetFileFromFilename(pm_selected), ".mdl", ""), function()
+				pace.current_part:SetModel(pm_selected)
+				pace.current_part.pace_properties["Model"]:SetValue(pm_selected)
+				pace.PopulateProperties(pace.current_part)
+
+			end):SetImage("materials/spawnicons/"..string.gsub(pm_selected, ".mdl", "")..".png")
+		end
+
+		if IsValid(pace.current_part:GetRootPart():GetOwner()) then
+			local root_model = pace.current_part:GetRootPart():GetOwner():GetModel()
+			if root_model ~= pm then
+				if not file.Exists("materials/spawnicons/"..string.gsub(root_model, ".mdl", "")..".png", "GAME") then
+					pace.FlashNotification("missing spawn icon")
+					local spawnicon = vgui.Create("SpawnIcon")
+					spawnicon:SetPos(0,0)
+					spawnicon:SetModel(root_model)
+					spawnicon:RebuildSpawnIcon()
+					timer.Simple(2, function()
+						spawnicon:Remove()
+					end)
+				end
+				local pnl = menu2:AddOption("root owner model - " .. string.gsub(string.GetFileFromFilename(root_model), ".mdl", ""), function()
+					pace.current_part:SetModel(root_model)
+					pace.current_part.pace_properties["Model"]:SetValue(root_model)
+					pace.PopulateProperties(pace.current_part)
+
+				end)
+				pnl:SetImage("materials/spawnicons/"..string.gsub(root_model, ".mdl", "")..".png")
+				timer.Simple(0, function()
+					pnl:SetImage("materials/spawnicons/"..string.gsub(root_model, ".mdl", "")..".png")
+				end)
+			end
+		end
+		
+		menu2:AddOption("Active playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
+			pace.current_part:SetModel(pm)
+			pace.current_part.pace_properties["Model"]:SetValue(pm)
+			pace.PopulateProperties(pace.current_part)
+		end):SetImage("materials/spawnicons/"..string.gsub(pm, ".mdl", "")..".png")
+
+		if IsValid(pac.LocalPlayer:GetActiveWeapon()) then
+			local wep = pac.LocalPlayer:GetActiveWeapon()
+			local wep_mdl = wep:GetModel()
+			menu2:AddOption("Active weapon - " .. wep:GetClass() .. " - model - " .. string.gsub(string.GetFileFromFilename(wep_mdl), ".mdl", ""), function()
+				pace.current_part:SetModel(wep_mdl)
+				pace.current_part.pace_properties["Model"]:SetValue(wep_mdl)
+				pace.PopulateProperties(pace.current_part)
+			end):SetImage("materials/spawnicons/"..string.gsub(wep_mdl, ".mdl", "")..".png")
+		end
+
+		for id,mdl in ipairs(pace.bookmarked_ressources["models"]) do
+			if string.sub(mdl, 1, 7) == "folder:" then
+				mdl = string.sub(mdl, 8, #mdl)
+				local menu3, pnl2 = menu2:AddSubMenu(string.GetFileFromFilename(mdl), function()
+				end)
+				pnl2:SetImage("icon16/folder.png")
+
+				local files = get_files_recursively(nil, mdl, "mdl")
+
+				for i,file in ipairs(files) do
+					menu3:AddOption(string.GetFileFromFilename(file), function()
+						self:SetValue(file)
+						pace.current_part:SetModel(file)
+						timer.Simple(0.2, function()
+							pace.current_part.pace_properties["Model"]:SetValue(file)
+							pace.PopulateProperties(pace.current_part)
+						end)
+					end):SetImage("materials/spawnicons/"..string.gsub(file, ".mdl", "")..".png")
+				end
+			else
+				menu2:AddOption(string.GetFileFromFilename(mdl), function()
+					self:SetValue(mdl)
+					pace.current_part:SetModel(mdl)
+					timer.Simple(0.2, function()
+						pace.current_part.pace_properties["Model"]:SetValue(mdl)
+						pace.PopulateProperties(pace.current_part)
+					end)
+				end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
+			end
+		end
+	elseif mode == "materials" then
+		pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+		if not pace.bookmarked_ressources["materials"] then
+			pace.bookmarked_ressources["materials"] = {
+				"models/debug/debugwhite.vmt",
+				"vgui/null.vmt",
+				"debug/env_cubemap_model.vmt",
+				"models/wireframe.vmt",
+				"cable/physbeam.vmt",
+				"cable/cable2.vmt",
+				"effects/tool_tracer.vmt",
+				"effects/flashlight/logo.vmt",
+				"particles/flamelet[1,5]",
+				"sprites/key_[0,9]",
+				"vgui/spawnmenu/generating.vmt",
+				"vgui/spawnmenu/hover.vmt",
+				"metal"
+			}
+		end
+
+		local menu2, pnl = menu:AddSubMenu(L"Load favourite materials", function()
+		end)
+		pnl:SetImage("icon16/cart_go.png")
+
+		for id,mat in ipairs(pace.bookmarked_ressources["materials"]) do
+			mat = string.gsub(mat, "^materials/", "")
+			local mat_no_ext = string.StripExtension(mat)
+
+			if string.sub(mat, 1, 7) == "folder:" then
+				local path = string.sub(mat, 8, #mat)
+				local menu3, pnl2 = menu2:AddSubMenu(string.GetFileFromFilename(path), function()
+				end)
+				pnl2:SetImage("icon16/folder.png") pnl2:SetTooltip(mat)
+
+				local files = get_files_recursively(nil, path, {"vmt"})
+
+				for i,file in ipairs(files) do
+					local mat_no_ext = string.StripExtension(string.sub(file,11,#file)) --"materials/"
+					menu3:AddOption(mat_no_ext, function()
+						self:SetValue(mat_no_ext)
+						if self.CurrentKey == "Material" then
+							pace.current_part:SetMaterial(mat_no_ext)
+						elseif self.CurrentKey == "SpritePath" then
+							pace.current_part:SetSpritePath(mat_no_ext)
+						end
+					end):SetMaterial(mat_no_ext)
+				end
+			elseif string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
+				mat_no_ext = string.gsub(mat_no_ext, "%[%d+,%d+%]", "")
+				pace.AddSubmenuWithBracketExpansion(menu2, function(str)
+					str = str or ""
+					str = string.StripExtension(string.gsub(str, "^materials/", ""))
+					self:SetValue(str)
+					if self.CurrentKey == "Material" then
+						pace.current_part:SetMaterial(str)
+					elseif self.CurrentKey == "SpritePath" then
+						pace.current_part:SetSpritePath(str)
+					end
+				end, mat_no_ext, "vmt", "materials")
+
+			else
+				menu2:AddOption(string.StripExtension(mat), function()
+					self:SetValue(mat_no_ext)
+					if self.CurrentKey == "Material" then
+						pace.current_part:SetMaterial(mat_no_ext)
+					elseif self.CurrentKey == "SpritePath" then
+						pace.current_part:SetSpritePath(mat_no_ext)
+					end
+				end):SetMaterial(mat)
+			end
+
+		end
+
+		local pac_materials = {}
+		local has_pac_materials = false
+
+		local class_shaders = {
+			["material"] = "VertexLitGeneric",
+			["material_3d"] = "VertexLitGeneric",
+			["material_2d"] = "UnlitGeneric",
+			["material_eye refract"] = "EyeRefract",
+			["material_refract"] = "Refract",
+		}
+
+		for _,part in pairs(pac.GetLocalParts()) do
+			if part.Name ~= "" and string.find(part.ClassName, "material") then
+				if pac_materials[class_shaders[part.ClassName]] == nil then pac_materials[class_shaders[part.ClassName]] = {} end
+				has_pac_materials = true
+				pac_materials[class_shaders[part.ClassName]][part:GetName()] = {part = part, shader = class_shaders[part.ClassName]}
+			end
+		end
+		if has_pac_materials then
+			menu2:AddSpacer()
+			for shader,mats in pairs(pac_materials) do
+				local shader_submenu = menu2:AddSubMenu("pac3 materials - " .. shader)
+				for mat,tbl in pairs(mats) do
+					local part = tbl.part
+					local pnl2 = shader_submenu:AddOption(mat, function()
+						self:SetValue(mat)
+						if self.CurrentKey == "Material" then
+							pace.current_part:SetMaterial(mat)
+						elseif self.CurrentKey == "SpritePath" then
+							pace.current_part:SetSpritePath(mat)
+						end
+					end)
+					pnl2:SetMaterial(pac.Material(mat, part))
+					pnl2:SetTooltip(tbl.shader)
+				end
+			end
+		end
+
+		if self.CurrentKey == "Material" and pace.current_part.ClassName == "particles" then
+			pnl:SetTooltip("Appropriate shaders for particles are UnlitGeneric materials.\nOOtherwise, they should usually be additive or use VertexAlpha")
+		elseif self.CurrentKey == "SpritePath" then
+			pnl:SetTooltip("Appropriate shaders for sprites are UnlitGeneric materials.\nOOtherwise, they should usually be additive or use VertexAlpha")
+		end
+	elseif mode == "sound" then
+		pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+		if not pace.bookmarked_ressources["sound"] then
+			pace.bookmarked_ressources["sound"] = {
+				"music/hl1_song11.mp3",
+				"music/hl2_song23_suitsong3.mp3",
+				"music/hl2_song1.mp3",
+				"npc/combine_gunship/dropship_engine_near_loop1.wav",
+				"ambient/alarms/warningbell1.wav",
+				"phx/epicmetal_hard7.wav",
+				"phx/explode02.wav"
+			}
+		end
+
+		local menu2, pnl = menu:AddSubMenu(L"Load favourite sounds", function()
+		end)
+		pnl:SetImage("icon16/cart_go.png")
+
+		for id,snd in ipairs(pace.bookmarked_ressources["sound"]) do
+			local extension = string.GetExtensionFromFilename(snd)
+			local snd_no_ext = string.StripExtension(snd)
+			local single_menu = not favorites_menu_expansion:GetBool()
+
+			if string.sub(snd, 1, 7) == "folder:" then
+				snd = string.sub(snd, 8, #snd)
+				local menu3, pnl2 = menu2:AddSubMenu(string.GetFileFromFilename(snd), function()
+				end)
+				pnl2:SetImage("icon16/folder.png") pnl2:SetTooltip(snd)
+
+				local files = get_files_recursively(nil, snd, {"wav", "mp3", "ogg"})
+
+				for i,file in ipairs(files) do
+					file = string.sub(file,7,#file) --"sound/"
+					local icon = "icon16/sound.png"
+					if string.find(file, "music") or string.find(file, "theme") then
+						icon = "icon16/music.png"
+					elseif string.find(file, "loop") then
+						icon = "icon16/arrow_rotate_clockwise.png"
+					end
+					local pnl3 = menu3:AddOption(string.GetFileFromFilename(file), function()
+						self:SetValue(file)
+						if self.CurrentKey == "Sound" then
+							pace.current_part:SetSound(file)
+						elseif self.CurrentKey == "Path" then
+							pace.current_part:SetPath(file)
+						end
+					end)
+					pnl3:SetImage(icon) pnl3:SetTooltip(file)
+				end
+			elseif string.find(snd_no_ext, "%[%d+,%d+%]") then --find the bracket notation
+				pace.AddSubmenuWithBracketExpansion(menu2, function(str)
+					self:SetValue(str)
+					if self.CurrentKey == "Sound" then
+						pace.current_part:SetSound(str)
+					elseif self.CurrentKey == "Path" then
+						pace.current_part:SetPath(str)
+					end
+				end, snd_no_ext, extension, "sound")
+
+			elseif not single_menu and string.find(snd_no_ext, "%d+") then	--find a file ending in a number
+																			--expand only if we want it with the cvar
+				pace.AddSubmenuWithBracketExpansion(menu2, function(str)
+					self:SetValue(str)
+					if self.CurrentKey == "Sound" then
+						pace.current_part:SetSound(str)
+					elseif self.CurrentKey == "Path" then
+						pace.current_part:SetPath(str)
+					end
+				end, snd_no_ext, extension, "sound")
+
+			else
+
+				local icon = "icon16/sound.png"
+
+				if string.find(snd, "music") or string.find(snd, "theme") then
+					icon = "icon16/music.png"
+				elseif string.find(snd, "loop") then
+					icon = "icon16/arrow_rotate_clockwise.png"
+				end
+
+				menu2:AddOption(snd, function()
+					self:SetValue(snd)
+					if self.CurrentKey == "Sound" then
+						pace.current_part:SetSound(snd)
+					elseif self.CurrentKey == "Path" then
+						pace.current_part:SetPath(snd)
+					end
+
+				end):SetIcon(icon)
+			end
+
+
+		end
+	end
 end
 
 function pace.CreateSearchList(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
@@ -727,6 +1038,7 @@ do -- list
 
 					local goto_btn = vgui.Create("DButton", pnl)
 					goto_btn:SetText("")
+					goto_btn:SetTooltip("jump to...")
 					goto_btn:SetSize(self:GetItemHeight(), self:GetItemHeight())
 					goto_btn:Dock(RIGHT)
 					goto_btn:SetImage("icon16/arrow_turn_right.png")
