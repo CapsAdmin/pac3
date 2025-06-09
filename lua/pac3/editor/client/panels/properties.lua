@@ -1067,7 +1067,7 @@ do -- list
 					local menu = DermaMenu()
 					menu:SetPos(input.GetCursorPos())
 					menu:MakePopup()
-					populate_bookmarks(menu, "models", pace.current_part)
+					populate_bookmarks(menu, "models", var)
 				end
 			elseif key == "Material" or key == "SpritePath" then
 				local btn2 = vgui.Create("DImageButton", pnl)
@@ -1079,7 +1079,7 @@ do -- list
 					local menu = DermaMenu()
 					menu:SetPos(input.GetCursorPos())
 					menu:MakePopup()
-					populate_bookmarks(menu, "materials", pace.current_part)
+					populate_bookmarks(menu, "materials", var)
 				end
 			elseif string.find(pace.current_part.ClassName, "sound") then
 				if key == "Sound" or key == "Path" then
@@ -1092,7 +1092,7 @@ do -- list
 						local menu = DermaMenu()
 						menu:SetPos(input.GetCursorPos())
 						menu:MakePopup()
-						populate_bookmarks(menu, "sound", pace.current_part)
+						populate_bookmarks(menu, "sound", var)
 					end
 				end
 			end
