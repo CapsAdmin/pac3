@@ -456,16 +456,21 @@ PART.Inputs.sample_and_hold = function(self, seed, duration, min, max, ease)
 
 	self.samplehold = self.samplehold or {}
 	self.samplehold_prev = self.samplehold_prev or {}
+	self.samplehold_duration = self.samplehold_duration or {}
 	self.samplehold_prev[seed] = self.samplehold_prev[seed] or {value = min, refresh = CurTime()}
 	self.samplehold[seed] = self.samplehold[seed] or {value = min + math.random()*(max-min), refresh = CurTime() + duration}
 
+	self.samplehold_duration[seed] = self.samplehold_duration[seed] or CurTime()
+
 	local prev = self.samplehold_prev[seed].value
-	local frac = 1 - (self.samplehold[seed].refresh - CurTime()) / duration
+	local frac = 1 - (self.samplehold[seed].refresh - CurTime()) / self.samplehold_duration[seed]
 	local delta = self.samplehold[seed].value - prev
 
 	if CurTime() > self.samplehold[seed].refresh then
 		self.samplehold_prev[seed] = self.samplehold[seed]
-		self.samplehold[seed] = {value = min + math.random()*(max-min), refresh = CurTime() + duration}
+		self.samplehold_duration[seed] = duration
+		self.samplehold[seed] = {value = min + math.random()*(max-min), refresh = CurTime() + self.samplehold_duration[seed]}
+		
 	end
 	if not ease then
 		return self.samplehold[seed].value
