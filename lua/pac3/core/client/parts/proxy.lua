@@ -1643,6 +1643,8 @@ function PART:SetExpression(str, slot)
 		for name, func in pairs(PART.Inputs) do
 			lib[name] = function(...) return func(self, ...) end
 		end
+		--we'll use that in the luapad syntax highlighting
+		self.lib = lib
 
 		local ok, res = pac.CompileExpression(str, lib)
 		if ok then
