@@ -281,11 +281,14 @@ end
 
 PART.Inputs = {}
 
-PART.Inputs.property = function(self, property_name, field)
+PART.Inputs.property = function(self, property_name, field, uid)
 
 	local part = self.TargetEntity:IsValid() and self.TargetEntity or self:GetParent()
+	if uid then
+		part = self:GetOrFindCachedPart(uid)
+	end
 
-	if part:IsValid() and part.GetProperty and property_name then
+	if part and part:IsValid() and part.GetProperty and property_name then
 		local v = part:GetProperty(property_name)
 
 		local T = type(v)
