@@ -2067,6 +2067,14 @@ do -- base editable
 				self.OnValueChanged(self:GetValue())
 			end):SetImage("icon16/arrow_switch.png")
 
+			menu:AddOption(L"apply proxy", function()
+				local proxy = pac.CreatePart("proxy")
+				proxy:SetParent(pace.current_part)
+				proxy:SetVariableName(self.CurrentKey)
+				proxy:SetExpression(self:GetValue())
+				pace.OnPartSelected(proxy) pace.PopulateProperties(proxy)
+			end):SetImage("icon16/calculator.png")
+
 			if self.CurrentKey == "Size" then
 				if pace.current_part.ClassName == "sprite" then
 					menu:AddOption(L"apply size to scales", function()
@@ -2552,6 +2560,26 @@ do -- vector
 					end
 				end
 			end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(pace.clipboardtooltip)
+
+			menu:AddOption(L"apply proxy", function()
+				local proxy = pac.CreatePart("proxy")
+				proxy:SetParent(pace.current_part)
+				proxy:SetVariableName(self.CurrentKey)
+
+				local val = pac.CopyValue(self.vector)
+
+				if isnumber(val) then
+					proxy:SetExpression(tostring(val))
+				elseif type == "angle" then
+					proxy:SetExpression(math.Round(val.p, 4) .. "," .. math.Round(val.y, 4) .. "," .. math.Round(val.r, 4))
+				elseif type == "vector" then
+					proxy:SetExpression(math.Round(val.x, 4) .. "," .. math.Round(val.y, 4) .. "," .. math.Round(val.z, 4))
+				elseif type == "color" or type == "color2" then
+					proxy:SetExpression(math.Round(val.r, 4) .. "," .. math.Round(val.g, 4) .. "," .. math.Round(val.b, 4))
+				end
+
+				pace.OnPartSelected(proxy) pace.PopulateProperties(proxy)
+			end):SetImage("icon16/calculator.png")
 			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
