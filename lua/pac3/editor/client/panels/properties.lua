@@ -2936,6 +2936,119 @@ do -- boolean
 					end):SetImage("icon16/arrow_turn_right.png")
 				end
 			end
+			local menu2, pnl = menu:AddSubMenu(L"apply proxy") pnl:SetImage("icon16/calculator.png")
+				local state_str = self:GetValue() and "1" or "0"
+				local invert_str = self:GetValue() and "0" or "1"
+				menu2:AddOption(state_str .. " show, " .. invert_str .. " hide", function()
+					local proxy = pac.CreatePart("proxy")
+					proxy:SetParent(pace.current_part)
+					if self.CurrentKey == "Hide" then
+						if proxy:HasParent() then
+							proxy:SetParent(pace.current_part:GetParent())
+						else
+							local group = pac.CreatePart("group") proxy:SetParent(group)
+						end
+						proxy:SetTargetPart(pace.current_part)
+					end
+					proxy:SetVariableName(self.CurrentKey)
+					proxy:SetExpression(state_str) proxy:SetExpressionOnHide(invert_str)
+					pace.OnPartSelected(proxy) pace.PopulateProperties(proxy)
+				end):SetImage("icon16/calculator.png")
+				menu2:AddOption("(invert) " .. invert_str .. " show, " .. state_str .. " hide", function()
+					local proxy = pac.CreatePart("proxy")
+					proxy:SetParent(pace.current_part)
+					if self.CurrentKey == "Hide" then
+						if proxy:HasParent() then
+							proxy:SetParent(pace.current_part:GetParent())
+						else
+							local group = pac.CreatePart("group") proxy:SetParent(group)
+						end
+						proxy:SetTargetPart(pace.current_part)
+					end
+					proxy:SetVariableName(self.CurrentKey)
+					proxy:SetExpression(invert_str) proxy:SetExpressionOnHide(state_str)
+					pace.OnPartSelected(proxy) pace.PopulateProperties(proxy)
+				end):SetImage("icon16/calculator.png")
+				menu2:AddOption("if_else template", function()
+					local proxy = pac.CreatePart("proxy")
+					proxy:SetParent(pace.current_part)
+					if self.CurrentKey == "Hide" then
+						if proxy:HasParent() then
+							proxy:SetParent(pace.current_part:GetParent())
+						else
+							local group = pac.CreatePart("group") proxy:SetParent(group)
+						end
+						proxy:SetTargetPart(pace.current_part)
+					end
+					proxy:SetVariableName(self.CurrentKey)
+					proxy:SetExpression("if_else(50, \">\", 10, 1, 0)")
+					pace.FlashNotification("in the provided example, replace 50 with what to compare (usually a function), 10 with the test value.")
+					pace.OnPartSelected(proxy) pace.PopulateProperties(proxy)
+				end):SetImage("icon16/calculator.png")
+
+				local menu3, pnl3 = menu2:AddSubMenu("if_event") pnl3:SetImage("icon16/clock_red.png")
+					menu3:AddOption("if_event template", function()
+						local proxy = pac.CreatePart("proxy")
+						proxy:SetParent(pace.current_part)
+						if self.CurrentKey == "Hide" then
+							if proxy:HasParent() then
+								proxy:SetParent(pace.current_part:GetParent())
+							else
+								local group = pac.CreatePart("group") proxy:SetParent(group)
+							end
+							proxy:SetTargetPart(pace.current_part)
+						end
+						proxy:SetVariableName(self.CurrentKey)
+						proxy:SetExpression("if_event(\"event_name_or_uid\", 0, 1)")
+						pace.FlashNotification("in the provided example, replace event_name_or_uid with an existing event name or uid")
+					end):SetImage("icon16/clock_edit.png")
+					menu3:AddOption("if_event (creates an event)", function()
+						local proxy = pac.CreatePart("proxy")
+						local event = pac.CreatePart("event") event:SetAffectChildrenOnly(true)
+						proxy:SetParent(pace.current_part) event:SetParent(proxy)
+						if self.CurrentKey == "Hide" then
+							if proxy:HasParent() then
+								proxy:SetParent(pace.current_part:GetParent())
+							else
+								local group = pac.CreatePart("group") proxy:SetParent(group)
+							end
+							proxy:SetTargetPart(pace.current_part)
+						end
+						proxy:SetVariableName(self.CurrentKey)
+						proxy:SetExpression("if_event(\"" .. event.UniqueID .. "\", 0, 1)")
+						pace.OnPartSelected(event) pace.PopulateProperties(event)
+						pace.FlashProperty(event, "Event", true)
+					end):SetImage("icon16/clock_go.png")
+					local menu4, pnl4 = menu3:AddSubMenu("from existing events") pnl4:SetImage("icon16/text_list_bullets.png")
+						for uid, part in pairs(pac.GetLocalParts()) do
+							if part.ClassName ~= "event" then continue end
+							local b = part.raw_event_condition
+							if part.Invert then
+								b = not b
+							end
+							local parents_str = "parents:\n"
+							local parent = part
+							while parent:HasParent() do
+								parent = parent:GetParent()
+								parents_str = parents_str .. "\n<" .. parent.ClassName .. "> " .. parent:GetName()
+							end
+							local pnl5 = menu4:AddOption(part:GetName(), function()
+								local proxy = pac.CreatePart("proxy")
+								proxy:SetParent(pace.current_part)
+								if self.CurrentKey == "Hide" then
+									if proxy:HasParent() then
+										proxy:SetParent(pace.current_part:GetParent())
+									else
+										local group = pac.CreatePart("group") proxy:SetParent(group)
+									end
+									proxy:SetTargetPart(pace.current_part)
+								end
+								proxy:SetVariableName(self.CurrentKey)
+								proxy:SetExpression("if_event(\"" .. uid .. "\", 0, 1)")
+							end) pnl5:SetImage(b and "icon16/clock_red.png" or "icon16/clock_link.png")
+							pnl5:SetTooltip(parents_str)
+						end
+			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and (pace.current_part.DefaultVars[self.CurrentKey] ~= nil) then
 					local val = pac.CopyValue(pace.current_part.DefaultVars[self.CurrentKey])
