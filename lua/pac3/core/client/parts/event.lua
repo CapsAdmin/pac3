@@ -2898,7 +2898,7 @@ PART.OldEvents = {
 		tutorial = "activates when the local player has the steamID specified",
 		arguments = {{find = "string"}, {include_owner = "boolean"}},
 		callback = function(self, ent, find, include_owner)
-			local owner = self:GetOwner()
+			local owner = self:GetPlayerOwner()
 			if include_owner and owner:IsValid() then
 				find = find .. ";" .. owner:SteamID()
 			end
