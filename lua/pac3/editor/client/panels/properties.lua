@@ -1982,6 +1982,33 @@ do -- base editable
 
 		if self.CurrentKey == "Material" or self.CurrentKey == "SpritePath" then
 			populate_bookmarks(menu, "materials", self)
+
+			local part_material = pace.current_part:GetProperty(self.CurrentKey)
+			local mat_name = part_material:match(".+/(.+)") or ""
+			mat_name = mat_name .. "_" .. string.sub(pace.current_part.UniqueID,1,6)
+			mat_name = string.Replace(mat_name, " ", "")
+			local menu2, pnl = menu:AddSubMenu("Edit Material (will be named " .. mat_name .. ")", function()
+				local newmaterial = pac.CreatePart("material_2d") newmaterial:SetParent(pace.current_part)
+				newmaterial:SetName(mat_name)
+				newmaterial:SetProperty("LoadVmt", part_material)
+				pace.current_part:SetProperty(self.CurrentKey, mat_name)
+			end)
+			pnl:SetImage("icon16/paintcan.png")
+
+			menu2:AddOption("Make transparent (vertex alpha) (for transparent textures)", function()
+				local newmaterial = pac.CreatePart("material_2d") newmaterial:SetParent(pace.current_part)
+				newmaterial:SetName(mat_name)
+				newmaterial:SetProperty("LoadVmt", part_material)
+				pace.current_part:SetProperty(self.CurrentKey, mat_name)
+				newmaterial:Setvertexalpha(true)
+			end):SetImage("icon16/paintcan.png")
+			menu2:AddOption("Make transparent (additive) (for black backgrounds)", function()
+				local newmaterial = pac.CreatePart("material_2d") newmaterial:SetParent(pace.current_part)
+				newmaterial:SetName(mat_name)
+				newmaterial:SetProperty("LoadVmt", part_material)
+				pace.current_part:SetProperty(self.CurrentKey, mat_name)
+				newmaterial:Setadditive(true)
+			end):SetImage("icon16/paintcan.png")
 		end
 
 		if string.find(pace.current_part.ClassName, "sound") then
