@@ -2690,9 +2690,8 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 
 		local submat_toggler_proxy
 		local submat_toggler_event
-		local submaterials = {}
+		local submaterials = string.Split(obj:GetMaterials(),";")
 		for i,mat2 in ipairs(mats) do
-			table.insert(submaterials,"")
 			local kw = string.GetFileFromFilename(mat2)
 			AddOptionRightClickable(kw, function()
 				if not submat_toggler_proxy then
@@ -2711,7 +2710,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				else
 					obj:SetMaterials(table.concat(submaterials, ";"))
 				end
-				
+
 			end, submat_togglers):SetIcon("icon16/paintcan.png")
 		end
 
