@@ -3497,7 +3497,7 @@ function PART:GetNiceName()
 
 	if not PART.Events[event_name] then return "unknown event" end
 
-	return self:GetTargetingModePrefix() .. PART.Events[event_name]:GetNiceName(self, get_owner(self))
+	return self:GetTargetingModePrefix() .. (PART.Events[event_name]:GetNiceName(self, get_owner(self)) or "")
 end
 
 local function is_hidden_by_something_else(part, ignored_part)
