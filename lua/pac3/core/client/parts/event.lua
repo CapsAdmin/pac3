@@ -947,6 +947,113 @@ PART.OldEvents = {
 		end,
 	},
 
+	is_turning = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on pitch and yaw combined with pythagoras theorem as absolute terms. so it won't go into negatives",
+		arguments = {{amount = "number"}},
+		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			--pythagoras theorem
+			local ang_difference = math.sqrt(
+				math.AngleDifference(ang.p,self.last_turning_ang.p)^2 +
+				math.abs(math.AngleDifference(ang.y,self.last_turning_ang.y))^2
+			) / FrameTime()
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff = ang_difference
+
+			return self:NumberOperator(ang_difference, num)
+		end,
+		nice = function(self, ent, amount)
+			if self.turning_ang_diff == nil then return "" end
+			return "is_turning {" ..  math.Round(self.turning_ang_diff,2) .. " | " .. amount .. "}"
+		end
+	},
+	is_turning_pitch = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on pitch.",
+		arguments = {{pitch_amount = "number"}, {absolute = "boolean"}},
+		callback = function(self, ent, pitch_amount, absolute)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			local ang_difference_y = 0
+			if absolute then
+				ang_difference_y = math.abs(math.AngleDifference(ang.p, self.last_turning_ang.p)) / FrameTime()
+			else
+				ang_difference_y = math.AngleDifference(ang.p, self.last_turning_ang.p) / FrameTime()
+			end
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff_y = ang_difference_y
+
+			return self:NumberOperator(ang_difference_y, pitch_amount)
+		end,
+		nice = function(self, ent, pitch_amount, absolute)
+			if self.turning_ang_diff_y == nil then return "" end
+			return "is_turning_yaw {" ..  math.Round(self.turning_ang_diff_y,2) .. " | " .. pitch_amount .. "}"
+		end
+	},
+	is_turning_yaw = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on yaw.",
+		arguments = {{yaw_amount = "number"}, {absolute = "boolean"}},
+		callback = function(self, ent, yaw_amount, absolute)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			local ang_difference_x = 0
+			if absolute then
+				ang_difference_x = math.abs(math.AngleDifference(ang.y, self.last_turning_ang.y)) / FrameTime()
+			else
+				ang_difference_x = math.AngleDifference(ang.y, self.last_turning_ang.y) / FrameTime()
+			end
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff_x = ang_difference_x
+
+			return self:NumberOperator(ang_difference_x, yaw_amount)
+		end,
+		nice = function(self, ent, yaw_amount, absolute)
+			if self.turning_ang_diff_x == nil then return "" end
+			return "is_turning_yaw {" ..  math.Round(self.turning_ang_diff_x,2) .. " | " .. yaw_amount .. "}"
+		end
+	},
+	is_turning_xy = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on pitch or yaw. there are separate thresholds for each component",
+		arguments = {{pitch_amount = "number"}, {yaw_amount = "number"}, {absolute = "boolean"}},
+		callback = function(self, ent, pitch_amount, yaw_amount, absolute)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			local ang_difference_x = 0
+			local ang_difference_y = math.abs(ang.p - self.last_turning_ang.p) / FrameTime()
+
+			if absolute then
+				ang_difference_x = math.abs(math.AngleDifference(ang.y, self.last_turning_ang.y)) / FrameTime()
+			else
+				ang_difference_x = math.AngleDifference(ang.y, self.last_turning_ang.y) / FrameTime()
+			end
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff_x = ang_difference_x
+			self.turning_ang_diff_y = ang_difference_y
+
+			return self:NumberOperator(ang_difference_x, yaw_amount) or self:NumberOperator(ang_difference_y, pitch_amount)
+		end,
+		nice = function(self, ent, pitch_amount, yaw_amount)
+			if self.turning_ang_diff_x == nil or self.turning_ang_diff_y == nil then return "" end
+			return "is_turning_xy {" ..  math.Round(self.turning_ang_diff_x,2) .. ", " .. math.Round(self.turning_ang_diff_y,2) .. "} | {" .. yaw_amount .. ", " .. pitch_amount .. "}"
+		end
+	},
+
 	is_under_water = {
 		operator_type = "number", preferred_operator = "above",
 		tutorial_explanation = "is_under_water activates when you're under a certain level of water.\nas you get deeper, the number is higher.\n0 is dry\n1 is slightly submerged (at least to the feet)\n2 is mostly submerged (at least to the waist)\n3 is completely submerged",
