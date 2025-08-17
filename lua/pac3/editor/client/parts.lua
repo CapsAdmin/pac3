@@ -6,7 +6,7 @@ pace.BulkSelectList = {}
 pace.BulkSelectUIDs = {}
 pace.BulkSelectClipboard = {}
 local refresh_halo_hook = true
-pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables", "arraying_menu", "criteria_process", "bulk_morph", "view_goto", "view_lockon"}
+pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables", "arraying_menu", "criteria_process", "bulk_morph", "view_goto", "view_lockon", "rename", "showhide", "notes"}
 
 pace.operations_default = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "bulk_select", "bulk_apply_properties", "spacer", "save", "load", "spacer", "remove"}
 pace.operations_legacy = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "save", "load", "spacer", "remove"}
