@@ -317,12 +317,11 @@ end
 
 function PART:GetOrFindCachedPart(uid_or_name)
 	local part = nil
-	local existing_part = self.found_cached_parts[uid_or_name]
-	if existing_part then
-		if existing_part ~= NULL and existing_part:IsValid() then
-			return existing_part
-		end
-	end
+	self.erroring_cached_parts = {}
+	self.found_cached_parts = self.found_cached_parts or {}
+	if self.found_cached_parts[uid_or_name] then self.erroring_cached_parts[uid_or_name] = nil return self.found_cached_parts[uid_or_name] end
+	if self.erroring_cached_parts[uid_or_name] then return end
+	if self.bad_uid_search and self.bad_uid_search > 250 then return end
 
 	local owner = self:GetPlayerOwner()
 	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
@@ -332,7 +331,14 @@ function PART:GetOrFindCachedPart(uid_or_name)
 		self.found_cached_parts[uid_or_name] = part
 		return part
 	end
-	if part:IsValid() then
+	if not part:IsValid() then
+		self.erroring_cached_parts[uid_or_name] = true
+		self.bad_uid_search = self.bad_uid_search or 0
+		self.bad_uid_search = self.bad_uid_search + 1
+		if self:GetPlayerOwner() == LocalPlayer() then
+			pace.FlashNotification("performance warning! " .. tostring(self) .. " keeps searching for parts not finding anything! " .. tostring(uid_or_name) .. " may be unused!")
+		end
+	else
 		self.found_cached_parts[uid_or_name] = part
 		return part
 	end
@@ -2893,7 +2899,7 @@ PART.OldEvents = {
 			local true_count = 0
 			for i,uid in ipairs(uid_splits) do
 				local part = self:GetOrFindCachedPart(uid)
-				if part:IsValid() then
+				if IsValid(part) then
 					local raw = part.raw_event_condition
 					local b = false
 					if ignore_inverts then
