@@ -122,7 +122,7 @@ function PART:GetOrFindCachedPart(uid_or_name)
 		self.erroring_cached_parts[uid_or_name] = true
 		self.bad_uid_search = self.bad_uid_search or 0
 		self.bad_uid_search = self.bad_uid_search + 1
-		if self:GetPlayerOwner() == LocalPlayer() then
+		if self:GetPlayerOwner() == LocalPlayer() and not pace.still_loading_wearing then
 			pace.FlashNotification("performance warning! " .. tostring(self) .. " keeps searching for parts not finding anything! " .. tostring(uid_or_name) .. " may be unused!")
 		end
 	else
