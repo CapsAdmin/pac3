@@ -145,6 +145,7 @@ if SERVER then
 	local calcview_consents = {}
 	local active_force_ids = {}
 	local active_grabbed_ents = {}
+	local active_dots = {}
 
 
 	local friendly_NPC_preferences = {}
@@ -862,6 +863,19 @@ if SERVER then
 		end
 	end)
 
+	gameevent.Listen("entity_killed")
+	hook.Add( "entity_killed", "entity_killed_example", function( data )
+		local victim_index = data.entindex_killed		// Same as Victim:EntIndex() / the entity / player victim
+		local ent = Entity(victim_index)
+		if ent:IsValid() then
+			if active_dots[ent] then
+				for timer_entid,_ in pairs(active_dots[ent]) do
+					timer.Remove(timer_entid)
+				end
+			end
+		end
+	end)
+
 	local function MergeTargetsByID(tbl1, tbl2)
 		for i,v in ipairs(tbl2) do
 			tbl1[v:EntIndex()] = v
@@ -1210,18 +1224,22 @@ if SERVER then
 					ply_prog_count = ply_prog_count + 1
 				else
 					if tbl.DOTMode then
+						active_dots[ent] = active_dots[ent] or {}
 						local counts = tbl.NoInitialDOT and tbl.DOTCount or tbl.DOTCount-1
 						local timer_entid = tbl.UniqueID .. "_" .. ent:GetClass() .. "_" .. ent:EntIndex()
 						if counts <= 0 then --nuh uh, timer 0 means infinite repeat
 							timer.Remove(timer_entid)
+							active_dots[ent][timer_entid] = nil
 						else
 							if timer.Exists(timer_entid) then
 								timer.Adjust(tbl.UniqueID, tbl.DOTTime, counts)
+								active_dots[ent][timer_entid] = tbl
 							else
 								timer.Create(timer_entid, tbl.DOTTime, counts, function()
 									if not IsValid(ent) then timer.Remove(timer_entid) return end
 									DoDamage(ent)
 								end)
+								active_dots[ent][timer_entid] = tbl
 							end
 						end
 						
