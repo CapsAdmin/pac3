@@ -645,6 +645,7 @@ function pac.EnablePartsByClass(classname, enable)
 	end
 end
 
+local known_special_link_parts = {}
 function pac.LinkSpecialTrackedPartsForEvent(part, ply)
 	part.erroring_cached_parts = {}
 	part.found_cached_parts = {}
@@ -654,10 +655,26 @@ function pac.LinkSpecialTrackedPartsForEvent(part, ply)
 		["damage_zone"] = true,
 		["lock"] = true
 	}
+	known_special_link_parts[ply] = known_special_link_parts[ply] or {}
+	known_special_link_parts[ply][part] = part.specialtrackedparts
 	for _,part2 in pairs(all_parts) do
 		if ply == part2:GetPlayerOwner() and tracked_classes[part2.ClassName] then
 			table.insert(part.specialtrackedparts,part2)
 		end
+	end
+	known_special_link_parts[ply][part] = part.specialtrackedparts
+end
+function pac.InsertSpecialTrackedPart(ply, append_part, remove)
+	if append_part then
+		if known_special_link_parts[ply] then
+			for part,tbl in pairs(known_special_link_parts[ply]) do
+				if remove then table.RemoveByValue(part.specialtrackedparts, append_part) continue end
+				if part:IsValid() then
+					table.insert(part.specialtrackedparts, append_part)
+				end
+			end
+		end
+		return
 	end
 end
 

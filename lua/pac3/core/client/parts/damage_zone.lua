@@ -998,6 +998,8 @@ function PART:OnRemove()
 		pac.RemoveHook(v, "pace_draw_hitbox")
 	end
 	self:ClearHitMarkers()
+	--remove itself
+	pac.InsertSpecialTrackedPart(self:GetPlayerOwner(), self, true)
 end
 
 local previousRenderingHook
@@ -1295,6 +1297,7 @@ function PART:Initialize()
 		end
 	end)
 
+	pac.InsertSpecialTrackedPart(self:GetPlayerOwner(), self)
 end
 
 function PART:SetRadius(val)

@@ -478,6 +478,7 @@ function PART:reset_ent_ang()
 end
 
 function PART:OnRemove()
+	pac.InsertSpecialTrackedPart(self:GetPlayerOwner(), self, true)
 end
 
 function PART:DecideTarget()
@@ -595,6 +596,7 @@ function PART:Initialize()
 		end
 	end
 	if not convar_lock:GetBool() then self:SetError("lock parts are disabled on this server!") end
+	pac.InsertSpecialTrackedPart(self:GetPlayerOwner(), self)
 end
 
 
