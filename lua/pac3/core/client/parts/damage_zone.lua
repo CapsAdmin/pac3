@@ -821,6 +821,7 @@ net.Receive("pac_hit_results", function(len)
 			local cs_ent = false
 			if not self.AttachPartsToTargetEntity then
 				ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
+				ent.is_pac_hitmarker = true
 				cs_ent = true
 				ent:SetNoDraw(true)
 				ent:SetPos(pos)
