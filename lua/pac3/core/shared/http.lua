@@ -106,6 +106,16 @@ function pac.getContentLength(url, cb, failcb)
 			if string.lower(key) == "content-length" then
 				length = tonumber(value)
 
+				--we started to get stuff like "7182199,0" from Google Drive, triggering the failstate because tonumber doesn't like varargs
+				if not length then
+					if string.find(value, ",") then
+						local args = string.Split(value, ",")
+						if args[1] then
+							length = tonumber(args[1])
+						end
+					end
+				end
+
 				if not length or math.floor(length) ~= length then
 					return failcb(string.format("malformed server reply with header content-length (got %q, expected valid integer number)", value), true)
 				end
