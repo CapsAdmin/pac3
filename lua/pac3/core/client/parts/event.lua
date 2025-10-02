@@ -317,12 +317,11 @@ end
 
 function PART:GetOrFindCachedPart(uid_or_name)
 	local part = nil
-	local existing_part = self.found_cached_parts[uid_or_name]
-	if existing_part then
-		if existing_part ~= NULL and existing_part:IsValid() then
-			return existing_part
-		end
-	end
+	self.erroring_cached_parts = {}
+	self.found_cached_parts = self.found_cached_parts or {}
+	if self.found_cached_parts[uid_or_name] then self.erroring_cached_parts[uid_or_name] = nil return self.found_cached_parts[uid_or_name] end
+	if self.erroring_cached_parts[uid_or_name] then return end
+	if self.bad_uid_search and self.bad_uid_search > 250 then return end
 
 	local owner = self:GetPlayerOwner()
 	part = pac.GetPartFromUniqueID(pac.Hash(owner), uid_or_name) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid_or_name)
@@ -332,7 +331,14 @@ function PART:GetOrFindCachedPart(uid_or_name)
 		self.found_cached_parts[uid_or_name] = part
 		return part
 	end
-	if part:IsValid() then
+	if not part:IsValid() then
+		self.erroring_cached_parts[uid_or_name] = true
+		self.bad_uid_search = self.bad_uid_search or 0
+		self.bad_uid_search = self.bad_uid_search + 1
+		if self:GetPlayerOwner() == LocalPlayer() and not pace.still_loading_wearing then
+			pace.FlashNotification("performance warning! " .. tostring(self) .. " keeps searching for parts not finding anything! " .. tostring(uid_or_name) .. " may be unused!")
+		end
+	else
 		self.found_cached_parts[uid_or_name] = part
 		return part
 	end
@@ -945,6 +951,113 @@ PART.OldEvents = {
 			ent = try_viewmodel(ent)
 			return self:NumberOperator(ent:GetVelocity():Length(), num)
 		end,
+	},
+
+	is_turning = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on pitch and yaw combined with pythagoras theorem as absolute terms. so it won't go into negatives",
+		arguments = {{amount = "number"}},
+		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			--pythagoras theorem
+			local ang_difference = math.sqrt(
+				math.AngleDifference(ang.p,self.last_turning_ang.p)^2 +
+				math.abs(math.AngleDifference(ang.y,self.last_turning_ang.y))^2
+			) / FrameTime()
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff = ang_difference
+
+			return self:NumberOperator(ang_difference, num)
+		end,
+		nice = function(self, ent, amount)
+			if self.turning_ang_diff == nil then return "" end
+			return "is_turning {" ..  math.Round(self.turning_ang_diff,2) .. " | " .. amount .. "}"
+		end
+	},
+	is_turning_pitch = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on pitch.",
+		arguments = {{pitch_amount = "number"}, {absolute = "boolean"}},
+		callback = function(self, ent, pitch_amount, absolute)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			local ang_difference_y = 0
+			if absolute then
+				ang_difference_y = math.abs(math.AngleDifference(ang.p, self.last_turning_ang.p)) / FrameTime()
+			else
+				ang_difference_y = math.AngleDifference(ang.p, self.last_turning_ang.p) / FrameTime()
+			end
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff_y = ang_difference_y
+
+			return self:NumberOperator(ang_difference_y, pitch_amount)
+		end,
+		nice = function(self, ent, pitch_amount, absolute)
+			if self.turning_ang_diff_y == nil then return "" end
+			return "is_turning_yaw {" ..  math.Round(self.turning_ang_diff_y,2) .. " | " .. pitch_amount .. "}"
+		end
+	},
+	is_turning_yaw = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on yaw.",
+		arguments = {{yaw_amount = "number"}, {absolute = "boolean"}},
+		callback = function(self, ent, yaw_amount, absolute)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			local ang_difference_x = 0
+			if absolute then
+				ang_difference_x = math.abs(math.AngleDifference(ang.y, self.last_turning_ang.y)) / FrameTime()
+			else
+				ang_difference_x = math.AngleDifference(ang.y, self.last_turning_ang.y) / FrameTime()
+			end
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff_x = ang_difference_x
+
+			return self:NumberOperator(ang_difference_x, yaw_amount)
+		end,
+		nice = function(self, ent, yaw_amount, absolute)
+			if self.turning_ang_diff_x == nil then return "" end
+			return "is_turning_yaw {" ..  math.Round(self.turning_ang_diff_x,2) .. " | " .. yaw_amount .. "}"
+		end
+	},
+	is_turning_xy = {
+		operator_type = "number", preferred_operator = "above",
+		tutorial_explanation = "checks eye angle movements on pitch or yaw. there are separate thresholds for each component",
+		arguments = {{pitch_amount = "number"}, {yaw_amount = "number"}, {absolute = "boolean"}},
+		callback = function(self, ent, pitch_amount, yaw_amount, absolute)
+			ent = try_viewmodel(ent)
+			local ang = ent:EyeAngles()
+			self.last_turning_ang = self.last_turning_ang or ang
+
+			local ang_difference_x = 0
+			local ang_difference_y = math.abs(ang.p - self.last_turning_ang.p) / FrameTime()
+
+			if absolute then
+				ang_difference_x = math.abs(math.AngleDifference(ang.y, self.last_turning_ang.y)) / FrameTime()
+			else
+				ang_difference_x = math.AngleDifference(ang.y, self.last_turning_ang.y) / FrameTime()
+			end
+
+			self.last_turning_ang = ang
+			self.turning_ang_diff_x = ang_difference_x
+			self.turning_ang_diff_y = ang_difference_y
+
+			return self:NumberOperator(ang_difference_x, yaw_amount) or self:NumberOperator(ang_difference_y, pitch_amount)
+		end,
+		nice = function(self, ent, pitch_amount, yaw_amount)
+			if self.turning_ang_diff_x == nil or self.turning_ang_diff_y == nil then return "" end
+			return "is_turning_xy {" ..  math.Round(self.turning_ang_diff_x,2) .. ", " .. math.Round(self.turning_ang_diff_y,2) .. "} | {" .. yaw_amount .. ", " .. pitch_amount .. "}"
+		end
 	},
 
 	is_under_water = {
@@ -2786,7 +2899,7 @@ PART.OldEvents = {
 			local true_count = 0
 			for i,uid in ipairs(uid_splits) do
 				local part = self:GetOrFindCachedPart(uid)
-				if part:IsValid() then
+				if IsValid(part) then
 					local raw = part.raw_event_condition
 					local b = false
 					if ignore_inverts then
@@ -2898,8 +3011,9 @@ PART.OldEvents = {
 		tutorial = "activates when the local player has the steamID specified",
 		arguments = {{find = "string"}, {include_owner = "boolean"}},
 		callback = function(self, ent, find, include_owner)
-			if include_owner then
-				find = find .. ";" .. self:GetOwner():SteamID()
+			local owner = self:GetPlayerOwner()
+			if include_owner and owner:IsValid() then
+				find = find .. ";" .. owner:SteamID()
 			end
 
 			return self:StringOperator(pac.LocalPlayer:SteamID(), find)
@@ -3496,7 +3610,7 @@ function PART:GetNiceName()
 
 	if not PART.Events[event_name] then return "unknown event" end
 
-	return self:GetTargetingModePrefix() .. PART.Events[event_name]:GetNiceName(self, get_owner(self))
+	return self:GetTargetingModePrefix() .. (PART.Events[event_name]:GetNiceName(self, get_owner(self)) or "")
 end
 
 local function is_hidden_by_something_else(part, ignored_part)

@@ -75,7 +75,7 @@ end
 function PART:SetAppendedNumber(val)
 	if self.AppendedNumber ~= val then
 		self.AppendedNumber = val
-		if self:GetPlayerOwner() == pac.LocalPlayer and self.DynamicMode then
+		if self:GetPlayerOwner() == pac.LocalPlayer and self.DynamicMode and not self:IsHidden() then
 			self:Execute()
 		end
 	end

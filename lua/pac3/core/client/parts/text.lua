@@ -190,6 +190,13 @@ BUILDER:StartStorableVars()
 		:GetSet("VectorBrackets", "()")
 		:GetSet("VectorSeparator", ",")
 		:GetSet("UseBracketsOnNonVectors", false)
+		:GetSet("ForceNewline", false, {description = "manually draw newlines"})
+		:GetSet("LineSpacing", 1)
+
+	:SetPropertyGroup("wrap")
+		:GetSet("Wrap", false, {description = "force newline if text exceeds set width or there is a newline character"})
+		:GetSet("WrapWidth", 500, {editor_round = true, editor_onchange = function(self, val) return math.floor(val) end, description = "text size is dependent on font. for the 3D2D text, size doesn't matter"})
+		:GetSet("WrapByWords", false, {description = "split by spaces after splitting by newline characters"})
 
 	:SetPropertyGroup("data source")
 		:GetSet("TextOverride", "Text", {enums = {
@@ -389,12 +396,13 @@ end
 --before using a font, we need to check if it exists
 --font creation time should mark them
 function PART:SetFont(str)
+	self.request_line_recalculation = true
 	self.Font = str
 	self:SetError()
 	self:CheckFont()
 end
 
- 
+
 local lastfontcreationtime = 0
 function PART:CheckFont()
 	if self.CreateCustomFont then
@@ -658,92 +666,139 @@ function PART:OnDraw()
 		DisplayText = string.Replace(DisplayText,"? ","?\n")
 	end
 
+	if self.Wrap or self.ForceNewline then
+		if (self.lines == nil) or (self.previous_str ~= DisplayText) or self.request_line_recalculation then
+			self.lines = self:WrapString(DisplayText, self.WrapWidth)
+		end
+	end
+
 	if DisplayText ~= "" then
 		local w, h = surface.GetTextSize(DisplayText)
 		if not w or not h then return end
 
 		if self.DrawMode == "DrawTextOutlined" then
-			cam_Start3D(EyePos(), EyeAngles())
-				cam_Start3D2D(pos, ang, self.Size)
-				local oldState = DisableClipping(true)
+			local y = 0
+			local function drawtext(str)
+				cam_Start3D(EyePos(), EyeAngles())
+					if self.IgnoreZ then cam.IgnoreZ(true) end
+					cam_Start3D2D(pos, ang, self.Size)
+					local oldState = DisableClipping(true)
+					
+					draw_SimpleTextOutlined(str, self.UsedFont, 0,y, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
+					render_CullMode(1) -- MATERIAL_CULLMODE_CW
 
-				draw_SimpleTextOutlined(DisplayText, self.UsedFont, 0,0, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
-				render_CullMode(1) -- MATERIAL_CULLMODE_CW
+					draw_SimpleTextOutlined(str, self.UsedFont, 0,y, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
+					render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 
-				draw_SimpleTextOutlined(DisplayText, self.UsedFont, 0,0, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
-				render_CullMode(0) -- MATERIAL_CULLMODE_CCW
+					DisableClipping(oldState)
+					cam_End3D2D()
+					cam.IgnoreZ(false)
+				cam_End3D()
+				cam_Start3D(EyePos(), EyeAngles())
+					if self.IgnoreZ then cam.IgnoreZ(true) end
+					cam_Start3D2D(pos, ang, self.Size)
+					local oldState = DisableClipping(true)
 
-				DisableClipping(oldState)
-				cam_End3D2D()
-			cam_End3D()
-			cam_Start3D(EyePos(), EyeAngles())
-				cam_Start3D2D(pos, ang, self.Size)
-				local oldState = DisableClipping(true)
+					draw.SimpleText(str, self.UsedFont, 0,y, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
+					render_CullMode(1) -- MATERIAL_CULLMODE_CW
 
-				draw.SimpleText(DisplayText, self.UsedFont, 0,0, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
-				render_CullMode(1) -- MATERIAL_CULLMODE_CW
+					draw.SimpleText(str, self.UsedFont, 0,y, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
+					render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 
-				draw.SimpleText(DisplayText, self.UsedFont, 0,0, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
-				render_CullMode(0) -- MATERIAL_CULLMODE_CCW
+					DisableClipping(oldState)
+					cam_End3D2D()
+					cam.IgnoreZ(false)
+				cam_End3D()
+				if self.IgnoreZ then cam.IgnoreZ(false) end
+			end
 
-				DisableClipping(oldState)
-				cam_End3D2D()
-			cam_End3D()
+			if not self.Wrap and not self.ForceNewline then
+				drawtext(DisplayText)
+			else
+				if (self.lines == nil) or (self.previous_str ~= DisplayText) then
+					self.lines = self:WrapString(DisplayText, self.WrapWidth)
+				end
+				for i, str in ipairs(self.lines) do
+					drawtext(str)
+					local w, h = surface.GetTextSize(str)
+					if h then y = y + self.LineSpacing*h end
+				end
+			end
+			
 		elseif self.DrawMode == "SurfaceText" or self.DrawMode == "DrawTextOutlined2D" or self.DrawMode == "DrawDrawText" then
 			pac.AddHook("HUDPaint", "pac.DrawText"..self.UniqueID, function()
 				surface.SetFont(self.UsedFont)
 
 				surface.SetTextColor(self.Color.r, self.Color.g, self.Color.b, 255*self.Alpha)
 
-				
+
 				local pos2d = self:GetDrawPosition():ToScreen()
 				local pos2d_original = table.Copy(pos2d)
-				local w, h = surface.GetTextSize(DisplayText)
-				if not h or not w then return end
 
-				if self.HorizontalTextAlign == 0 then --left
-					pos2d.x = pos2d.x
-				elseif self.HorizontalTextAlign == 1 then --center
-					pos2d.x = pos2d.x - w/2
-				elseif self.HorizontalTextAlign == 2 then --right
-					pos2d.x = pos2d.x - w
+				local function drawtext(str)
+					local w, h = surface.GetTextSize(str)
+					if not h or not w then return end
+
+					local X = pos2d.x
+					local Y = pos2d.y
+
+					if self.HorizontalTextAlign == 0 then --left
+						X = pos2d.x
+					elseif self.HorizontalTextAlign == 1 then --center
+						X = pos2d.x - w/2
+					elseif self.HorizontalTextAlign == 2 then --right
+						X = pos2d.x - w
+					end
+
+					if self.VerticalTextAlign == 1 then --center
+						Y = pos2d.y - h/2
+					elseif self.VerticalTextAlign == 3 then --top
+						Y = pos2d.y
+					elseif self.VerticalTextAlign == 4 then --bottom
+						Y = pos2d.y - h
+					end
+
+					surface.SetTextPos(X, Y)
+					local dist = (pac.EyePos - self:GetWorldPosition()):Length()
+
+					--clamp down the part's requested values with the viewer client's cvar
+					local fadestartdist = math.max(draw_distance:GetInt() - 200,0)
+					local fadeenddist = math.max(draw_distance:GetInt(),0)
+
+					if dist < fadeenddist then
+						if dist < fadestartdist then
+							if self.DrawMode == "DrawTextOutlined2D" then
+								draw.SimpleTextOutlined(str, self.UsedFont, X, Y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha))
+							elseif self.DrawMode == "SurfaceText" then
+								surface.DrawText(str, self.ForceAdditive)
+							elseif self.DrawMode == "DrawDrawText" then
+								draw.DrawText(str, self.UsedFont, pos2d_original.x, Y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha), self.HorizontalTextAlign)
+							end
+						else
+							local fade = math.pow(math.Clamp(1 - (dist-fadestartdist)/math.max(fadeenddist - fadestartdist,0.1),0,1),3)
+							if self.DrawMode == "DrawTextOutlined2D" then
+								draw.SimpleTextOutlined(str, self.UsedFont, X, Y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha*fade), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha*fade))
+							elseif self.DrawMode == "SurfaceText" then
+								surface.SetTextColor(self.Color.r * fade, self.Color.g * fade, self.Color.b * fade)
+								surface.DrawText(str, true)
+							elseif self.DrawMode == "DrawDrawText" then
+								draw.DrawText(str, self.UsedFont, X, Y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha*fade), TEXT_ALIGN_LEFT)
+							end
+
+						end
+					end
 				end
 
-				if self.VerticalTextAlign == 1 then --center
-					pos2d.y = pos2d.y - h/2
-				elseif self.VerticalTextAlign == 3 then --top
-					pos2d.y = pos2d.y
-				elseif self.VerticalTextAlign == 4 then --bottom
-					pos2d.y = pos2d.y - h
-				end
-
-				surface.SetTextPos(pos2d.x, pos2d.y)
-				local dist = (pac.EyePos - self:GetWorldPosition()):Length()
-
-				--clamp down the part's requested values with the viewer client's cvar
-				local fadestartdist = math.max(draw_distance:GetInt() - 200,0)
-				local fadeenddist = math.max(draw_distance:GetInt(),0)
-
-				if dist < fadeenddist then
-					if dist < fadestartdist then
-						if self.DrawMode == "DrawTextOutlined2D" then
-							draw.SimpleTextOutlined(DisplayText, self.UsedFont, pos2d.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha))
-						elseif self.DrawMode == "SurfaceText" then
-							surface.DrawText(DisplayText, self.ForceAdditive)
-						elseif self.DrawMode == "DrawDrawText" then
-							draw.DrawText(DisplayText, self.UsedFont, pos2d_original.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha), self.HorizontalTextAlign)
-						end
-					else
-						local fade = math.pow(math.Clamp(1 - (dist-fadestartdist)/math.max(fadeenddist - fadestartdist,0.1),0,1),3)
-						if self.DrawMode == "DrawTextOutlined2D" then
-							draw.SimpleTextOutlined(DisplayText, self.UsedFont, pos2d.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha*fade), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha*fade))
-						elseif self.DrawMode == "SurfaceText" then
-							surface.SetTextColor(self.Color.r * fade, self.Color.g * fade, self.Color.b * fade)
-							surface.DrawText(DisplayText, true)
-						elseif self.DrawMode == "DrawDrawText" then
-							draw.DrawText(DisplayText, self.UsedFont, pos2d.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha*fade), TEXT_ALIGN_LEFT)
-						end
-
+				if not self.Wrap and not self.ForceNewline then
+					drawtext(DisplayText)
+				else
+					if (self.lines == nil) or (self.previous_str ~= DisplayText) then
+						self.lines = self:WrapString(DisplayText, self.WrapWidth)
+					end
+					for i, str in ipairs(self.lines) do
+						drawtext(str)
+						local w, h = surface.GetTextSize(str)
+						if h then pos2d.y = pos2d.y + self.LineSpacing*h end
 					end
 				end
 			end)
@@ -752,9 +807,12 @@ function PART:OnDraw()
 			pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID)
 		end
 	else pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID) end
+	self.previous_str = DisplayText
 end
 
 function PART:Initialize()
+	self.lines = nil
+	self.previous_str = ""
 	if self.Font == "default" then self.Font = "DermaDefault" end
 	self:TryCreateFont()
 	self.anotherwarning = false
@@ -820,7 +878,120 @@ function PART:OnRemove()
 	end
 end
 function PART:SetText(str)
+	self.request_line_recalculation = true
 	self.Text = str
+end
+
+function PART:SetWrapWidth(num)
+	self.WrapWidth = math.Round(num,0)
+	self.request_line_recalculation = true
+end
+function PART:SetWrapByWords(b)
+	self.WrapByWords = b
+	self.request_line_recalculation = true
+end
+function PART:SetForceNewline(b)
+	self.ForceNewline = b
+	self.request_line_recalculation = true
+end
+
+local font = ""
+local wrap_calculation_time = 0
+local frame_reset = 0
+function PART:WrapString(str, max_w, font_override)
+	local stime = SysTime()
+	if self.UsedFont == "" then self.previous_str = nil return {} end
+	if not self.ForceNewline and #str > 5000 then self.previous_str = nil return {} end
+	if stime < wrap_calculation_time then return self.lines or {} end --rate limit
+	if font_override then
+		surface.SetFont(font_override)
+	else
+		surface.SetFont(self.UsedFont)
+	end
+	
+	local lines = string.Split(str, "\n")
+	local lines_pushed = {}
+
+	--newline first pass
+	for i,v in ipairs(lines) do
+		local words = {}
+		if self.Wrap and self.WrapByWords then
+			words = string.Split(v, " ")
+		else
+			words = {v}
+		end
+
+		if self.Wrap then
+			if self.WrapByWords then
+				local guard = 0
+				local remain_tbl = words
+				local offset = 0
+
+				while (#remain_tbl > 0 and guard < 200) do
+					local remain_tbl_temp = {}
+					for i2=#words,1,-1 do --longest to shortest possible sentence
+						local sentence = {}
+						--i2 is the decreasing limit
+						for i3=offset,#words,1 do
+							--i3 is the increasing counter
+							if i3 < i2 then
+								table.insert(sentence,words[i3])
+							else
+								table.insert(remain_tbl_temp,words[i3])
+							end
+						end
+						local concatenated = table.concat(sentence, " ")
+						local w,_ = surface.GetTextSize(concatenated)
+						if w > max_w then
+							continue
+						else
+							offset = i2
+							table.insert(lines_pushed, concatenated)
+							remain_tbl = remain_tbl_temp
+							break
+						end
+					end
+					if #remain_tbl_temp == 1 then lines_pushed[#lines_pushed] = lines_pushed[#lines_pushed] .. " " .. remain_tbl_temp[1] break end
+					
+					guard = guard + 1
+				end
+			else
+				for i2, word in ipairs(words) do
+					local word = word
+					local remain = word
+					local w,_ = surface.GetTextSize(word)
+
+					if w > max_w then --overflow
+						local guard = 0
+						while (#remain > 0 and guard < 15) do
+							for c=#word,1,-1 do
+								local split_word = string.sub(word,1,c)
+								local w2,_ = surface.GetTextSize(split_word)
+								if w2 > max_w then
+									continue
+								else
+									table.insert(lines_pushed, split_word)
+									remain = string.sub(word,c+1,#word)
+									word = remain
+									break
+								end
+							end
+							guard = guard + 1
+						end
+					else
+						table.insert(lines_pushed, remain)
+					end
+				end
+			end
+		else
+			table.insert(lines_pushed, v)
+		end
+	end
+	local delta = SysTime() - stime
+	
+	if game.SinglePlayer() then wrap_calculation_time = SysTime() else wrap_calculation_time = SysTime() + 0.5 end
+	self.request_line_recalculation = false
+	return lines_pushed
 end
 
 BUILDER:Register()

@@ -22,6 +22,7 @@ local remember_divider = CreateConVar("pac_editor_remember_divider_height", "0",
 local remember_width = CreateConVar("pac_editor_remember_width", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's width")
 
 function pace.RefreshZoomBounds(zoomslider)
+	if not IsValid(zoomslider) then return end
 	if pace.Editor then
 		if not zoomslider then
 			zoomslider = pace.Editor.zoomslider

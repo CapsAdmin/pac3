@@ -72,6 +72,9 @@ end
 
 function PART:Initialize()
 	self:SetSpritePath(self.SpritePath)
+	if not IsValid(self.Materialm) then
+		timer.Simple(0, function() self:SetSpritePath(self.SpritePath) end)
+	end
 end
 
 function PART:SetSpritePath(var)

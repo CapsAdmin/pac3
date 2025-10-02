@@ -448,7 +448,24 @@ local function populate_part(menu, part, override_part, clear)
 end
 
 local function populate_parts(menu, tbl, override_part, clear)
-	for key, data in pairs(tbl) do
+	local files = {}
+	local folders = {}
+	local sorted_tbl = {}
+	for k,v in pairs(tbl) do
+		if isstring(k) then
+			folders[k] = v
+		elseif isnumber(k) then
+			files[k] = v
+		end
+	end
+
+	for k,v in ipairs(files) do table.insert(sorted_tbl, {k,v}) end
+	for k,v in SortedPairs(folders) do table.insert(sorted_tbl, {k,v}) end
+
+	--for key, data in pairs(tbl) do
+	for i, tab in ipairs(sorted_tbl) do
+		local key = tab[1]
+		local data = tab[2]
 		if not data.Path then
 			local menu, pnl = menu:AddSubMenu(key, function() end, data)
 			pnl:SetImage(pace.MiscIcons.load)
@@ -672,7 +689,24 @@ local function populate_parts(menu, tbl, dir, override_part)
 	:SetImage(pace.MiscIcons.copy)
 
 	menu:AddSpacer()
-	for key, data in pairs(tbl) do
+	local files = {}
+	local folders = {}
+	local sorted_tbl = {}
+	for k,v in pairs(tbl) do
+		if isstring(k) then
+			folders[k] = v
+		elseif isnumber(k) then
+			files[k] = v
+		end
+	end
+
+	for k,v in ipairs(files) do table.insert(sorted_tbl, {k,v}) end
+	for k,v in SortedPairs(folders) do table.insert(sorted_tbl, {k,v}) end
+
+	--for key, data in pairs(tbl) do
+	for i, tab in ipairs(sorted_tbl) do
+		local key = tab[1]
+		local data = tab[2]
 		if not data.Path then
 			local menu, pnl = menu:AddSubMenu(key, function() end, data)
 			pnl:SetImage(pace.MiscIcons.load)

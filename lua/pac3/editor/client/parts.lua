@@ -6,7 +6,7 @@ pace.BulkSelectList = {}
 pace.BulkSelectUIDs = {}
 pace.BulkSelectClipboard = {}
 local refresh_halo_hook = true
-pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables", "arraying_menu", "criteria_process", "bulk_morph", "view_goto", "view_lockon"}
+pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables", "arraying_menu", "criteria_process", "bulk_morph", "view_goto", "view_lockon", "rename", "showhide", "notes"}
 
 pace.operations_default = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "bulk_select", "bulk_apply_properties", "spacer", "save", "load", "spacer", "remove"}
 pace.operations_legacy = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "save", "load", "spacer", "remove"}
@@ -16,6 +16,40 @@ pace.operations_bulk_poweruser = {"bulk_select", "clone", "registered_parts", "s
 
 if not file.Exists("pac3_config/pac_editor_partmenu_layouts.txt", "DATA") then
 	pace.operations_order = pace.operations_default
+end
+
+pace.partmenu_action_images = {
+	save = pace.MiscIcons.save,
+	load = pace.MiscIcons.load,
+	wear = pace.MiscIcons.wear,
+	remove = pace.MiscIcons.clear,
+	copy = pace.MiscIcons.copy,
+	paste = pace.MiscIcons.paste,
+	cut = "icon16/cut.png",
+	paste_properties = pace.MiscIcons.replace,
+	clone = pace.MiscIcons.clone,
+	partsize_info = "icon16/drive.png",
+	bulk_apply_properties= "icon16/application_form.png",
+	bulk_select = "icon16/table_multiple.png",
+	spacer = "icon16/application_split.png",
+	hide_editor = "icon16/application_delete.png",
+	expand_all = "icon16/arrow_down.png",
+	collapse_all = "icon16/arrow_in.png",
+	copy_uid = pace.MiscIcons.uniqueid,
+	help_part_info = "icon16/information.png",
+	reorder_movables = "icon16/application_double.png",
+	criteria_process = "icon16/text_list_numbers.png",
+	bulk_morph = "icon16/chart_line.png",
+	arraying_menu = "icon16/shape_group.png",
+	view_lockon = "icon16/zoom.png",
+	view_goto = "icon16/arrow_turn_right.png",
+	rename = "icon16/text_align_center.png",
+	showhide = "icon16/clock_red.png",
+	notes = "icon16/page_white_edit.png",
+}
+
+function pace.GetPartMenuOptionImage(str)
+	return pace.partmenu_action_images[str] or "icon16/world.png"
 end
 
 local hover_color = CreateConVar( "pac_hover_color", "255 255 255", FCVAR_ARCHIVE, "R G B value of the highlighting when hovering over pac3 parts, there are also special options: none, ocean, funky, rave, rainbow")
@@ -2690,9 +2724,8 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 
 		local submat_toggler_proxy
 		local submat_toggler_event
-		local submaterials = {}
+		local submaterials = string.Split(obj:GetMaterials(),";")
 		for i,mat2 in ipairs(mats) do
-			table.insert(submaterials,"")
 			local kw = string.GetFileFromFilename(mat2)
 			AddOptionRightClickable(kw, function()
 				if not submat_toggler_proxy then
@@ -2711,7 +2744,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				else
 					obj:SetMaterials(table.concat(submaterials, ";"))
 				end
-				
+
 			end, submat_togglers):SetIcon("icon16/paintcan.png")
 		end
 
@@ -3770,7 +3803,7 @@ end)]])
 			local group = pac.CreatePart("group")
 			group:SetParent(obj.Parent)
 			obj:SetParent(group)
-			local axismodel = pac.CreatePart("model2") axismodel:SetParent(obj) newnode:SetModel("models/editor/axis_helper_thick.mdl") newnode:SetSize(5)
+			local axismodel = pac.CreatePart("model2") axismodel:SetParent(obj) axismodel:SetModel("models/editor/axis_helper_thick.mdl") axismodel:SetSize(5)
 			for i=1,5,1 do
 				local newnode = pac.CreatePart("model2") newnode:SetParent(obj.Parent) newnode:SetModel("models/empty.mdl")
 				newnode:SetName("test_node_"..i)
@@ -4525,6 +4558,27 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 			end
 		end
 
+	elseif option_name == "rename" then
+		menu:AddOption(L"rename", function()
+			local old_func = pace.doubleclickfunc
+			RunConsoleCommand("pac_doubleclick_action", "rename")
+			timer.Simple(0, function() obj:OnDoubleClickBaseClass() end)
+			timer.Simple(0.2, function() RunConsoleCommand("pac_doubleclick_action", old_func) end)
+		end):SetIcon("icon16/text_align_center.png")
+	elseif option_name == "showhide" then
+		menu:AddOption(L"show/hide", function()
+			local old_func = pace.doubleclickfunc
+			RunConsoleCommand("pac_doubleclick_action", "showhide")
+			timer.Simple(0, function() obj:OnDoubleClickBaseClass() end)
+			timer.Simple(0.2, function() RunConsoleCommand("pac_doubleclick_action", old_func) end)
+		end):SetIcon("icon16/clock_red.png")
+	elseif option_name == "notes" then
+		menu:AddOption(L"write notes", function()
+			local old_func = pace.doubleclickfunc
+			RunConsoleCommand("pac_doubleclick_action", "notes")
+			timer.Simple(0, function() obj:OnDoubleClickBaseClass() end)
+			timer.Simple(0.2, function() RunConsoleCommand("pac_doubleclick_action", old_func) end)
+		end):SetIcon("icon16/page_white_edit.png")
 	end
 
 end
