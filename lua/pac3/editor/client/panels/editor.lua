@@ -13,6 +13,8 @@ local BAR_SIZE = 17
 local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
+local pins = CreateClientConVar("pac_editor_pins", 1, true)
+local pins_button = CreateClientConVar("pac_editor_pins_show_button", 1, true)
 
 local zoom_persistent = CreateClientConVar("pac_zoom_persistent", 0, true, false, 'Keep zoom between sessions.')
 local zoom_mousewheel = CreateClientConVar("pac_zoom_mousewheel", 0, true, false, 'Enable zooming with mouse wheel.')
@@ -35,6 +37,28 @@ function pace.RefreshZoomBounds(zoomslider)
 			zoomslider:SetMax(pace.max_fov)
 			timer.Simple(0, function() zoomslider:SetValue(math.Clamp(pace.ViewFOV, 0, pace.max_fov)) end)
 		end
+	end
+end
+
+local function resize_properties(self)
+	local w = self:GetWide()
+	surface.SetFont(pace.CurrentFont)
+	local _,h = surface.GetTextSize("|")
+	local baseline = self.properties2.line_heights or 125
+	local total_h = ScrH() - self.div:GetTopHeight()
+	self.props_shared_pnl:SetSize(w, total_h)
+	if pins:GetBool() then
+		local baseline = self.properties2.line_heights or 125
+		baseline = baseline + self.font_h
+
+		self.properties_pnl_holder:SetPos(0,baseline + h)
+		self.properties2_pnl_holder:SetPos(0,self.font_h)
+	
+		self.properties_pnl_holder:SetSize(w - 4, total_h - baseline - 2*h - 22)
+		self.properties2_pnl_holder:SetSize(w - 4, baseline)
+	else
+		self.properties_pnl_holder:SetPos(0,0)
+		self.properties_pnl_holder:SetSize(w - 4, total_h - h - 22)
 	end
 end
 
@@ -62,8 +86,14 @@ function PANEL:Init()
 	self.treePanel = pace.CreatePanel("tree")
 	self:SetTop(self.treePanel)
 
-	local pnl = pace.CreatePanel("properties", div)
+	local props_shared_pnl = vgui.Create("DPanel", div)
+	self.props_shared_pnl = props_shared_pnl
+	local properties_pnl_holder = vgui.Create("DPanel", props_shared_pnl)
+	local pnl = pace.CreatePanel("properties", properties_pnl_holder)
+	pnl:Dock(FILL)
 	pace.properties = pnl
+	self.properties = pnl
+	self.properties_pnl_holder = properties_pnl_holder
 
 	self.exit_button = vgui.Create("DButton")
 	self.exit_button:SetText("")
@@ -202,7 +232,53 @@ function PANEL:Init()
 
 	self.btnClose.Paint = function() end
 
-	self:SetBottom(pnl)
+	self:SetBottom(props_shared_pnl)
+	local clr = self:GetSkin().control_color_active --Color(70,200,255)
+	local _,font_h = surface.GetTextSize("|")
+	self.font_h = font_h + 2
+	self.props_shared_pnl.Paint = function(self, w, h)
+		if not pins:GetBool() then return end
+		surface.SetFont(pace.CurrentFont)
+		local _,font_h = surface.GetTextSize("|")
+		self.font_h = font_h + 2
+	    draw.RoundedBox(2, 0, 0, w, font_h + 5, clr)
+		draw.SimpleText("pinned", pace.CurrentFont, 5, 0, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+	end
+	local properties2_pnl_holder = vgui.Create("DPanel", props_shared_pnl)
+	local pnl2 = pace.CreatePanel("properties", properties2_pnl_holder)
+	local collapse_pin_btn = vgui.Create("DButton", props_shared_pnl)
+	self.collapse_pin_btn = collapse_pin_btn
+	collapse_pin_btn:SetSize(self.font_h,self.font_h) collapse_pin_btn:SetImage("icon16/arrow_down.png") collapse_pin_btn:SetText("") collapse_pin_btn:SetTooltip("expand/collapse pinned properties")
+	function collapse_pin_btn:DoClick()
+		pins:SetBool(not pins:GetBool())
+		--notify once
+		if not self.clicked_once then pace.FlashNotification("you can hide the button by right clicking it") self.clicked_once = true end
+	end
+	function collapse_pin_btn:DoRightClick()
+		local menu = DermaMenu()
+		menu:SetPos(input.GetCursorPos())
+		menu:AddOption("disable the pins collapser button", function()
+			pins_button:SetBool(false)
+			pace.FlashNotification("to re-enable the button display, run pac_editor_pins_show_button 1")
+		end)
+		menu:AddOption("replace the pins collapser button with a keyboard shortcut", function()
+			pins_button:SetBool(false)
+			pace.OpenSettings("Editor menu Settings")
+			timer.Simple(0.5, function()
+				GetConVar("pac_editor_shortcuts_legacy_mode"):SetBool(true)
+				pace.shortcutaction_choices:ChooseOptionID(table.KeyFromValue(pace.PACActionShortcut_Dictionary, "toggle_pins"))
+				Derma_StringRequest("bind request", "Pick a bind for toggle_pins", "TAB", function(str) pace.AssignEditorShortcut("toggle_pins", {[1] = str}, 1) end)
+			end)
+		end)
+	end
+
+	pnl2:Dock(FILL)
+	pnl2.is_pins = true
+	self.collapse_pin_btn = collapse_pin_btn
+	pace.properties2 = pnl2
+	self.properties2 = pnl2
+	pnl.pins_counterpart = pnl2
+	self.properties2_pnl_holder = properties2_pnl_holder
 
 	self:SetCookieName("pac3_editor")
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
@@ -288,6 +364,29 @@ end
 function PANEL:Think(...)
 	if not self.okay then return end
 	DFrame.Think(self, ...)
+	
+	surface.SetFont(pace.CurrentFont)
+	local _,h = surface.GetTextSize("|")
+	if pins:GetBool() then
+		self.properties2_pnl_holder:Show()
+		self.properties2:KillFocus()
+
+		self.collapse_pin_btn:SetPos(self:GetWide() - self.font_h - 4, 0)
+		self.collapse_pin_btn:SetSize(self.font_h, self.font_h)
+		self.collapse_pin_btn:SetImage("icon16/arrow_down.png")
+	else
+		self.properties2_pnl_holder:Hide()
+
+		self.collapse_pin_btn:SetPos(self:GetWide() - self.font_h - 4, 0)
+		self.collapse_pin_btn:SetSize(self.font_h, self.font_h)
+		self.collapse_pin_btn:SetImage("icon16/arrow_up.png")
+	end
+	resize_properties(self)
+	if not pins_button:GetBool() then
+		self.collapse_pin_btn:Hide()
+	else
+		self.collapse_pin_btn:Show()
+	end
 
 	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
 		self:SetCursor("sizewe")
@@ -435,6 +534,7 @@ function PANEL:PerformLayout()
 			end
 		end
 	end
+	resize_properties(self)
 end
 
 function PANEL:SetTop(pnl)

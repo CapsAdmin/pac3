@@ -70,7 +70,8 @@ pace.PACActionShortcut_Dictionary = {
 	"ultra_cleanup",
 	"arraying_menu",
 	"bulk_morph",
-	"criteria_process"
+	"criteria_process",
+	"toggle_pins",
 }
 
 pace.PACActionShortcut_Default = {
@@ -545,8 +546,8 @@ function pace.DoShortcutFunc(action)
 	end
 	if action == "wear" then pace.Call("ShortcutWear") end
 
-	if action == "hide_editor" then pace.Call("ToggleFocus") pace.delaymovement = RealTime() pace.delaybulkselect = RealTime() end
-	if action == "hide_editor_visible" then pace.Call("ToggleFocus", true) end
+	if action == "hide_editor" and not (pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad) then pace.Call("ToggleFocus") pace.delaymovement = RealTime() pace.delaybulkselect = RealTime() end
+	if action == "hide_editor_visible" and not (pace.ActiveSpecialPanel and pace.ActiveSpecialPanel.luapad) then pace.Call("ToggleFocus", true) end
 	if action == "panic" then pac.Panic() end
 	if action == "restart" then RunConsoleCommand("pac_restart") end
 	if action == "collapse_all" then
@@ -798,6 +799,9 @@ function pace.DoShortcutFunc(action)
 		pace.PromptProcessPartsByCriteria(pace.current_part)
 	end
 
+	if action == "toggle_pins" then
+		GetConVar("pac_editor_pins"):SetBool(not GetConVar("pac_editor_pins"):GetBool())
+	end
 end
 
 pace.delaybulkselect = 0

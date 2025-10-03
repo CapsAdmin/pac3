@@ -5,6 +5,13 @@ local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_
 local extra_dynamic = CreateClientConVar("pac_special_property_update_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
 local special_property_text_color = CreateClientConVar("pac_special_property_text_color", "160 0 80", true, false, "R G B color of special property text\npac_special_property_text_color \"\" will make it not change the color\nSpecial contexts like proxies and hidden parts can show a different color to show that changes are happening in real time.")
 
+local pins = CreateClientConVar("pac_editor_pins", 0, true)
+cvars.AddChangeCallback("pac_editor_pins", function(cvar, old, new)
+	pace.PopulateProperties(pace.current_part)
+end, "pac_change_special_property_text_color")
+
+local line_height = 16
+
 pace.special_property_text_color = Color(160,0,80)
 if special_property_text_color:GetString() ~= "" then
 	local r,g,b = unpack(string.Split(special_property_text_color:GetString(), " "))
@@ -721,6 +728,9 @@ do -- container
 		do	--scroll to the property
 			local _,y = self:LocalToScreen(0,0)
 			local _,py = pace.properties:LocalToScreen(0,0)
+			if pace.pinned_properties_keyed[self.CurrentKey] then
+				_,py = pace.properties2:LocalToScreen(0,0)
+			end
 			local scry = pace.properties.scr:GetScroll()
 
 			if y > ScrH() then
@@ -773,6 +783,9 @@ do -- container
 
 	pace.RegisterPanel(PANEL)
 end
+
+pace.pinned_properties_keyed = {}
+pace.property_internals = {}
 
 do -- list
 	local PANEL = {}
@@ -989,6 +1002,8 @@ do -- list
 	end
 
 	function PANEL:AddKeyValue(key, var, pos, obj, udata, group)
+		line_height = self:GetItemHeight()
+		self.line_heights = self.line_heights + line_height
 		local btn = pace.CreatePanel("properties_label")
 			btn:SetTall(self:GetItemHeight())
 
@@ -1039,7 +1054,7 @@ do -- list
 					local goto_btn = vgui.Create("DButton", pnl)
 					goto_btn:SetText("")
 					goto_btn:SetTooltip("jump to...")
-					goto_btn:SetSize(self:GetItemHeight(), self:GetItemHeight())
+					goto_btn:SetSize(line_height / 1.5, line_height / 1.5)
 					goto_btn:Dock(RIGHT)
 					goto_btn:SetImage("icon16/arrow_turn_right.png")
 
@@ -1059,19 +1074,18 @@ do -- list
 				pace.current_part.hide_property_pnl = var
 			elseif key == "Model" then
 				local btn2 = vgui.Create("DImageButton", pnl)
-				btn2:SetSize(self:GetItemHeight(), self:GetItemHeight())
+				btn2:SetSize(line_height / 1.5, line_height / 1.5)
 				btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
 				btn2:SetTooltip("bookmarks")
 				btn2:SetImage("icon16/cart_go.png")
 				btn2.DoClick = function()
 					local menu = DermaMenu()
 					menu:SetPos(input.GetCursorPos())
-					menu:MakePopup()
 					populate_bookmarks(menu, "models", var)
 				end
 			elseif key == "Material" or key == "SpritePath" then
 				local btn2 = vgui.Create("DImageButton", pnl)
-				btn2:SetSize(self:GetItemHeight(), self:GetItemHeight())
+				btn2:SetSize(line_height / 1.5, line_height / 1.5)
 				btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
 				btn2:SetTooltip("bookmarks")
 				btn2:SetImage("icon16/cart_go.png")
@@ -1084,7 +1098,7 @@ do -- list
 			elseif string.find(pace.current_part.ClassName, "sound") then
 				if key == "Sound" or key == "Path" then
 					local btn2 = vgui.Create("DImageButton", pnl)
-					btn2:SetSize(self:GetItemHeight(), self:GetItemHeight())
+					btn2:SetSize(line_height / 1.5, line_height / 1.5)
 					btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
 					btn2:SetTooltip("bookmarks")
 					btn2:SetImage("icon16/cart_go.png")
@@ -1184,143 +1198,185 @@ do -- list
 	function PANEL:Populate(flat_list)
 		if pace.bypass_tree then return end
 		self:Clear()
+		self:InvalidateLayout()
 
+		if self.pins_counterpart then self.pins_counterpart:Clear() end
+		local class = pace.current_part.ClassName
+		if not pace.property_internals[class] then
+			pace.property_internals[class] = {}
+			for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
+				for pos, prop in ipairs(data.props) do
+					pace.property_internals[class][prop.key] = prop
+				end
+			end
+		end
+
+		local function populate(prop, pin)
+			local self = self
+			--redirect the populate to the pin panel
+			if pin then self = self.pins_counterpart end
+			if prop == nil then return end
+			if pace.current_part:GetProperty(prop.key) == nil then return end --I found it to happen with events' dynamic properties
+			local val = prop.get()
+			local T = type(val):lower()
+
+			if prop.udata and prop.udata.editor_panel then
+				T = prop.udata.editor_panel or T
+			elseif pace.PanelExists("properties_" .. prop.key:lower()) then
+				--is it code bloat to fix weird edge cases like bodygroups on specific models???
+				--idk but it's more egregious to allow errors just because of what bodygroups the model has
+				if prop.key:lower() ~= "container" then
+					T = prop.key:lower()
+				end
+			elseif not pace.PanelExists("properties_" .. T) then
+				T = "string"
+			end
+
+			if pin then
+				if pace.CollapsedProperties["pinned"] ~= nil and pace.CollapsedProperties["pinned"] then
+					goto CONTINUE
+				end
+			else
+				if pace.CollapsedProperties[prop.udata.group] ~= nil and pace.CollapsedProperties[prop.udata.group] then
+					goto CONTINUE
+				end
+			end
+			local pnl = pace.CreatePanel("properties_" .. T)
+
+			if pnl.PostInit then
+				pnl:PostInit()
+			end
+
+			if prop.udata and prop.udata.description then
+				pnl:SetTooltip(L(prop.udata.description))
+			end
+
+			local part = pace.current_part
+			part.pace_properties = part.pace_properties or {}
+			part.pace_properties[prop.key] = pnl
+			pnl.part = part
+			pnl.udata = prop.udata
+
+			if prop.udata.enums then
+				DefineMoreOptionsLeftClick(pnl, function(self)
+					pace.CreateSearchList(
+						self,
+						self.CurrentKey,
+						L(prop.key),
+
+						function(list)
+							list:AddColumn("enum")
+						end,
+
+						function()
+							local tbl
+
+							if isfunction(prop.udata.enums) then
+								if pace.current_part:IsValid() then
+									tbl = prop.udata.enums(pace.current_part)
+								end
+							else
+								tbl = prop.udata.enums
+							end
+
+							local enums = {}
+
+							if tbl then
+								for k, v in pairs(tbl) do
+									if not isstring(v) then
+										v = k
+									end
+
+									if not isstring(k) then
+										k = v
+									end
+
+									enums[k] = v
+								end
+							end
+
+							return enums
+						end,
+
+						function()
+							return pace.current_part[prop.key]
+						end,
+
+						function(list, key, val)
+							return list:AddLine(key)
+						end,
+
+						function(val, key)
+							return val
+						end
+					)
+				end)
+			end
+			if prop.udata.editor_sensitivity or prop.udata.editor_clamp or prop.udata.editor_round then
+				pnl.LimitValue = function(self, num)
+					if prop.udata.editor_sensitivity then
+						self.sens = prop.udata.editor_sensitivity
+					end
+					if prop.udata.editor_clamp then
+						num = math.Clamp(num, unpack(prop.udata.editor_clamp))
+					end
+					if prop.udata.editor_round then
+						num = math.Round(num)
+					end
+					return num
+				end
+			elseif prop.udata.editor_onchange then
+				pnl.LimitValue = prop.udata.editor_onchange
+			end
+
+			pnl.CurrentKey = prop.key
+
+			if pnl.ExtraPopulate then
+				table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
+				pnl:Remove()
+				goto CONTINUE
+			end
+
+			pnl:SetValue(val)
+
+			pnl.OnValueChanged = function(val)
+				if T == "number" then
+					val = tonumber(val) or 0
+				elseif T == "string" then
+					val = tostring(val)
+				end
+
+				pace.Call("VariableChanged", pace.current_part, prop.key, val)
+			end
+
+			self:AddKeyValue(prop.key, pnl, pos, flat_list, prop.udata)
+			if pin then
+				pnl:SetValue(pace.current_part:GetProperty(prop.key))
+			end
+
+			::CONTINUE::
+		end
+
+		if pins:GetBool() and pace.pinned_properties and pace.property_internals[class] then
+			pace.properties2.line_heights = 0
+			for _, key in ipairs(pace.pinned_properties) do
+				pace.pinned_properties_keyed[key] = true
+				local prop = pace.property_internals[class][key]
+				populate(prop, true)
+			end
+		end
+		pace.properties.line_heights = 0
 		for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
 			self:AddCollapser(data.group or "generic")
 			for pos, prop in ipairs(data.props) do
 
+				if pins:GetBool() and pace.pinned_properties_keyed[prop.key] and not pace.CollapsedProperties["pinned"] then continue end
+
 				if prop.udata and prop.udata.hide_in_editor then
 					continue
 				end
+				populate(prop)
 
-				local val = prop.get()
-				local T = type(val):lower()
-
-				if prop.udata and prop.udata.editor_panel then
-					T = prop.udata.editor_panel or T
-				elseif pace.PanelExists("properties_" .. prop.key:lower()) then
-					--is it code bloat to fix weird edge cases like bodygroups on specific models???
-					--idk but it's more egregious to allow errors just because of what bodygroups the model has
-					if prop.key:lower() ~= "container" then
-						T = prop.key:lower()
-					end
-				elseif not pace.PanelExists("properties_" .. T) then
-					T = "string"
-				end
-
-				if pace.CollapsedProperties[prop.udata.group] ~= nil and pace.CollapsedProperties[prop.udata.group] then goto CONTINUE end
-
-				local pnl = pace.CreatePanel("properties_" .. T)
-
-				if pnl.PostInit then
-					pnl:PostInit()
-				end
-
-				if prop.udata and prop.udata.description then
-					pnl:SetTooltip(L(prop.udata.description))
-				end
-
-				local part = pace.current_part
-				part.pace_properties = part.pace_properties or {}
-				part.pace_properties[prop.key] = pnl
-				pnl.part = part
-				pnl.udata = prop.udata
-
-				if prop.udata.enums then
-					DefineMoreOptionsLeftClick(pnl, function(self)
-						pace.CreateSearchList(
-							self,
-							self.CurrentKey,
-							L(prop.key),
-
-							function(list)
-								list:AddColumn("enum")
-							end,
-
-							function()
-								local tbl
-
-								if isfunction(prop.udata.enums) then
-									if pace.current_part:IsValid() then
-										tbl = prop.udata.enums(pace.current_part)
-									end
-								else
-									tbl = prop.udata.enums
-								end
-
-								local enums = {}
-
-								if tbl then
-									for k, v in pairs(tbl) do
-										if not isstring(v) then
-											v = k
-										end
-
-										if not isstring(k) then
-											k = v
-										end
-
-										enums[k] = v
-									end
-								end
-
-								return enums
-							end,
-
-							function()
-								return pace.current_part[prop.key]
-							end,
-
-							function(list, key, val)
-								return list:AddLine(key)
-							end,
-
-							function(val, key)
-								return val
-							end
-						)
-					end)
-				end
-				if prop.udata.editor_sensitivity or prop.udata.editor_clamp or prop.udata.editor_round then
-					pnl.LimitValue = function(self, num)
-						if prop.udata.editor_sensitivity then
-							self.sens = prop.udata.editor_sensitivity
-						end
-						if prop.udata.editor_clamp then
-							num = math.Clamp(num, unpack(prop.udata.editor_clamp))
-						end
-						if prop.udata.editor_round then
-							num = math.Round(num)
-						end
-						return num
-					end
-				elseif prop.udata.editor_onchange then
-					pnl.LimitValue = prop.udata.editor_onchange
-				end
-
-				pnl.CurrentKey = prop.key
-
-				if pnl.ExtraPopulate then
-					table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
-					pnl:Remove()
-					goto CONTINUE
-				end
-
-				pnl:SetValue(val)
-
-				pnl.OnValueChanged = function(val)
-					if T == "number" then
-						val = tonumber(val) or 0
-					elseif T == "string" then
-						val = tostring(val)
-					end
-
-					pace.Call("VariableChanged", pace.current_part, prop.key, val)
-				end
-
-				self:AddKeyValue(prop.key, pnl, pos, flat_list, prop.udata)
-
-				::CONTINUE::
 			end
 		end
 	end
@@ -1403,6 +1459,76 @@ do -- non editable string
 
 	function PANEL:GetValue()
 		return self.lbl:GetValue()
+	end
+
+	function PANEL:Think()
+		if not pins:GetBool() then return end
+		if not input.IsMouseDown(MOUSE_RIGHT) then self.popup = false return end
+		if self == self:GetParent().left then return end
+		local x,y = self:LocalToScreen(0,0)
+		local w,h = self:GetSize()
+		local mx, my = input.GetCursorPos()
+		if not ((mx > x) and (mx < x + w) and (my > y) and (my < y + h)) then return end
+		if not self.popup then
+			local menu = DermaMenu()
+			menu:SetPos(input.GetCursorPos())
+			menu:MakePopup()
+			self.popup = true
+			if table.HasValue(pace.pinned_properties, self.key_name) then
+				menu:AddOption("unpin", function()
+					table.RemoveByValue(pace.pinned_properties, self.key_name)
+					pace.pinned_properties_keyed[self.key_name] = false
+					pace.PopulateProperties(pace.current_part)
+					pac.UpdateConfigFile("pinned_properties")
+				end):SetImage("icon16/collision_off.png")
+
+				--there may be hidden keys from other part classes, so we have to check and offset until we snap to an existing key
+				local i = table.KeyFromValue(pace.pinned_properties, self.key_name)
+				if i > 1 then
+					local check_i = i
+					local snap_i = i - 1
+					while (check_i > 1) do
+						check_i = check_i - 1
+						if pace.current_part[pace.pinned_properties[check_i]] ~= nil then
+							snap_i = check_i
+							break
+						end
+						
+					end
+					menu:AddOption("move up (" .. snap_i .. ")", function()
+						table.RemoveByValue(pace.pinned_properties, self.key_name)
+						table.insert(pace.pinned_properties, snap_i, self.key_name)
+						pace.PopulateProperties(pace.current_part)
+						pac.UpdateConfigFile("pinned_properties")
+					end):SetImage("icon16/arrow_up.png")
+				end
+				if i < #pace.pinned_properties then
+					local check_i = i
+					local snap_i = i + 1
+					while (check_i < #pace.pinned_properties) do
+						check_i = check_i + 1
+						if pace.current_part["Get"..pace.pinned_properties[check_i]] ~= nil then
+							snap_i = check_i
+							break
+						end
+					end
+					menu:AddOption("move down (" .. snap_i .. ")", function()
+						table.RemoveByValue(pace.pinned_properties, self.key_name)
+						table.insert(pace.pinned_properties, snap_i, self.key_name)
+						pace.PopulateProperties(pace.current_part)
+						pac.UpdateConfigFile("pinned_properties")
+					end):SetImage("icon16/arrow_down.png")
+				end
+			else
+				menu:AddOption("pin", function()
+					pins:SetBool(true)
+					table.insert(pace.pinned_properties, self.key_name)
+					pace.pinned_properties_keyed[self.key_name] = true
+					pace.PopulateProperties(pace.current_part)
+					pac.UpdateConfigFile("pinned_properties")
+				end):SetImage("icon16/attach.png")
+			end
+		end
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -2226,6 +2352,9 @@ do -- base editable
 			if not self:IsValid() then pnl:Remove() return end
 			local x, y = self:LocalToScreen()
 			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			if pace.pinned_properties_keyed[self.CurrentKey] then
+				_,prop_y = pace.properties2:LocalToScreen(0,0)
+			end
 			y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
 
 			pnl:SetPos(x + 5 + inset_x, y)
@@ -2249,6 +2378,9 @@ do -- base editable
 		pac.AddHook('PostRenderVGUI', hookID .. "2", function(code)
 			if not IsValid(self) or not IsValid(pnl) or self.CurrentKey == nil  then pac.RemoveHook('Think', hookID .. "2") return end
 			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			if pace.pinned_properties_keyed[self.CurrentKey] then
+				_,prop_y = pace.properties2:LocalToScreen(0,0)
+			end
 			local x, y = self:LocalToScreen()
 			local overflow = y < prop_y or y > ScrH() - self:GetTall()
 			if overflow then
@@ -2441,8 +2573,8 @@ do -- vector
 
 					--screen color picker
 					local btn2 = vgui.Create("DImageButton", self)
-					btn2:SetSize(16, 16)
-					btn2:Dock(RIGHT) btn2:DockPadding(0,0,16,0)
+					btn2:SetSize(line_height / 1.5, line_height / 1.5)
+					btn2:Dock(RIGHT) btn2:DockPadding(0,0,line_height / 1.5,0)
 					btn2:SetTooltip("Color picker")
 					btn2:SetImage("icon16/sitemap_color.png")
 					btn2.DoClick = function()
@@ -2587,7 +2719,7 @@ do -- vector
 					end
 				end
 			end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(pace.clipboardtooltip)
-
+			menu:AddSpacer()
 			menu:AddOption(L"apply proxy", function()
 				local proxy = pac.CreatePart("proxy")
 				proxy:SetParent(pace.current_part)

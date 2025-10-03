@@ -605,6 +605,9 @@ local function encode_table_to_file(str)
 	elseif str == "eventwheel_colors" then
 		data = pace.command_colors or {}
 		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data, true))
+	elseif str == "pinned_properties" then
+		data = pace.pinned_properties or {}
+		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data, true))
 	end
 
 end
@@ -640,6 +643,8 @@ local function decode_table_from_file(str)
 		else
 			pace.command_colors = util.JSONToTable(data)
 		end
+	elseif str == "pinned_properties" then
+		pace.pinned_properties = util.JSONToTable(data, false, true)
 	end
 
 
@@ -1094,6 +1099,7 @@ function pace.FillEditorSettings(pnl)
 	local shortcutaction_choices = vgui.Create("DComboBox", LeftPanel)
 	shortcutaction_choices:SetText("Select a PAC action")
 	shortcutaction_choices:SetSortItems(false)
+	pace.shortcutaction_choices = shortcutaction_choices
 	local function rebuild_shortcut_box()
 		local display, active_action = shortcutaction_choices:GetSelected()
 		local active_action_count = 0
@@ -2501,6 +2507,19 @@ end
 decode_table_from_file("pac_editor_shortcuts")
 decode_table_from_file("pac_editor_partmenu_layouts")
 decode_table_from_file("eventwheel_colors")
+decode_table_from_file("pinned_properties")
+if not pace.pinned_properties then
+	pace.pinned_properties = {
+		"Name",
+		"Hide",
+		"Bone", "Position", "Angles",
+		"Notes"
+	}
+end
+
+function pac.UpdateConfigFile(str)
+	encode_table_to_file(str)
+end
 
 if not file.Exists("pac_part_categories_experimental.txt", "DATA") then
 	file.Write("pac3_config/pac_part_categories_experimental.txt", util.TableToKeyValues(pace.partmenu_categories_experimental))
