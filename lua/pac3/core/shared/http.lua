@@ -57,7 +57,8 @@ local function http(method, url, headers, cb, failcb)
 			else
 				pac.Message("_G.HTTP error: " .. err)
 			end
-		end
+		end,
+		timeout = 300
 	})
 end
 
