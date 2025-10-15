@@ -113,7 +113,7 @@ function urltex.StartDownload(url, data)
 		urltex.ActivePanel:Remove()
 	end
 
-	url = pac.FixUrl(url)
+	url = pac.FixUrl(url, "image")
 	local size = tonumber(data.size or urltex.TextureSize)
 	local id = "urltex_download_" .. url
 	local pnl
