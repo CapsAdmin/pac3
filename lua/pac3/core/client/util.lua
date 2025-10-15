@@ -440,7 +440,7 @@ function pac.Handleurltex(part, url, callback, shader, additionalData)
 	if not url:match("https?://.+/%S*") then return false end
 
 	pac.urltex.GetMaterialFromURL(
-		pac.FixUrl(url),
+		pac.FixUrl(url, "image"),
 
 		function(mat, tex)
 			if not part:IsValid() then return end
