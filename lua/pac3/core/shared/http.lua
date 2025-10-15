@@ -61,7 +61,7 @@ local function http(method, url, headers, cb, failcb)
 	})
 end
 
-function pac.FixUrl(url)
+function pac.FixUrl(url, expectedContentType)
 	url = url:Trim()
 	url = url:gsub("[\"'<>\n\\]+", "")
 
@@ -74,14 +74,21 @@ function pac.FixUrl(url)
 		return url
 	end
 
-	if url:find("drive.google.com", 1, true) and not url:find("export=download", 1, true) then
+	if url:find("drive.google.com", 1, true) then
 		local id =
 			url:match("https://drive.google.com/file/d/(.-)/") or
 			url:match("https://drive.google.com/file/d/(.-)$") or
-			url:match("https://drive.google.com/open%?id=(.-)$")
+			url:match("https://drive.google.com/open%?id=(.-)$") or
+			url:match("https://drive.google.com/uc%?export=download&id=(.-)$") or
+			url:match("https://drive.google.com/uc%?id=(.-)&export=download$")
 
 		if id then
-			return "https://drive.google.com/uc?export=download&id=" .. id
+			if expectedContentType == "image" then
+				local thumbnailSize = math.Clamp( pac.urltex.TextureSize, 32, 4096 )
+				return "https://drive.google.com/thumbnail?id=" .. id .. "&sz=s" .. string.format("%.0f", thumbnailSize)
+			elseif not url:find("export=download", 1, true) then
+				return "https://drive.google.com/uc?export=download&id=" .. id
+			end
 		end
 		return url
 	end
