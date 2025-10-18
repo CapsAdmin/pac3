@@ -241,6 +241,13 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 	if no_parent then
 		if class_name ~= "group" then
+			--fixes a freeze that happens before the fix bad parent code runs
+			if class_name == "custom_animation" then
+				local root = pac.CreatePart("group")
+				root:CreatePart(class_name)
+				return
+			end
+
 			local group
 			local parts = pac.GetLocalParts()
 			if table.Count(parts) == 1 then
