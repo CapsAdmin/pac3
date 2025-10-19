@@ -81,6 +81,7 @@ function pace.ClientOptionsMenu(self)
 	self:CheckBox(L"enable", "pac_enable")
 	self:Button(L"clear", "pac_clear_parts")
 	self:Button(L"wear on server", "pac_wear_parts" )
+	self:CheckBox(L"raw file sizes", "pac_browser_display_raw_file_size"):SetTooltip("fixes sorting")
 
 	local browser = self:AddControl("pace_browser", {})
 

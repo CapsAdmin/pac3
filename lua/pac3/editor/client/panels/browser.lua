@@ -7,6 +7,13 @@ PANEL.Base = "DListView"
 PANEL.Dir = ""
 AccessorFunc(PANEL, "Dir", "Dir")
 
+local raw_size = CreateClientConVar("pac_browser_display_raw_file_size", "0", true, false, "whether to ignore nice filesize, switching to actual numeric sorting instead of alphabetical")
+cvars.AddChangeCallback("pac_browser_display_raw_file_size", function()
+	if pace.SpawnlistBrowser then
+		pace.SpawnlistBrowser:PopulateFromClient()
+	end
+end)
+
 function PANEL:SetDir(str)
 	self.Dir = str
 	self:PopulateFromClient()
@@ -29,20 +36,47 @@ local function OnMousePressed(self, mcode)
 	end
 end
 
+local previous_folder = "pac3/"
 function PANEL:AddOutfits(folder, callback)
-	for i, name in pairs(file.Find(folder.."*", "DATA")) do
+	local files, folders = file.Find(folder.."*", "DATA")
+	previous_folder = string.sub(folder, 6, #folder)
+
+	if folder ~= "pac3/" then
+		local filenode = self:AddLine("<<< " .. previous_folder,"", "")
+		filenode.OnSelect = function() self:SetDir(string.GetPathFromFilename(string.sub(previous_folder, 1, #previous_folder - 1))) end
+		filenode.OnMousePressed = OnMousePressed
+	end
+
+	for i, name in ipairs(files) do
 		if name:find("%.txt") then
 			local outfit = folder .. name
 			if file.Exists(outfit, "DATA") then
 				local filenode = self:AddLine(
 					name:gsub("%.txt", ""),
-					string.NiceSize(file.Size(outfit, "DATA")),
+					raw_size:GetBool() and file.Size(outfit, "DATA") or string.NiceSize(file.Size(outfit, "DATA")),
 					os.date("%m/%d/%Y %H:%M", file.Time(outfit, "DATA"))
 				)
 				filenode.FileName = name
 				filenode.OnSelect = callback
 				filenode.OnMousePressed = OnMousePressed
 			end
+		end
+	end
+
+	--separator
+	if #folders > 0 and #files > 0 then self:AddLine("","","") end
+
+	for i, name in ipairs(folders) do
+		local folder2 = folder..name.."/"
+		if file.Exists(folder2, "DATA") then
+			local filenode = self:AddLine(
+				name,
+				"<folder>",
+				os.date("%m/%d/%Y %H:%M", file.Time(folder2, "DATA"))
+			)
+			filenode.FileName = name
+			filenode.OnSelect = function() self:SetDir(string.sub(folder2, 6, #folder2)) end
+			filenode.OnMousePressed = OnMousePressed
 		end
 	end
 end
