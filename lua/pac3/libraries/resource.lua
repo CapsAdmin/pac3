@@ -139,6 +139,7 @@ local function download(from, to, callback, on_fail, on_header, check_etag, etag
 
 	local allowed = {
 		[".txt"] = true,
+		[".jpeg"] = true,
 		[".jpg"] = true,
 		[".png"] = true,
 		[".vtf"] = true,
@@ -150,7 +151,20 @@ local function download(from, to, callback, on_fail, on_header, check_etag, etag
 		function(body, len, header)
 			do
 				if need_extension then
-					local ext = header["Content-Type"] and (header["Content-Type"]:match(".-/(.-);") or header["Content-Type"]:match(".-/(.+)")) or "dat"
+					local ext = "dat"
+					if header["Content-Type"] then
+						for _, mime in ipairs( string.Split(header["Content-Type"], ',') ) do -- some common services, including google, serve multi-item mime strings like "image/png,application/binary"
+							subtype = mime:match(".-/(.-);") or mime:match(".-/(.+)")
+							if subtype then
+								subtype = subtype:lower()
+								if allowed['.' .. subtype] then
+									ext = subtype
+									break -- take the first subtype (if any) found in our whitelist
+								end
+							end
+						end
+					end
+					
 					if ext == "jpeg" then ext = "jpg" end
 
 					if body:StartWith("VTF") then

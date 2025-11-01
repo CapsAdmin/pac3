@@ -54,7 +54,7 @@ function PANEL:AddOutfits(folder, callback)
 				local filenode = self:AddLine(
 					name:gsub("%.txt", ""),
 					raw_size:GetBool() and file.Size(outfit, "DATA") or string.NiceSize(file.Size(outfit, "DATA")),
-					os.date("%m/%d/%Y %H:%M", file.Time(outfit, "DATA"))
+					raw_size:GetBool() and file.Time(outfit, "DATA") or os.date("%m/%d/%Y %H:%M", file.Time(outfit, "DATA"))
 				)
 				filenode.FileName = name
 				filenode.OnSelect = callback
@@ -72,7 +72,7 @@ function PANEL:AddOutfits(folder, callback)
 			local filenode = self:AddLine(
 				name,
 				"<folder>",
-				os.date("%m/%d/%Y %H:%M", file.Time(folder2, "DATA"))
+				raw_size:GetBool() and file.Time(folder2, "DATA") or os.date("%m/%d/%Y %H:%M", file.Time(folder2, "DATA"))
 			)
 			filenode.FileName = name
 			filenode.OnSelect = function() self:SetDir(string.sub(folder2, 6, #folder2)) end
