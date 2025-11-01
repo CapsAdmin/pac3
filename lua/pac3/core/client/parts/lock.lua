@@ -16,6 +16,7 @@ local physics_point_ent_classes = {
 	["physics_cannister"] = true,
 	["npc_satchel"] = true,
 	["npc_grenade_frag"] = true,
+	["pac_projectile"] = true,
 }
 
 local convar_lock = GetConVar("pac_sv_lock")

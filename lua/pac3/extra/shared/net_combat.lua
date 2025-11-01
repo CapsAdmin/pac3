@@ -95,7 +95,8 @@ if SERVER then
 		["item_item_crate"] = true,
 		["func_breakable_surf"] = true,
 		["func_breakable"] = true,
-		["physics_cannister"] = true
+		["physics_cannister"] = true,
+		["pac_projectile"] = true,
 	}
 
 	local contraption_classes = {
