@@ -6,6 +6,7 @@ local pac_sv_projectile_max_speed = CreateConVar("pac_sv_projectile_max_speed", 
 local pac_sv_projectile_max_damage = CreateConVar("pac_sv_projectile_max_damage", 100000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum damage for physical projectiles")
 local pac_sv_projectile_max_mass = CreateConVar("pac_sv_projectile_max_mass", 50000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum speed for physical projectiles")
 local pac_sv_projectile_allow_custom_collision_mesh = CreateConVar("pac_sv_projectile_allow_custom_collision_mesh", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to allow other models' collision mesh as a physical projectile, rather than just box and sphere")
+local pac_sv_projectile_max_spawn_radius = CreateConVar("pac_sv_projectile_max_spawn_radius", 2000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to limit how far away physical projectiles should be able to spawn, set to 0 to disable this limit altogether.")
 
 do -- projectile entity
 	local ENT = {}
@@ -587,22 +588,24 @@ if SERVER then
 		part.AttractRadius = net.ReadUInt(10)
 		part.Bounce = net.ReadInt(15) / 100
 
-		local radius_limit = 2000
+		local radius_limit = pac_sv_projectile_max_spawn_radius:GetFloat()
 
-		if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
-			local ok = false
+		if radius_limit > 0 then
+			if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
+				local ok = false
 
-			for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
-				if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
-					ok = true
-					break
+				for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
+					if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
+						ok = true
+						break
+					end
 				end
-			end
 
-			if not ok then
-				pos = ply:EyePos()
-			end
-		end
+                if not ok then
+                    pos = ply:EyePos()
+                end
+            end
+        end
 
 		local function spawn()
 			if not ply:IsValid() then return end
