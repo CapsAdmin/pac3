@@ -590,16 +590,16 @@ if SERVER then
 
 		local radius_limit = pac_sv_projectile_max_spawn_radius:GetFloat()
 
-        if radius_limit > 0 then
-            if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
-                local ok = false
+		if radius_limit > 0 then
+			if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
+				local ok = false
 
-                for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
-                    if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
-                        ok = true
-                        break
-                    end
-                end
+				for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
+					if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
+						ok = true
+						break
+					end
+				end
 
                 if not ok then
                     pos = ply:EyePos()
