@@ -137,6 +137,15 @@ end
 
 texture_keys["include"] = "include"
 
+-- screenspace_general(_8tex) textures
+texture_keys["texture1"] = "texture1"
+texture_keys["texture2"] = "texture2"
+texture_keys["texture3"] = "texture3"
+texture_keys["texture4"] = "texture4"
+texture_keys["texture5"] = "texture5"
+texture_keys["texture6"] = "texture6"
+texture_keys["texture7"] = "texture7"
+
 -- for pac_restart
 PAC_MDL_SALT = PAC_MDL_SALT or 0
 
