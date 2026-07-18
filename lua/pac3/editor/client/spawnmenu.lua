@@ -112,7 +112,7 @@ function pace.ClientOptionsMenu(self)
 		browser
 	}
 	_G.pace_SpawnlistBrowser_panels = pace.SpawnlistBrowser_panels
-	
+
 
 	self:Button(L"request outfits", "pac_request_outfits")
 end
@@ -187,6 +187,8 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Allow MDL zips for entity", "pac_allow_mdl_entity")
 		self:CheckBox(L"Allow entity model modifier", "pac_modifier_model")
 		self:CheckBox(L"Allow entity size modifier", "pac_modifier_size")
+		self:CheckBox(L"Allow entity step size modifier", "pac_modifier_stepsize")
+		self:CheckBox(L"Allow entity view offset modifier", "pac_modifier_viewoffset")
 		self:CheckBox(L"Allow blood color modifier", "pac_allow_blood_color")
 		self:NumSlider(L"Allow prop / other player outfits", "pac_sv_prop_outfits", 0, 2, 0)
 		self:CheckBox(L"Allow Nearest Life", "pac_sv_nearest_life")
