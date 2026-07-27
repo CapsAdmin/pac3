@@ -45,8 +45,10 @@ do
 			local tbl = ply.pac_pose_params
 
 			if tbl then
-				for _, data in pairs(tbl) do
-					ply:SetPoseParameter(data.key, data.val)
+				for i, data in pairs(tbl) do
+                    if ply:LookupPoseParameter(data.key) ~= -1 then 
+                        pac.SetPoseParameter(ply, data.key, data.val)
+					end
 				end
 			end
 		end

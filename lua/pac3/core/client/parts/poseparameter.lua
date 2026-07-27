@@ -9,6 +9,7 @@ PART.Icon = 'icon16/disconnect.png'
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
 	BUILDER:GetSet("Range", 0)
+    BUILDER:GetSet("UseRange", false, {description="Limits the output range of the Pose Parameter to be within the legal ranges defined by the model"})
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
@@ -49,7 +50,22 @@ function PART:UpdateParams()
 		local data = self.pose_params[self.PoseParameter]
 
 		if data then
-			local num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
+			local num
+
+            if self.UseRange then 
+                num = self.Range
+            else
+                -- backwards compatibility; reverts the math in the new setter 
+                -- old calculation
+                
+                num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
+                
+                num = pac.ToPoseParameterRange( 
+                    ent, 
+                    data.name, 
+                    num
+                )
+            end
 
 			ent.pac_pose_params = ent.pac_pose_params or {}
 			ent.pac_pose_params[self.UniqueID] = ent.pac_pose_params[self.UniqueID] or {}
@@ -57,9 +73,13 @@ function PART:UpdateParams()
 			ent.pac_pose_params[self.UniqueID].key  = data.name
 			ent.pac_pose_params[self.UniqueID].val = num
 
-			ent:SetPoseParameter(data.name, num)
+			pac.SetPoseParameter(ent, data.name, num)
 		end
 	end
+end
+
+function PART:OnBuildBonePositions()
+    self:UpdateParams()
 end
 
 function PART:OnHide()
