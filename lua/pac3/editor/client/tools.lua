@@ -882,7 +882,7 @@ local function mirror_parts(part, plane)
 		part:SetAngleOffset(mirror_vector(fwdO, plane):AngleEx(mirror_vector(upO, plane)))
 	end
 
-	if part.SetScale then
+	if part.SetScale and part.ClassName ~= "faceposer" then
 		part:SetScale(mirror_vector(part:GetScale(), plane))
 	end
 
@@ -899,6 +899,15 @@ local axis_planes = {
 	["x"] = Vector(1, 0, 0),
 	["y"] = Vector(0, 1, 0),
 	["z"] = Vector(0, 0, 1)}
+
+function pac.MirrorParts(part, plane)
+	if isstring(plane) then
+		plane = axis_planes[plane]
+		if not isvector(plane) then return end
+	end
+	mirror_parts(part, plane)
+end
+
 
 pace.AddTool(L"mirror this and children", function(part)
 	Derma_StringRequest(L"plane", L"input the plane to mirror across", "y", function(plane)
