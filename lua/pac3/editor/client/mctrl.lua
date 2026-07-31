@@ -496,6 +496,31 @@ function mctrl.RotationLines(pos, dir, dir2, r)
     DrawLine(pr.x, pr.y, prb.x, prb.y)
 end
 
+function mctrl.ManualPaint(pos, ang, radius)
+	local forward, right, up = pace.mctrl.GetAxes(ang)
+	local radius = 2 * pace.mctrl.GetGizmoSize()
+	local origin = pace.mctrl.VecToScreen(pos)
+	local forward_point = pace.mctrl.VecToScreen(pos + forward * radius)
+	local right_point = pace.mctrl.VecToScreen(pos + right * radius)
+	local up_point = pace.mctrl.VecToScreen(pos + up * radius)
+
+	mctrl.nodraw = true
+	surface.SetDrawColor(255, 80, 80, 255)
+	mctrl.LineToBox(origin, forward_point)
+	mctrl.RotationLines(pos, forward, up, radius)
+
+	surface.SetDrawColor(80, 255, 80, 255)
+	mctrl.LineToBox(origin, right_point)
+	mctrl.RotationLines(pos, right, forward, radius)
+
+	surface.SetDrawColor(80, 80, 255, 255)
+	mctrl.LineToBox(origin, up_point)
+	mctrl.RotationLines(pos, up, right, radius)
+
+	surface.SetDrawColor(255, 200, 0, 255)
+	DrawCircleEx(origin.x, origin.y, 4, 32, 2)
+end
+
 function mctrl.HUDPaint()
     mctrl.LastThinkCall = FrameNumber()
     if pace.IsSelecting then return end
@@ -503,6 +528,7 @@ function mctrl.HUDPaint()
     if not target then return end
     local pos, ang = mctrl.GetWorldPosition()
     if not pos or not ang then return end
+	if mctrl.nodraw then return end --to allow overridden rendering
     local forward, right, up = mctrl.GetAxes(ang)
     local radius = mctrl.GetGizmoSize()
     local origin = mctrl.VecToScreen(pos)

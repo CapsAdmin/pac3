@@ -2707,6 +2707,29 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			substitutes:AddOption("interpolator", function()
 				pace.SubstituteBaseMovable(obj, "create_parent", "interpolated_multibone")
 			end):SetIcon("icon16/table_multiple.png")
+
+		--mirroring
+			local tooltip = "Axis is relative to parent bone\nThe output stays within that same bone\n\nIf you wish to mirror on flipped bones, it can work. I recommend using the bone 'switch sides' action first, and then double-check your axis to make sure you know what's the new bone's actual base angle."
+			local mirror_submenu1, pnlsubmenu = main:AddSubMenu("Mirror parts...") pnlsubmenu:SetImage("icon16/shape_flip_horizontal.png")  pnlsubmenu:SetTooltip(tooltip)
+			mirror_submenu1:AddOption("x", function() pac.MirrorParts(pace.current_part, "x") end)
+			mirror_submenu1:AddOption("y", function() pac.MirrorParts(pace.current_part, "y") end)
+			mirror_submenu1:AddOption("z", function() pac.MirrorParts(pace.current_part, "z") end)
+		local mirror_submenu2, pnlsubmenu = main:AddSubMenu("Clone and Mirror parts...") pnlsubmenu:SetImage("icon16/shape_flip_horizontal.png") pnlsubmenu:SetTooltip(tooltip)
+			mirror_submenu2:AddOption("x", function() pac.MirrorParts(pace.current_part:Clone(), "x") end)
+			mirror_submenu2:AddOption("y", function() pac.MirrorParts(pace.current_part:Clone(), "y") end)
+			mirror_submenu2:AddOption("z", function() pac.MirrorParts(pace.current_part:Clone(), "z") end)
+		--override the gizmo to real coordinates used by mirror tool
+		pac.AddHook("HUDPaint", "mirror_tool_preview_bone_posang", function()
+			if not IsValid(menu) then
+				pace.mctrl.nodraw = false pac.RemoveHook("HUDPaint", "mirror_tool_preview_bone_posang") return
+			end
+			if pnlsubmenu1:IsHovered() or pnlsubmenu1:IsChildHovered() or pnlsubmenu2:IsHovered() or pnlsubmenu2:IsChildHovered() then
+				local pos, ang = pac.GetBonePosAng(pace.current_part:GetParentOwner(), pace.current_part.Bone)
+				pace.mctrl.ManualPaint(pos, ang, 2 * pace.mctrl.GetGizmoSize())
+			else
+				pace.mctrl.nodraw = false
+			end
+		end)
 	end
 
 	local function install_submaterial_options(menu)

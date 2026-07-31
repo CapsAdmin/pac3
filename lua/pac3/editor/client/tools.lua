@@ -863,3 +863,70 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 		end
 	end
 end)
+
+local function mirror_vector(vec, plane) -- plane must be normal vector
+	return vec - 2 * vec:Dot(plane) * plane
+end
+
+local function mirror_parts(part, plane)
+	if part.SetPosition then
+		part:SetPosition(mirror_vector(part:GetPosition(), plane))
+		part:SetPositionOffset(mirror_vector(part:GetPositionOffset(), plane))
+	end
+
+	if part.SetAngles then
+		local ang, angO = part:GetAngles(), part:GetAngleOffset()
+		local fwd, up, fwdO, upO = ang:Forward(), ang:Up(), angO:Forward(), angO:Up()
+
+		part:SetAngles(mirror_vector(fwd, plane):AngleEx(mirror_vector(up, plane)))
+		part:SetAngleOffset(mirror_vector(fwdO, plane):AngleEx(mirror_vector(upO, plane)))
+	end
+
+	if part.SetScale and part.ClassName ~= "faceposer" then
+		part:SetScale(mirror_vector(part:GetScale(), plane))
+	end
+
+	if part.SetInvert then
+		part:SetInvert(not part:GetInvert())
+	end
+
+	for _, part in ipairs(part:GetChildren()) do
+		mirror_parts(part, plane)
+	end
+end
+
+local axis_planes = {
+	["x"] = Vector(1, 0, 0),
+	["y"] = Vector(0, 1, 0),
+	["z"] = Vector(0, 0, 1)}
+
+function pac.MirrorParts(part, plane)
+	if isstring(plane) then
+		plane = axis_planes[plane]
+		if not isvector(plane) then return end
+	end
+	mirror_parts(part, plane)
+end
+
+
+pace.AddTool(L"mirror this and children", function(part)
+	Derma_StringRequest(L"plane", L"input the plane to mirror across", "y", function(plane)
+		if plane and part:IsValid() then
+			local axis_plane = axis_planes[string.lower(plane)]
+			if axis_plane then
+				mirror_parts(part, axis_plane)
+			end
+		end
+	end)
+end)
+
+pace.AddTool(L"clone and mirror this and children", function(part)
+	Derma_StringRequest(L"plane", L"input the plane to mirror across", "y", function(plane)
+		if plane and part:IsValid() then
+			local axis_plane = axis_planes[string.lower(plane)]
+			if axis_plane then
+				mirror_parts(part:Clone(), axis_plane)
+			end
+		end
+	end)
+end)
