@@ -286,6 +286,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 		end
 	end
 
+	if not part then return end
 	if name then part:SetName(name) end
 
 	if part.SetModel then
@@ -528,7 +529,8 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	end
 
 	if not not_from_editor then
-		timer.Create("pace_backup", 1, 1, pace.Backup)
+		timer.Create("pace_backup", 3, 1, pace.Backup)
+		timer.Create("pace_backup_collectgarbage", 60, 1, function() collectgarbage("collect") end)
 
 		if not pace.undo_release_varchange then
 			pace.RecordUndoHistory()
@@ -826,6 +828,7 @@ do -- menu
 				table.sort(tbl, function(a, b) return a < b end)
 				for i, class in pairs(tbl) do
 					if isstring(i) and Parts[class] then
+						pace.TUTORIALS.PartInfos[class] = pace.TUTORIALS.PartInfos[class] or {}
 						local tooltip = pace.TUTORIALS.PartInfos[class].tooltip
 
 						if not tooltip or tooltip == "" then tooltip = "no information available" end
