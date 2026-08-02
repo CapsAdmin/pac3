@@ -153,12 +153,13 @@ you can also do "pac_proxy my_number --5" etc. and enter vectors.
 "pac_proxy my_number 1 2 3"]]
 
 Tutorials["property"] =
-[[property(property_name, field)
+[[property(property_name, field, uid)
 
 it takes a part's property. the part is the target entity
 
 property_name is a part's variable name. e.g. "Alpha"
-field is an axis: "x", "y", "z", "p", "y", "r", "r", "g", "b"]]
+field is an axis: "x", "y", "z", "p", "y", "r", "r", "g", "b"
+uid - optional : a string identifier, which is either the Name or UniqueID of a part to choose instead of the target entity]]
 
 Tutorials["number_operator_alternative"] = [[number_operator_alternative(comp1, op, comp2, num1, num2) or if_else is a simple if statement to choose between two numbers depending on the compared input values
 
@@ -204,6 +205,24 @@ extra expressions can't change feedbacks. they can read them from the previous f
 Tutorials["feedback_x"] = Tutorials["feedback"]
 Tutorials["feedback_y"] = Tutorials["feedback"]
 Tutorials["feedback_z"] = Tutorials["feedback"]
+
+Tutorials["feedback_attractor"] = [[feedback_attractor(in,id,speed,ease) is an expanded function to encompass various smoothening/easing methods.
+
+in = input
+id - optional. : an unique identifier for each instance within a proxy - optional but important when having multiple attractors inside the same proxy. default = 0
+speed - optional : the speed of easing. default = 1
+ease - optional : the easing method. choices:
+	empty : the default fractional gravitator setup i.e. feedback_z() + speed*ftime()*(in - feedback_z())
+	the basic ease library e.g. \"InCubic\", \"OutElastic\", \"InOutSine\"
+	\"lin\" : linear
+	\"c\" : constant speed
+
+note: the eases from the ease library and the linear won't work as intended if the input keeps changing, the transition will keep restarting when the input changes.]]
+
+Tutorials["eased_attractor"] = Tutorials["feedback_attractor"]
+Tutorials["attractor"] = Tutorials["feedback_attractor"]
+Tutorials["fb_att"] = Tutorials["feedback_attractor"]
+Tutorials["fb_a"] = Tutorials["feedback_attractor"]
 
 local extravar_tutorial = [[the extra/var series range from 1 to 5, so you'll have extra1, extra2, extra3, extra4, extra5 or alternatively var1, var2, var3, var4, var5
 

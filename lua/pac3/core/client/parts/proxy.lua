@@ -523,7 +523,12 @@ PART.Inputs.feedback_attractor = function(self, num, id, speed, ease)
 			end
 
 			local frac = math.Clamp((CurTime() - fb_tbl.starttime) * speed_prev,0,1)
-			local eased_frac = math.ease[ease_aliases[ease]] and math.ease[ease_aliases[ease]](frac) or 1
+			local eased_frac = 1
+			if math.ease[ease_aliases[ease]] then
+				eased_frac = math.ease[ease_aliases[ease]](frac)
+			elseif ease == "lin" or ease == "linear" then
+				eased_frac = frac
+			end
 			self.feedback_attractors_val[id] = fb_tbl.startvalue + eased_frac*(fb_tbl.endvalue - fb_tbl.startvalue)
 
 			return self.feedback_attractors_val[id]

@@ -2657,7 +2657,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 	local main, pnlmain = menu:AddSubMenu("quick setups") pnlmain:SetIcon("icon16/basket_go.png")
 	--base_movables can restructure, but nah bones aint it
 	if obj.GetDrawPosition and obj.ClassName ~= "bone" and obj.ClassName ~= "bone2" and obj.ClassName ~= "bone3" then
-		if obj.Bone and obj.Bone == "camera" then
+		if obj.Bone and (obj.Bone == "camera" or obj.Bone == "player_eyes") then
 			main:AddOption("camera bone suggestion: limit view to yourself", function()
 				local event = pac.CreatePart("event") event:SetEvent("viewed_by_owner") event:SetParent(obj)
 			end):SetImage("icon16/star.png")
@@ -2733,7 +2733,9 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 	end
 
 	local function install_submaterial_options(menu)
-		local mats = obj:GetOwner():GetMaterials()
+		local owner = obj:GetOwner()
+		if not IsValid(owner) then return end
+		local mats = owner:GetMaterials()
 		local mats_str = table.concat(mats,"\n")
 		local dyn_props = obj:GetDynamicProperties()
 		local submat_togglers, pnl = main:AddSubMenu("create submaterial zone togglers (hide/show materials)", function()
@@ -2972,7 +2974,7 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				local new_proxy = pac.CreatePart("proxy") new_proxy:SetParent(obj.Parent)
 				new_proxy:SetExpression("feedback() + 4*ftime()*((" .. obj.Expression .. ") - feedback())")
 				new_proxy:SetName(str)
-				new_proxy:SetExtra1(new_proxy.Expression)
+				new_proxy:SetExtra1("feedback()")
 			end)
 		end):SetIcon("icon16/calculator.png")
 	elseif obj.ClassName == "text" then
@@ -3075,20 +3077,23 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 		end):SetIcon("icon16/shield.png")
 
 	elseif obj.ClassName == "entity2" then
-		if obj:GetOwner().GetBodyGroups then
-			local bodygroups = obj:GetOwner():GetBodyGroups()
-			if #bodygroups > 0 then
-				local submenu, pnl = main:AddSubMenu("toggleable bodygroup with a dual proxy") pnl:SetImage("icon16/table_refresh.png")
-				pnl:SetTooltip("It will apply 1 and 0. But if there are more variations in that bodygroup, change the expression and the expression on hide if you wish")
-				for i,bodygroup in ipairs(bodygroups) do
-					if bodygroup.num == 1 then continue end
-					local pnl = submenu:AddOption(bodygroup.name, function()
-						local proxy = pac.CreatePart("proxy") proxy:SetParent(obj)
-						proxy:SetExpression("1") proxy:SetExpressionOnHide("0")
-						proxy:SetVariableName(bodygroup.name)
-						local event = pac.CreatePart("event") event:SetParent(proxy) event:SetEvent("command") event:SetArguments(string.Replace(bodygroup.name, " "))
-					end)
-					pnl:SetTooltip(table.ToString(bodygroup.submodels, nil, true))
+		local owner = obj:GetOwner()
+		if IsValid(owner) then
+			if owner.GetBodyGroups then
+				local bodygroups = owner:GetBodyGroups()
+				if #bodygroups > 0 then
+					local submenu, pnl = main:AddSubMenu("toggleable bodygroup with a dual proxy") pnl:SetImage("icon16/table_refresh.png")
+					pnl:SetTooltip("It will apply 1 and 0. But if there are more variations in that bodygroup, change the expression and the expression on hide if you wish")
+					for i,bodygroup in ipairs(bodygroups) do
+						if bodygroup.num == 1 then continue end
+						local pnl = submenu:AddOption(bodygroup.name, function()
+							local proxy = pac.CreatePart("proxy") proxy:SetParent(obj)
+							proxy:SetExpression("1") proxy:SetExpressionOnHide("0")
+							proxy:SetVariableName(bodygroup.name)
+							local event = pac.CreatePart("event") event:SetParent(proxy) event:SetEvent("command") event:SetArguments(string.Replace(bodygroup.name, " "))
+						end)
+						pnl:SetTooltip(table.ToString(bodygroup.submodels, nil, true))
+					end
 				end
 			end
 		end
@@ -3123,20 +3128,23 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 				end):SetImage("materials/spawnicons/"..string.gsub(wep_mdl, ".mdl", "")..".png")
 			end
 		end
-		if obj.Owner.GetBodyGroups then
-			local bodygroups = obj.Owner:GetBodyGroups()
-			if (#bodygroups > 1) or (#bodygroups[1].submodels > 1) then
-				local submenu, pnl = main:AddSubMenu("toggleable bodygroup with a dual proxy") pnl:SetImage("icon16/table_refresh.png")
-				pnl:SetTooltip("It will apply 1 and 0. But if there are more variations in that bodygroup, change the expression and the expression on hide if you wish")
-				for i,bodygroup in ipairs(bodygroups) do
-					if bodygroup.num == 1 then continue end
-					local pnl = submenu:AddOption(bodygroup.name, function()
-						local proxy = pac.CreatePart("proxy") proxy:SetParent(obj)
-						proxy:SetExpression("1") proxy:SetExpressionOnHide("0")
-						proxy:SetVariableName(bodygroup.name)
-						local event = pac.CreatePart("event") event:SetParent(proxy) event:SetEvent("command") event:SetArguments(string.Replace(bodygroup.name, " "))
-					end)
-					pnl:SetTooltip(table.ToString(bodygroup.submodels, nil, true))
+		local owner = obj:GetOwner()
+		if IsValid(owner) then
+			if owner.GetBodyGroups then
+				local bodygroups = owner:GetBodyGroups()
+				if (#bodygroups > 1) or (#bodygroups[1].submodels > 1) then
+					local submenu, pnl = main:AddSubMenu("toggleable bodygroup with a dual proxy") pnl:SetImage("icon16/table_refresh.png")
+					pnl:SetTooltip("It will apply 1 and 0. But if there are more variations in that bodygroup, change the expression and the expression on hide if you wish")
+					for i,bodygroup in ipairs(bodygroups) do
+						if bodygroup.num == 1 then continue end
+						local pnl = submenu:AddOption(bodygroup.name, function()
+							local proxy = pac.CreatePart("proxy") proxy:SetParent(obj)
+							proxy:SetExpression("1") proxy:SetExpressionOnHide("0")
+							proxy:SetVariableName(bodygroup.name)
+							local event = pac.CreatePart("event") event:SetParent(proxy) event:SetEvent("command") event:SetArguments(string.Replace(bodygroup.name, " "))
+						end)
+						pnl:SetTooltip(table.ToString(bodygroup.submodels, nil, true))
+					end
 				end
 			end
 		end
@@ -3912,6 +3920,20 @@ end)]])
 				pace.PopulateProperties(obj)
 			end):SetIcon("icon16/pencil_add.png")
 		end
+	elseif obj.ClassName == "material_3d" then
+		main:AddOption("Flesh Demo", function()
+			obj:Setfleshinteriorenabled(true)
+			obj:Setfleshdebugforcefleshon(true)
+			obj:Setfleshborderwidth(1.3)
+			obj:Setfleshbordernoisescale(1)
+			obj:Setfleshglobalopacity(1)
+			obj:Setfleshcubetexture("models/debug/debugwhite")
+			obj:Setfleshinteriortexture("models/props_lab/glass_tint001")
+			obj:Setfleshinteriornoisetexture("models/props_lab/xencrystal_normal")
+			obj:Setfleshnormaltexture("dev/water_normal")
+			obj:Setfleshsubsurfacetexture("metal2")
+			obj:Setfleshbordertexture1d("models/props_combine/stasisshield_tint")
+		end):SetIcon("icon16/paintcan.png")
 	end
 end
 
