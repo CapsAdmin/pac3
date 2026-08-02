@@ -2627,6 +2627,7 @@ local part_classes_with_quicksetups = {
 	hitscan = true,
 	jiggle = true,
 	interpolated_multibone = true,
+	material_3d = true,
 }
 local function AddOptionRightClickable(title, func, parent_menu)
 	local pnl = parent_menu:AddOption(title, func)
