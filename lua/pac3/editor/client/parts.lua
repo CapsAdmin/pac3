@@ -2709,12 +2709,12 @@ function pace.AddQuickSetupsToPartMenu(menu, obj)
 			end):SetIcon("icon16/table_multiple.png")
 
 		--mirroring
-			local tooltip = "Axis is relative to parent bone\nThe output stays within that same bone\n\nIf you wish to mirror on flipped bones, it can work. I recommend using the bone 'switch sides' action first, and then double-check your axis to make sure you know what's the new bone's actual base angle."
-			local mirror_submenu1, pnlsubmenu = main:AddSubMenu("Mirror parts...") pnlsubmenu:SetImage("icon16/shape_flip_horizontal.png")  pnlsubmenu:SetTooltip(tooltip)
+		local tooltip = "Axis is relative to parent bone\nThe output stays within that same bone\n\nIf you wish to mirror on flipped bones, it can work. I recommend using the bone 'switch sides' action first, and then double-check your axis to make sure you know what's the new bone's actual base angle."
+		local mirror_submenu1, pnlsubmenu1 = main:AddSubMenu("Mirror parts...") pnlsubmenu1:SetImage("icon16/shape_flip_horizontal.png")  pnlsubmenu1:SetTooltip(tooltip)
 			mirror_submenu1:AddOption("x", function() pac.MirrorParts(pace.current_part, "x") end)
 			mirror_submenu1:AddOption("y", function() pac.MirrorParts(pace.current_part, "y") end)
 			mirror_submenu1:AddOption("z", function() pac.MirrorParts(pace.current_part, "z") end)
-		local mirror_submenu2, pnlsubmenu = main:AddSubMenu("Clone and Mirror parts...") pnlsubmenu:SetImage("icon16/shape_flip_horizontal.png") pnlsubmenu:SetTooltip(tooltip)
+		local mirror_submenu2, pnlsubmenu2 = main:AddSubMenu("Clone and Mirror parts...") pnlsubmenu2:SetImage("icon16/shape_flip_horizontal.png") pnlsubmenu2:SetTooltip(tooltip)
 			mirror_submenu2:AddOption("x", function() pac.MirrorParts(pace.current_part:Clone(), "x") end)
 			mirror_submenu2:AddOption("y", function() pac.MirrorParts(pace.current_part:Clone(), "y") end)
 			mirror_submenu2:AddOption("z", function() pac.MirrorParts(pace.current_part:Clone(), "z") end)
