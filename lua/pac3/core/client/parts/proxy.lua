@@ -205,6 +205,7 @@ function PART:Initialize()
 	self.vec_additive = {}
 	self.next_vel_calc = 0
 	self.invalid_parts_in_expression = {}
+	self.valid_parts_in_expression = {}
 	if self:GetPlayerOwner() == pac.LocalPlayer then
 		self.errors_override = true
 		timer.Simple(5, function() self.errors_override = false end) --initialize hack to stop erroring when referenced parts aren't created yet but will be created shortly
@@ -472,7 +473,7 @@ PART.Inputs.sample_and_hold = function(self, seed, duration, min, max, ease)
 		self.samplehold_prev[seed] = self.samplehold[seed]
 		self.samplehold_duration[seed] = duration
 		self.samplehold[seed] = {value = min + math.random()*(max-min), refresh = CurTime() + self.samplehold_duration[seed]}
-		
+
 	end
 	if not ease then
 		return self.samplehold[seed].value
@@ -486,6 +487,63 @@ end
 PART.Inputs.samplehold = PART.Inputs.sample_and_hold
 PART.Inputs.random_drift = PART.Inputs.sample_and_hold
 PART.Inputs.drift = PART.Inputs.sample_and_hold
+
+PART.Inputs.feedback_attractor = function(self, num, id, speed, ease)
+	id = id or 0
+	speed = speed or 1
+	self.feedback_attractors = self.feedback_attractors or {}
+	self.feedback_attractors_val = self.feedback_attractors_val or {}
+	self.feedback_attractors[id] = self.feedback_attractors[id] or {id = id, speed = speed, ease = ease, startvalue = 0, endvalue = num, starttime = CurTime()}
+	local fb = self.feedback_attractors_val[id] or 0
+	if ease then
+		if ease == "c" then
+			--go at constant speed to num
+			if num > fb then
+				self.feedback_attractors_val[id] = math.min(fb + FrameTime() * speed, num)
+			elseif num < fb then
+				self.feedback_attractors_val[id] = math.max(fb - FrameTime() * speed, num)
+			end
+			return self.feedback_attractors_val[id]
+		end
+
+		--managed like the sample&hold / drift system, needs a memory because we'd be tracking start/end values
+		local fb_tbl = self.feedback_attractors[id]
+		if speed == nil or speed == 0 then
+			return fb
+		else
+			local speed_prev = self.feedback_attractors[id].speed
+			if num ~= fb_tbl.endvalue then
+				--force refresh when target (num aka endvalue) changes or when time passed (and we reached the end)
+				fb_tbl.speed = speed
+				fb_tbl.startvalue = fb
+				fb_tbl.endvalue = num
+				fb_tbl.starttime = CurTime()
+				fb_tbl.endtime = CurTime() + 1/speed
+				self.feedback_attractors_val[id] = num
+			end
+
+			local frac = math.Clamp((CurTime() - fb_tbl.starttime) * speed_prev,0,1)
+			local eased_frac = 1
+			if math.ease[ease_aliases[ease]] then
+				eased_frac = math.ease[ease_aliases[ease]](frac)
+			elseif ease == "lin" or ease == "linear" then
+				eased_frac = frac
+			end
+			self.feedback_attractors_val[id] = fb_tbl.startvalue + eased_frac*(fb_tbl.endvalue - fb_tbl.startvalue)
+
+			return self.feedback_attractors_val[id]
+		end
+	else
+		--just a regular feedback attractor formula
+		self.feedback_attractors_val[id] = fb + FrameTime()*speed*(num - fb)
+		return self.feedback_attractors_val[id]
+	end
+end
+
+PART.Inputs.eased_attractor = PART.Inputs.feedback_attractor
+PART.Inputs.fb_att = PART.Inputs.feedback_attractor
+PART.Inputs.fb_a = PART.Inputs.feedback_attractor
+PART.Inputs.attractor = PART.Inputs.feedback_attractor
 
 PART.Inputs.timeex = function(s)
 	s.time = s.time or pac.RealTime
@@ -571,7 +629,7 @@ PART.Inputs.part_pos_x = function(self, uid1)
 	local PartA
 	if not uid1 then --no argument, take parent
 		PartA = self:GetParent()
-		return PartA:GetWorldPosition().x
+		return PartA.GetWorldPosition and PartA:GetWorldPosition().x or 0
 	else
 		PartA = self:GetOrFindCachedPart(uid1)
 	end
@@ -590,7 +648,7 @@ PART.Inputs.part_pos_y = function(self, uid1)
 	local PartA
 	if not uid1 then --no argument, take parent
 		PartA = self:GetParent()
-		return PartA:GetWorldPosition().y
+		return PartA.GetWorldPosition and PartA:GetWorldPosition().y or 0
 	else
 		PartA = self:GetOrFindCachedPart(uid1)
 	end
@@ -609,7 +667,7 @@ PART.Inputs.part_pos_z = function(self, uid1)
 	local PartA
 	if not uid1 then --no argument, take parent
 		PartA = self:GetParent()
-		return PartA:GetWorldPosition().z
+		return PartA.GetWorldPosition and PartA:GetWorldPosition().z or 0
 	else
 		PartA = self:GetOrFindCachedPart(uid1)
 	end
@@ -705,6 +763,193 @@ PART.Inputs.delta_z = function(self, uid1, uid2)
 	return PartB:GetWorldPosition().z - PartA:GetWorldPosition().z
 end
 
+PART.Inputs.part_pitch = function(self, uid1)
+	local PartA
+	if not uid1 then --no argument, take parent
+		PartA = self:GetParent()
+		return PartA.GetWorldAngles and PartA:GetWorldAngles().p or 0
+	else
+		PartA = self:GetOrFindCachedPart(uid1)
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_pos"
+	end
+
+	if not IsValid(PartA) then return 0 end
+	if not PartA.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	return PartA:GetWorldAngles().p
+end
+
+PART.Inputs.part_yaw = function(self, uid1)
+	local PartA
+	if not uid1 then --no argument, take parent
+		PartA = self:GetParent()
+		return PartA.GetWorldAngles and PartA:GetWorldAngles().y or 0
+	else
+		PartA = self:GetOrFindCachedPart(uid1)
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_pos"
+	end
+
+	if not IsValid(PartA) then return 0 end
+	if not PartA.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	return PartA:GetWorldAngles().y
+end
+
+PART.Inputs.part_roll = function(self, uid1)
+	local PartA
+	if not uid1 then --no argument, take parent
+		PartA = self:GetParent()
+		return PartA.GetWorldAngles and PartA:GetWorldAngles().r or 0
+	else
+		PartA = self:GetOrFindCachedPart(uid1)
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_pos"
+	end
+
+	if not IsValid(PartA) then return 0 end
+	if not PartA.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	return PartA:GetWorldAngles().r
+end
+
+PART.Inputs.part_ang_x = PART.Inputs.part_pitch
+PART.Inputs.part_ang_p = PART.Inputs.part_pitch
+PART.Inputs.part_ang_y = PART.Inputs.part_yaw
+PART.Inputs.part_ang_z = PART.Inputs.part_roll
+PART.Inputs.part_ang_r = PART.Inputs.part_roll
+
+PART.Inputs.delta_pitch = function(self, uid1, uid2)
+	if not uid1 then return 0 end
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in delta_pitch"
+		end
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in delta_pitch"
+	end
+
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
+	return PartB:GetWorldAngles().p - PartA:GetWorldAngles().p
+end
+
+PART.Inputs.delta_yaw = function(self, uid1, uid2)
+	if not uid1 then return 0 end
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in delta_yaw"
+		end
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in delta_yaw"
+	end
+
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
+	return ((360 + PartB:GetWorldAngles().y - PartA:GetWorldAngles().y) % 180) - 180
+end
+
+PART.Inputs.delta_roll = function(self, uid1, uid2)
+	if not uid1 then return 0 end
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartB
+	if not uid2 then
+		PartB = self:GetParent()
+	else
+		PartB = self:GetOrFindCachedPart(uid2)
+	end
+	if not IsValid(PartB) then
+		if uid2 then
+			--second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in delta_roll"
+		end
+	end
+
+	if not IsValid(PartA) and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in delta_roll"
+	end
+
+	if not IsValid(PartA) or not IsValid(PartB) then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
+	return PartB:GetWorldAngles().r - PartA:GetWorldAngles().r
+end
+
+local function get_relative_posang(self, uid1, frame_ref)
+	local PartA = self:GetOrFindCachedPart(uid1)
+	local PartR = self:GetOrFindCachedPart(frame_ref)
+
+	if not IsValid(PartA) then return Vector() end
+	if not PartA.GetWorldPosition then return Vector() end
+	if not IsValid(PartR) then return Vector() end
+	if not PartR.GetWorldPosition then return Vector() end
+
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartR] = PartR
+
+	local pos1, ang1 = PartA:GetDrawPosition()
+	local pos2, ang2 = PartR:GetDrawPosition()
+
+	return WorldToLocal(pos1, ang1, pos2, ang2)
+end
+
+PART.Inputs.relative_pos_x = function(self, uid1, frame_ref)
+	local rel_pos, rel_ang = get_relative_posang(self, uid1, frame_ref)
+	return rel_pos.x
+end
+PART.Inputs.relative_pos_y = function(self, uid1, frame_ref)
+	local rel_pos, rel_ang = get_relative_posang(self, uid1, frame_ref)
+	return rel_pos.y
+end
+PART.Inputs.relative_pos_z = function(self, uid1, frame_ref)
+	local rel_pos, rel_ang = get_relative_posang(self, uid1, frame_ref)
+	return rel_pos.z
+end
+PART.Inputs.relative_ang_p = function(self, uid1, frame_ref)
+	local rel_pos, rel_ang = get_relative_posang(self, uid1, frame_ref)
+	return rel_ang.p
+end
+PART.Inputs.relative_ang_y = function(self, uid1, frame_ref)
+	local rel_pos, rel_ang = get_relative_posang(self, uid1, frame_ref)
+	return rel_ang.y
+end
+PART.Inputs.relative_ang_r = function(self, uid1, frame_ref)
+	local rel_pos, rel_ang = get_relative_posang(self, uid1, frame_ref)
+	return rel_ang.r
+end
+
 PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 	if not uid1 then return 0 end
 	num1 = num1 or 0
@@ -730,6 +975,28 @@ PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 end
 PART.Inputs.if_else_event = PART.Inputs.event_alternative
 PART.Inputs.if_event = PART.Inputs.event_alternative
+PART.Inputs.event_a = function(self, uid1)
+	local PartA = self:GetOrFindCachedPart(uid1)
+
+	if not IsValid(PartA) then
+		if uid1 then --first argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid1] = "invalid argument: " .. uid1 .. " in event_a"
+		end
+		return 0
+	end
+	if PartA.ClassName == "event" then return PartA.compare_a or 0 end
+end
+PART.Inputs.event_b = function(self, uid1)
+	local PartA = self:GetOrFindCachedPart(uid1)
+
+	if not IsValid(PartA) then
+		if uid1 then --first argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid1] = "invalid argument: " .. uid1 .. " in event_b"
+		end
+		return 0
+	end
+	if PartA.ClassName == "event" then return PartA.compare_b or 0 end
+end
 
 --normalized sine
 PART.Inputs.nsin = function(self, radians) return 0.5 + 0.5*math.sin(radians) end
@@ -1131,7 +1398,7 @@ do -- scale
 	end
 	PART.Inputs.parent_scale_x = function(self) return get_scale(self, "x") end
 	PART.Inputs.parent_scale_y = function(self) return get_scale(self, "y") end
-	PART.Inputs.parent_scale_z = function(self) return get_scale(self, "z") end	
+	PART.Inputs.parent_scale_z = function(self) return get_scale(self, "z") end
 end
 
 PART.Inputs.pose_parameter = function(self, name)
@@ -1682,8 +1949,6 @@ function PART:SetExpression(str, slot)
 	if not slot then --that's the default expression
 		self.Expression = str
 		self.ExpressionFunc = nil
-		self.valid_parts_in_expression = {}
-		self.invalid_parts_in_expression = {}
 	elseif slot == 0 then --that's the expression on hide
 		self.ExpressionOnHide = str
 		self.ExpressionOnHideFunc = nil
@@ -1963,8 +2228,8 @@ local function set(self, part, x, y, z, children)
 				property_pnl:SetValue(math.Round(tonumber(x) or 0,4))
 				container:SetTooltip("LOCKED: Used by proxy:\n"..self:GetName().."\n\n" .. math_description)
 			end
-			
-			
+
+
 		end
 	end
 end

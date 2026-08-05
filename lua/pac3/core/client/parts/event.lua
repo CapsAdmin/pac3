@@ -4000,6 +4000,8 @@ function PART:StringOperator(a, b)
 end
 
 function PART:NumberOperator(a, b)
+	self.compare_a = a
+	self.compare_b = b
 	if not self.Operator or not a or not b then
 		return false
 	elseif self.Operator == "equal" then
