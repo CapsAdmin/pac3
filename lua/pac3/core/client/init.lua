@@ -1,8 +1,11 @@
 pac = pac or {}
 
 pac.LocalPlayer = LocalPlayer()
-pac.LocalViewModel = pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetViewModel() or NULL
-pac.LocalHands = pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetHands() or NULL
+hook.Add("InitPostEntity", "pac_init_localplayer_refs", function()
+	pac.LocalPlayer = LocalPlayer()
+	pac.LocalViewModel = pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetViewModel() or NULL
+	pac.LocalHands = pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetHands() or NULL
+end)
 do
 	local pac_enable = CreateClientConVar("pac_enable", "1", true)
 

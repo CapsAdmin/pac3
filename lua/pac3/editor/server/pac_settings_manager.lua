@@ -64,6 +64,8 @@ local pac_server_cvars = {
 	{"pac_allow_mdl_entity", "Entity MDL", "", -1, 0, 200},
 	{"pac_modifier_model", "Entity model", "", -1, 0, 200},
 	{"pac_modifier_size", "Entity size", "", -1, 0, 200},
+	{"pac_modifier_stepsize", "Step size", "", -1, 0, 200},
+	{"pac_modifier_viewoffset", "View offset", "", -1, 0, 200},
 
 	--the playermovement enabler policy cvar is a form, not a slider nor a bool
 	{"pac_player_movement_allow_mass", "Allow Modify Mass", "", -1, 0, 200},
@@ -81,7 +83,7 @@ local pac_server_cvars = {
 	{"pac_to_contraption_allow", "Allow PAC to contraption tool", "", -1, 0, 200},
 	{"pac_max_contraption_entities", "Entity limit for PAC to contraption", "", 0, 0, 200},
 	{"pac_restrictions", "restrict PAC editor camera movement", "", -1, 0, 200},
-	
+
 	{"pac_sv_nearest_life", "Allow nearest life aimparts or bones", "", -1, 0, 200},
 	{"pac_sv_nearest_life_allow_sampling_from_parts", "Allow NL sampling from anywhere", "", -1, 0, 200},
 	{"pac_sv_nearest_life_allow_bones", "Allow NL usage on bones", "", -1, 0, 200},
@@ -118,5 +120,5 @@ net.Receive("pac_request_sv_cvars", function (len, ply)
 		net.WriteTable(cvars_tbl)
 		net.Send(ply)
 	end)
-	
+
 end)

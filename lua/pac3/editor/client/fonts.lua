@@ -43,7 +43,7 @@ for i = 8, 32, 4 do
 	{
 		font = "Arial",
 		size = 11 + i,
-		weight = 50,
+		weight = 800,
 		antialias = true,
 	})
 

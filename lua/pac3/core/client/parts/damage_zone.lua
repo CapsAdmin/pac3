@@ -513,13 +513,16 @@ function PART:ClearHitMarkers()
 		if IsValid(part) then part:GetRootOwner():Remove() end
 	end
 	local ply = self:GetPlayerOwner()
-	if ply.hitparts then
-		for i,v in pairs(ply.hitparts) do
-			v.specimen_part:Remove()
+	if IsValid(ply) then
+		if ply.hitparts then
+			for i,v in pairs(ply.hitparts) do
+				v.specimen_part:Remove()
+			end
 		end
+		ply.hitmarker_partpool = nil
+		ply.hitparts = nil
 	end
-	ply.hitmarker_partpool = nil
-	ply.hitparts = nil
+	
 	--second pass
 	local remaining_parts = {}
 	for i,v in ipairs(hitparts_dump) do
@@ -690,8 +693,12 @@ function PART:OnShow()
 		self:PreviewHitbox()
 	end
 	self.stop_until = self.stop_until or 0
-	if self.stop_until then self:GetPlayerOwner().stop_hit_markers_admonishment_message_up = nil end
-	if (self:GetPlayerOwner().stop_hit_markers_admonishment_message_up) or self.stop_until > CurTime() then return end
+	local owner = self:GetPlayerOwner()
+	if IsValid(owner) then
+		if self.stop_until then owner.stop_hit_markers_admonishment_message_up = nil end
+		if (owner.stop_hit_markers_admonishment_message_up) or self.stop_until > CurTime() then return end
+	end
+	
 
 	if self.DOTMethod == "RefreshZone" then return end --handle with Think
 
@@ -797,6 +804,7 @@ net.Receive("pac_hit_results", function(len)
 
 	local pos = self:GetWorldPosition()
 	local owner = self:GetPlayerOwner()
+	if not IsValid(owner) then return end
 
 	self.lag_risk = table.Count(ents_hit) > 15
 

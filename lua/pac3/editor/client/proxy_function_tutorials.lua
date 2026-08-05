@@ -153,12 +153,13 @@ you can also do "pac_proxy my_number --5" etc. and enter vectors.
 "pac_proxy my_number 1 2 3"]]
 
 Tutorials["property"] =
-[[property(property_name, field)
+[[property(property_name, field, uid)
 
 it takes a part's property. the part is the target entity
 
 property_name is a part's variable name. e.g. "Alpha"
-field is an axis: "x", "y", "z", "p", "y", "r", "r", "g", "b"]]
+field is an axis: "x", "y", "z", "p", "y", "r", "r", "g", "b"
+uid - optional : a string identifier, which is either the Name or UniqueID of a part to choose instead of the target entity]]
 
 Tutorials["number_operator_alternative"] = [[number_operator_alternative(comp1, op, comp2, num1, num2) or if_else is a simple if statement to choose between two numbers depending on the compared input values
 
@@ -205,16 +206,34 @@ Tutorials["feedback_x"] = Tutorials["feedback"]
 Tutorials["feedback_y"] = Tutorials["feedback"]
 Tutorials["feedback_z"] = Tutorials["feedback"]
 
+Tutorials["feedback_attractor"] = [[feedback_attractor(in,id,speed,ease) is an expanded function to encompass various smoothening/easing methods.
+
+in = input
+id - optional. : an unique identifier for each instance within a proxy - optional but important when having multiple attractors inside the same proxy. default = 0
+speed - optional : the speed of easing. default = 1
+ease - optional : the easing method. choices:
+	empty : the default fractional gravitator setup i.e. feedback_z() + speed*ftime()*(in - feedback_z())
+	the basic ease library e.g. \"InCubic\", \"OutElastic\", \"InOutSine\"
+	\"lin\" : linear
+	\"c\" : constant speed
+
+note: the eases from the ease library and the linear won't work as intended if the input keeps changing, the transition will keep restarting when the input changes.]]
+
+Tutorials["eased_attractor"] = Tutorials["feedback_attractor"]
+Tutorials["attractor"] = Tutorials["feedback_attractor"]
+Tutorials["fb_att"] = Tutorials["feedback_attractor"]
+Tutorials["fb_a"] = Tutorials["feedback_attractor"]
+
 local extravar_tutorial = [[the extra/var series range from 1 to 5, so you'll have extra1, extra2, extra3, extra4, extra5 or alternatively var1, var2, var3, var4, var5
 
 var1(uid) for example takes the result of the first extra expression of the proxy referenced
 
-uid is a string argument corresponding to the Unique ID, partial UID or name of a proxy.
-It's optional but you'll probably end up using it anyway because it's not hugely useful if it's gone.
+uid is a string (text) identifying a proxy part. it supports names and full UIDs. full UID can be copied from the part in the copy menu
+It's optional but you'll probably end up using it anyway.
 
 the two main uses for this function are:
-1-without the uid argument: working inside the same proxy, compressing some math for readability. extra expressions are computed before the main expression.
-2-with the uid argument: outsourcing / creating variables used by other proxies. defining some stuff outside is useful to make your proxies more meaningful and simpler down the line
+1-(Without the uid argument) Working inside the same proxy, compressing some math for readability. Extra expressions are computed before the main expression.
+2-(With the uid argument) Outsourcing / creating variables used by other proxies. Defining some stuff outside is useful to make your proxies more meaningful and simpler down the line
 
 Keep in mind if you have feedback functions, feedback can only change based on the main expression. Put your main math in the main expression in that case.
 You can simply put a feedback() in your extra expression and it'll work then. You could also do some minor reformatting on it.
@@ -390,7 +409,7 @@ it is like the middle element in a list when sorted
 if there are an even number of arguments, the median is the average of the two middle elements]]
 Tutorials["event_alternative"] = [[event_alternative(uid1, num1, num2) or if_event or if_else_event finds out whether an event is active, and returns num1 or num2 depending on whether it's on or off
 
-uid1 is a string (text), we expect quotes like "w_button", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 is a string (text) identifying an event part, we expect quotes like "w_button" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
 full UID can be copied from the part in the copy menu
 
 num1 is the value to return if the event is acive (hiding parts), it is optional, 0 by default.
@@ -459,7 +478,7 @@ you normally won't have a roll in your eye angles.]]
 --position, velocity, vectors
 Tutorials["part_distance"] = [[part_distance(uid1, uid2) takes the distance between two base_movable parts like models
 
-uid1 and uid2 are strings (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid2 is optional, it is implicitly using the proxy's parent model for example.
@@ -477,44 +496,63 @@ Tutorials["owner_position_z"] = [[owner_position_z() gets the owner's world posi
 
 Tutorials["part_pos"] = [[part_pos(uid1) takes the position of a base_movable part like models
 
-uid1 is a string (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid1 is optional, it is implicitly using the proxy's parent model for example]]
 Tutorials["part_pos_x"] = [[part_pos_x(uid1) takes the X (perhaps north/south) world position of a base_movable part like models
 
-uid1 is a string (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid1 is optional, it is implicitly using the proxy's parent model for example]]
 
 Tutorials["part_pos_y"] = [[part_pos_y(uid1) takes the Y (perhaps east/west) world position of a base_movable part like models
 
-uid1 is a string (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid1 is optional, it is implicitly using the proxy's parent model for example]]
 
 Tutorials["part_pos_z"] = [[part_pos_z(uid1) takes the Z (up/down) world position of a base_movable part like models
 
-uid1 is a string (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid1 is optional, it is implicitly using the proxy's parent model for example]]
 
-Tutorials["delta_pos"] = [[delta_pos(uid1, uid2) takes the difference of world positions as a vector, between two base_movable parts like models.
-mind the order. it is doing (pos2 - pos1) like a standard delta
 
-uid1 and uid2 are strings (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+Tutorials["part_ang_p"] = [[part_ang_p(uid1) takes the pitch world angle of a base_movable part like models
+
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
-uid2 is optional, it is implicitly using the proxy's parent model for example.
-that's useful if you have something spawned from a projectile, because projectile creates new parts with new uids, which means the set uid would match the old part otherwise]]
+uid1 is optional, it is implicitly using the proxy's parent model for example]]
+
+Tutorials["part_ang_y"] = [[part_ang_y(uid1) takes the yaw world angle of a base_movable part like models
+
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu
+
+uid1 is optional, it is implicitly using the proxy's parent model for example]]
+
+Tutorials["part_ang_r"] = [[part_ang_r(uid1) takes the roll world angle of a base_movable part like models
+
+uid1 is a string (text) identifying a movable part, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu
+
+uid1 is optional, it is implicitly using the proxy's parent model for example]]
+
+Tutorials["part_ang_x"] = Tutorials["part_ang_p"]
+Tutorials["part_ang_z"] = Tutorials["part_ang_r"]
+Tutorials["part_pitch"] = Tutorials["part_ang_p"]
+Tutorials["part_yaw"] = Tutorials["part_ang_y"]
+Tutorials["part_roll"] = Tutorials["part_ang_r"]
 
 Tutorials["delta_x"] = [[delta_x(uid1, uid2) takes the difference of X (perhaps north/south) world coordinates, between two base_movable parts like models
 mind the order. it is doing (pos2.x - pos1.x) like a standard delta
 
-uid1 and uid2 are strings (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid2 is optional, it is implicitly using the proxy's parent model for example.
@@ -523,7 +561,7 @@ that's useful if you have something spawned from a projectile, because projectil
 Tutorials["delta_y"] = [[delta_y(uid1, uid2) takes the difference of Y (perhaps east/west) world coordinates, between two base_movable parts like models
 mind the order. it is doing (pos2.y - pos1.y) like a standard delta
 
-uid1 and uid2 are strings (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid2 is optional, it is implicitly using the proxy's parent model for example.
@@ -532,11 +570,73 @@ that's useful if you have something spawned from a projectile, because projectil
 Tutorials["delta_z"] = [[delta_z(uid1, uid2) takes the difference of Z world coordinates (height), between two base_movable parts like models
 mind the order. it is doing (pos2.z - pos1.z) like a standard delta
 
-uid1 and uid2 are strings (text), we expect quotes like "center_pos", you have to get their uid or name to identify the parts. please avoid having multiple parts bearing the same name if that's the case.
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
 full UID can be copied from the part in the copy menu
 
 uid2 is optional, it is implicitly using the proxy's parent model for example.
 that's useful if you have something spawned from a projectile, because projectile creates new parts with new uids, which means the set uid would match the old part otherwise]]
+
+Tutorials["delta_pitch"] = [[delta_pitch(uid1, uid2) takes the difference of pitch world angle coordinates, between two base_movable parts like models
+mind the order. it is doing (pos2.x - pos1.x) like a standard delta
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu
+
+uid2 is optional, it is implicitly using the proxy's parent model for example.
+that's useful if you have something spawned from a projectile, because projectile creates new parts with new uids, which means the set uid would match the old part otherwise]]
+
+Tutorials["delta_yaw"] = [[delta_yaw(uid1, uid2) takes the difference of yaw world angle coordinates, between two base_movable parts like models
+mind the order. it is doing (pos2.y - pos1.y) like a standard delta
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu
+
+uid2 is optional, it is implicitly using the proxy's parent model for example.
+that's useful if you have something spawned from a projectile, because projectile creates new parts with new uids, which means the set uid would match the old part otherwise]]
+
+Tutorials["delta_roll"] = [[delta_roll(uid1, uid2) takes the difference of roll world angle coordinates, between two base_movable parts like models
+mind the order. it is doing (pos2.z - pos1.z) like a standard delta
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu
+
+uid2 is optional, it is implicitly using the proxy's parent model for example.
+that's useful if you have something spawned from a projectile, because projectile creates new parts with new uids, which means the set uid would match the old part otherwise]]
+
+
+Tutorials["relative_pos_x"] = [[relative_pos_x(uid1, uid2) takes the x coordinate of uid1's part, relative to uid2's part's reference frame.
+It uses WorldToLocal function for the vector transformation
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu]]
+Tutorials["relative_pos_y"] = [[relative_pos_y(uid1, uid2) takes the y coordinate of uid1's part, relative to uid2's part's reference frame.
+It uses WorldToLocal function for the vector transformation
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu]]
+Tutorials["relative_pos_z"] = [[relative_pos_z(uid1, uid2) takes the z coordinate of uid1's part, relative to uid2's part's reference frame.
+It uses WorldToLocal function for the vector transformation
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu]]
+
+
+Tutorials["relative_ang_p"] = [[relative_ang_p(uid1, uid2) takes the pitch angle coordinate of uid1's part, relative to uid2's part's reference frame.
+It uses WorldToLocal function for the vector transformation
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu]]
+Tutorials["relative_ang_y"] = [[relative_ang_y(uid1, uid2) takes the yaw angle coordinate of uid1's part, relative to uid2's part's reference frame.
+It uses WorldToLocal function for the vector transformation
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu]]
+Tutorials["relative_ang_r"] = [[relative_ang_z(uid1, uid2) takes the roll angle coordinate of uid1's part, relative to uid2's part's reference frame.
+It uses WorldToLocal function for the vector transformation
+
+uid1 and uid2 are strings (text) identifying movable parts, we expect quotes like "center_pos" or "626cc128a4c62e57866ce1860f6dffbf5eb586e916ceaacc1e9769c8fe4079d4". please avoid having multiple parts bearing the same name.
+full UID can be copied from the part in the copy menu]]
+
 
 Tutorials["owner_velocity_length_increase"] = [[owner_velocity_length_increase() takes overall speed and takes it to gradually increase in value
 it builds up, making it good for wheels and such, although the velocity is taken at its length so it won't go backwards. see owner_velocity_forward_increase.]]
@@ -630,10 +730,11 @@ e.g. while pose_parameter("head_yaw") might range from [0.2,0.8], pose_parameter
 since most people want a symmetrical thing, they'd need a 45*(-1 + 2*pose_parameter("head_yaw")) style setup
 I think it's more convenient to use pose_parameter_true("head_yaw")]]
 
-Tutorials["bodygroup"] = [[bodygroup(name, uid) or model_bodygroup reads the parent or the referenced part's bodygroup.
+Tutorials["bodygroup"] = [[bodygroup(name, uid) or model_bodygroup reads the owner's or the referenced part's bodygroup.
 
-name is the name of the bodygroup, it's a string, we expect quotes.
-uid is the Unique ID or name of a part, it's a string, we expect quotes again]]
+name is the name of the bodygroup. It's a string, we expect quotes like "hat".
+uid is the Unique ID or name of a part, it's a string, we expect quotes. full UID can be copied from the part in the copy menu
+if no uid is provided, takes the owner (parent or root owner)]]
 Tutorials["model_bodygroup"] = Tutorials["bodygroup"]
 
 Tutorials["parent_scale_x"] = [[parent_scale_x() takes the X scale (with size) of the physical target (target part or parent)]]
@@ -733,10 +834,10 @@ Tutorials["pac_healthbars_layertotal"] = [[pac_healthbars_layertotal(layer) or h
 layer should be a number, they are usually whole numbers from 0 to 15, with bigger numbers being damaged first]]
 Tutorials["healthmod_bar_layertotal"] = Tutorials["healthmod_bar_layertotal"]
 Tutorials["pac_healthbar_uidvalue"] = [[pac_healthbar_uidvalue(uid) or healthmod_bar_uidvalue gets the amount of "extra health" granted by one of your health modifier parts.
-uid is a string corresponding to the name or Unique ID of the part, we expect quotes.]]
+uid is a string corresponding to the name or Unique ID of the health modifier part, we expect quotes. full UID can be copied from the part in the copy menu]]
 Tutorials["healthmod_bar_uidvalue"] = Tutorials["pac_healthbar_uidvalue"]
 Tutorials["pac_healthbar_remaining_bars"] = [[healthmod_bar_remaining_bars(uid) or pac_healthbar_remaining_bars gets the remaining number of "extra health" bars granted by one of your health modifier parts.
-uid is a string corresponding to the name or Unique ID of the part, we expect quotes.]]
+uid is a string corresponding to the name or Unique ID of the health modifier part, we expect quotes. full UID can be copied from the part in the copy menu]]
 Tutorials["healthmod_bar_remaining_bars"] = Tutorials["pac_healthbar_remaining_bars"]
 
 return Tutorials

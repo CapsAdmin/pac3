@@ -11,11 +11,36 @@ local PANEL = {};
 PANEL.ClassName = "luapad"
 PANEL.Base = "Panel"
 
-surface.CreateFont("LuapadEditor", {font = "roboto mono", size = 16, weight = 400 } );
-surface.CreateFont("LuapadEditor_Bold", {font = "roboto mono", size = 16, weight = 800});
+--legacy value
+local default_font = "roboto mono"
+if system.IsLinux() then
+	default_font = "Noto Sans Mono"
+elseif system.IsWindows() then
+	default_font = "Noto Mono"
+elseif system.IsOSX() then
+	default_font = "Menlo"
+end
+local font_cvar = CreateClientConVar("pac_luapad_font", default_font, true, false, "font for pac3 code panel\nIt must be monospace!\n")
+local fontsize_cvar = CreateClientConVar("pac_luapad_fontsize", 16, true, false, "font size for pac3 code panel")
+pac.monospace_font = font_cvar:GetString()
+
+local active_panel = NULL
+function pace.LuapadRefreshFonts()
+	surface.CreateFont("LuapadEditor", {font = font_cvar:GetString(), size = fontsize_cvar:GetInt(), weight = 400 } )
+	surface.CreateFont("LuapadEditor_Bold", {font = font_cvar:GetString(), size = fontsize_cvar:GetInt(), weight = 800})
+	if IsValid(active_panel) then
+		active_panel.FontWidth, active_panel.FontHeight = surface.GetTextSize(" ")
+	end
+end
+
+cvars.AddChangeCallback("pac_luapad_font", function(cmd, old, new) pace.LuapadRefreshFonts() end)
+
+surface.CreateFont("LuapadEditor", {font = font_cvar:GetString(), size = fontsize_cvar:GetInt(), weight = 400 } );
+surface.CreateFont("LuapadEditor_Bold", {font = font_cvar:GetString(), size = fontsize_cvar:GetInt(), weight = 800});
 
 function PANEL:Init()
 	self:SetCursor("beam");
+	active_panel = self
 
 	surface.SetFont("LuapadEditor");
 	self.FontWidth, self.FontHeight = surface.GetTextSize(" ");
@@ -330,6 +355,7 @@ function PANEL:SyntaxColorLine(row)
 end
 
 function PANEL:PaintLine(row)
+
 	if(row > #self.Rows) then return end
 
 	if( not self.PaintRows[row]) then
@@ -420,6 +446,9 @@ function PANEL:PerformLayout()
 end
 
 function PANEL:Paint()
+	surface.SetFont("LuapadEditor")
+	self.FontWidth, self.FontHeight = surface.GetTextSize(" ")
+
 	if( not input.IsMouseDown(MOUSE_LEFT)) then
 		self:OnMouseReleased(MOUSE_LEFT)
 	end

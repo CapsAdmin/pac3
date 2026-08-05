@@ -1,3 +1,4 @@
+
 local lib = {
 	PI = math.pi,
 	rand = math.random,
@@ -36,108 +37,34 @@ local lib = {
 	round = math.Round,
 }
 
-local blacklist = {
-    "function";
-    "for"; "break";
-    "while"; "do";
-    "repeat"; "until";
-}
-
--- convert blacklist items into patterns to match
-for k, item in pairs(blacklist) do
-    -- uses more efficient / conclusive frontier pattern syntax
-    -- frontier matches transition into and out of sets
-    -- in this case, matching transition into letters and then out of letters (to match whole words and not partials)
-    blacklist[k] = ("%%f[%%a](%s)%%f[%%A]"):format(item)
-end
-
-local function_intro = "local IN = (...); "
-
-local function_formats = {
-    function_intro .. "return %s";
-    function_intro .. "%s"; -- allows <code>return</code> semantics
-}
-
-local function TryCompile(code, identifier)
-    local result = CompileString(code, identifier, false)
-    
-    return not isstring(result), result
-end
-
-local function CompileStringAdvanced(code, identifier)
-    local success, func = false, nil
-    
-    for _, structure in pairs(function_formats) do
-        success, func = TryCompile(structure:format(code), identifier)
-        
-        if success then break end
-    end
-    
-    return success, func
-end
-
-local function readonlyError()
-    error("Not allowed to assign to globals", 2)
-end
-
-local function makeReadonly(t)
-    return setmetatable(
-        {}, 
-        {
-            __index = t,
-            __newindex = readonlyError,
-            __metatable = "This metatable is locked."
-        }
-    )
-end
-
-local function copyInto(t1, t2)
-    for k,v in pairs(t1) do t2[k] = v end
-end
-
-local function checkBlacklist(code)
-    local str
-    
-    for _, word in pairs(blacklist) do
-        str = code:match(word)
-        
-		if str then
-			return str
-		end
-	end
-    
-    return nil
-end
+local blacklist = {"repeat", "until", "function", "end"}
 
 local function compile_expression(str, extra_lib)
-    local illegalWord = checkBlacklist(str)
-    
-	if illegalWord then
-        return false, string.format("illegal characters used %q", illegalWord)
-    end
+	for _, word in pairs(blacklist) do
+		if str:find("[%p%s]" .. word) or str:find(word .. "[%p%s]") then
+			return false, string.format("illegal characters used %q", word)
+		end
+	end
 
-	local success, func = CompileStringAdvanced(str, "pac_expression")
+	local functions = {}
 
-	if success then
-        local functions = {}
+	for k,v in pairs(lib) do functions[k] = v end
 
-        copyInto(lib, functions)
+	if extra_lib then
+		for k,v in pairs(extra_lib) do functions[k] = v end
+	end
 
-        if extra_lib then
-            copyInto(extra_lib, functions)
-        end
+	functions.select = select
+	str = "local IN = select(1, ...) return " .. str
 
-        functions.select = select
-        
-        setfenv(
-            func, 
-            makeReadonly(functions)
-        )
-        
+	local func = CompileString(str, "pac_expression", false)
+
+	if isstring(func) then
+		return false, func
+	else
+		setfenv(func, functions)
 		return true, func
 	end
-    
-    return false, func
 end
 
 return compile_expression

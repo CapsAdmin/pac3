@@ -194,6 +194,22 @@ local function populate_options(menu)
 	menu:AddOption(L"settings", function() pace.OpenSettings() end)
 
 	menu:AddCVar(L"Keyboard shortcuts: Legacy mode", "pac_editor_shortcuts_legacy_mode", "1", "0")
+	local tree, pnl = menu:AddSubMenu(L"tree config", function() end)
+		tree.GetDeleteSelf = function() return false end
+		pnl:SetImage("icon16/sitemap_color.png")
+		tree:AddOption("editor scale", function()
+			Derma_StringRequest("pac_editor_scale", "set the editor line height multiplier", math.Round(GetConVar("pac_editor_scale"):GetFloat(),3),
+				function(val)
+					if isnumber(tonumber(val)) then
+						GetConVar("pac_editor_scale"):SetString(val)
+					end
+				end)
+		end):SetImage("icon16/text_linespacing.png")
+		tree:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
+		tree:AddCVar(L"Lazy Mode", "pac_tree_lazymode", "1", "0"):SetTooltip("optimizes the editor by unloading collapsed parts")
+		tree:AddCVar(L"fade dormant nodes", "pac_tree_lazymode_fadeout_dormant_nodes", "1", "0")
+		tree:AddCVar(L"show tree refresh times", "pac_tree_log_refreshes", "1", "0")
+
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
 
@@ -301,6 +317,7 @@ local function populate_options(menu)
 			popup_pref_mode:AddOption(L"part label on tree", function() RunConsoleCommand("pac_popups_preferred_location", "pac tree label") end):SetImage('icon16/layout_content.png')
 			popup_pref_mode:AddOption(L"menu bar", function() RunConsoleCommand("pac_popups_preferred_location", "menu bar") end):SetImage('icon16/layout_header.png')
 			popup_pref_mode:AddOption(L"cursor", function() RunConsoleCommand("pac_popups_preferred_location", "cursor") end):SetImage('icon16/mouse.png')
+			popup_pref_mode:AddOption(L"tracking cursor", function() RunConsoleCommand("pac_popups_preferred_location", "tracking cursor") end):SetImage('icon16/mouse_add.png')
 			popup_pref_mode:AddOption(L"screen", function() RunConsoleCommand("pac_popups_preferred_location", "screen") end):SetImage('icon16/monitor.png')
 
 	menu:AddOption(L"configure event wheel", pace.ConfigureEventWheelMenu):SetImage("icon16/color_wheel.png")

@@ -53,9 +53,13 @@ BUILDER:StartStorableVars()
 :EndStorableVars()
 
 
+local prettify_name = CreateClientConVar("pac_faceposer_prettify_names", "1", true, false, "whether to prettify flex names in the faceposer part\nEyeDown -> Eye Down\neye_down -> Eye Down\neye-down -> Eye Down")
+
 -- Make the internal flex names be more presentable, TODO: handle numbers
 local function PrettifyName( name )
+	if not prettify_name:GetBool() then return name end
 	name = name:Replace( "_", " " )
+	name = name:Replace( "-", " " )
 
 	-- Try to split text into words, where words would start with single uppercase character
 	local newParts = {}
@@ -113,6 +117,7 @@ function PART:GetDynamicProperties()
 			udata = {
 				editor_friendly = PrettifyName(name),
 				group = "flexes",
+				override_case = true,
 				editor_sensitivity = 0.1,
 				editor_onchange = function(self, num)
 					local min, max = ent:GetFlexBounds(i)

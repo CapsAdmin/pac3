@@ -116,6 +116,7 @@ do --dev util
 
 			if istable(ent.pac_animation_sequences) then
 				for part in next, ent.pac_animation_sequences do
+					if isnumber(part) then continue end
 					if part:IsValid() then
 						_part = part
 						ProtectedCall(nuke_part)
@@ -127,6 +128,7 @@ do --dev util
 
 			if istable(ent.pac_bone_parts) then
 				for part in next, ent.pac_bone_parts do
+					if isnumber(part) then continue end
 					if part:IsValid() then
 						_part = part
 						ProtectedCall(nuke_part)
@@ -371,8 +373,8 @@ do -- hook helpers
 		end
 		if pac.IsEnabled() then
 			hook.Add(event_name, id, func, priority)
-			pac.added_hooks[event_name .. tostring(id)] = {event_name = event_name, id = id, func = func, priority = priority}
 		end
+		pac.added_hooks[event_name .. tostring(id)] = {event_name = event_name, id = id, func = func, priority = priority}
 	end
 
 	function pac.RemoveHook(event_name, id)

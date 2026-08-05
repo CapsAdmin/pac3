@@ -27,6 +27,10 @@ BUILDER:StartStorableVars()
 		:GetSet("StandingHullHeight", 72, {editor_panel = "hull"})
 		:GetSet("CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
 		:GetSet("HullWidth", 32, {editor_panel = "hull"})
+		:GetSet("OverrideStepAndView", false, {description = "When changing size, pac scales the step size and view offsets together. This overrides that."})
+		:GetSet("StepSize", 18, {description = "Height that you can step up or down without jumping. Slightly tricky and may create view transition issues."})
+		:GetSet("StandingViewOffset", 64, {description = "Eye height when standing"})
+		:GetSet("CrouchingViewOffset", 28, {description = "Eye height when crouching"})
 :EndStorableVars()
 
 BUILDER:RemoveProperty("BoneMerge")
@@ -56,6 +60,22 @@ function PART:SetCrouchingHullHeight(val)
 end
 function PART:SetHullWidth(val)
 	self.HullWidth = val
+	self:ApplyMatrix()
+end
+function PART:SetStandingViewOffset(val)
+	self.StandingViewOffset = val
+	self:ApplyMatrix()
+end
+function PART:SetCrouchingViewOffset(val)
+	self.CrouchingViewOffset = val
+	self:ApplyMatrix()
+end
+function PART:SetStepSize(val)
+	self.StepSize = val
+	self:ApplyMatrix()
+end
+function PART:SetOverrideStepAndView(b)
+	self.OverrideStepAndView = b
 	self:ApplyMatrix()
 end
 

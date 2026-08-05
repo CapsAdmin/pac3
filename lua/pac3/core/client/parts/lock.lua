@@ -16,6 +16,7 @@ local physics_point_ent_classes = {
 	["physics_cannister"] = true,
 	["npc_satchel"] = true,
 	["npc_grenade_frag"] = true,
+	["pac_projectile"] = true,
 }
 
 local convar_lock = GetConVar("pac_sv_lock")
@@ -54,7 +55,19 @@ BUILDER:StartStorableVars()
 		:GetSet("OverrideAngles", true, {description = "Whether the part will rotate the entity alongside it, otherwise it changes just the position"})
 		:GetSet("RelativeGrab", false)
 		:GetSet("RestoreDelay", 1, {description = "Seconds until the entity's original angles before self.grabbing are re-applied"})
+		:GetSet("MinimalRestore", false, {description = "Skip the angle reset on physics entities. But for players and NPCs, it'll still have to reset pitch and roll"})
 		:GetSet("NoCollide", true, {description = "Whether to disable collisions on the entity while grabbed."})
+		:GetSet("ThrowMode", "None", {description = "send a force impulse when hidden", enums = {
+			["None"] = "None",
+			["Local"] = "Local",
+			["Global"] = "Global",
+			["DeltaPos"] = "DeltaPos",
+			["DeltaPosSmooth"] = "DeltaPosSmooth",
+			["Locus"] = "Locus",
+			["EyeAngles"] = "EyeAngles",
+		}})
+		:GetSetPart("ThrowTargetPart")
+		:GetSet("ThrowAmount", Vector(0,0,0))
 
 	:SetPropertyGroup("DetectionOrigin")
 		:GetSet("Radius", 20)
@@ -84,6 +97,7 @@ BUILDER:StartStorableVars()
 		:GetSet("AffectPlayerOwner", false)
 		:GetSet("Players", false)
 		:GetSet("PhysicsProps", false)
+		:GetSet("ExcludeProjectiles", false)
 		:GetSet("NPC", false)
 
 
@@ -122,6 +136,17 @@ function PART:OnThink()
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
+
+	local pos = self:GetWorldPosition()
+	if self.last_pos then
+		self.delta_pos = pos - self.last_pos
+		self.last_pos  = pos
+		
+		self.delta_pos_smooth = (self.delta_pos_smooth + (self.delta_pos - self.delta_pos_smooth) * 10 * FrameTime())
+	else
+		self.last_pos = pos
+		self.delta_pos_smooth = Vector()
 	end
 
 	if self.forcebreak then
@@ -389,6 +414,10 @@ function PART:OnShow()
 			render.DrawWireframeSphere(origin_part:GetWorldPosition() + Vector(0,0,-self.OffsetDownAmount), self.Radius, 30, 30, Color(100,100,100),true)
 		end
 
+		if self.ThrowMode ~= "None" then
+			local vec_ang, vec = self:GetThrowAngle()
+			render.DrawLine(self:GetWorldPosition(),self:GetWorldPosition() + vec,Color(255,255,255))
+		end
 	end)
 	if self.Mode == "Teleport" then
 		if not convar_lock_teleport:GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
@@ -443,6 +472,36 @@ function PART:OnDoubleClickSpecified()
 	end
 end
 
+function PART:GetThrowAngle()
+	local pos, ang = self:GetDrawPosition()
+	local vec_ang = Angle()
+
+	if self.ThrowMode == "Local" then
+		vec_ang = ang
+	elseif self.ThrowMode == "Global" then
+		return self.ThrowAmount:Angle(), self.ThrowAmount
+	elseif self.ThrowMode == "Locus" and self.ThrowTargetPart:IsValid() then
+		ang = (self.ThrowTargetPart:GetWorldPosition() - pos):Angle()
+		local fwd = ang:Forward()
+		local right = ang:Right()
+		local up = ang:Up()
+		vec_ang = (fwd*self.ThrowAmount.x + right*self.ThrowAmount.y + up*self.ThrowAmount.z):Angle()
+	elseif self.ThrowMode == "EyeAngles" then
+		vec_ang = self:GetPlayerOwner():EyeAngles()
+	elseif self.ThrowMode == "DeltaPos" then
+		self.delta_pos = self.delta_pos or Vector()
+		vec_ang = self.delta_pos:Angle()
+	elseif self.ThrowMode == "DeltaPosSmooth" then
+		self.delta_pos_smooth = self.delta_pos_smooth or Vector()
+		vec_ang = self.delta_pos_smooth:Angle()
+	end
+	local fwd = vec_ang:Forward()
+	local right = vec_ang:Right()
+	local up = vec_ang:Up()
+	local vec = Vector(fwd*self.ThrowAmount.x + right*self.ThrowAmount.y + up*self.ThrowAmount.z)
+	return vec_ang, vec
+end
+
 function PART:OnHide()
 	pac.RemoveHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
 	self.teleported = false
@@ -451,6 +510,16 @@ function PART:OnHide()
 	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedByUID = nil end
 	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	self:reset_ent_ang()
+
+	if self.ThrowMode ~= "None" then
+		timer.Simple(0, function()
+			local vec_ang, vec = self:GetThrowAngle()
+			net.Start("pac_request_lock_toss")
+			net.WriteEntity(self.target_ent)
+			net.WriteVector(vec)
+			net.SendToServer()
+		end)
+	end
 end
 
 function PART:reset_ent_ang()
@@ -458,13 +527,22 @@ function PART:reset_ent_ang()
 	local reset_ent = self.target_ent
 
 	if reset_ent:IsValid() then
+		local ang = Angle(0,0,0)
+		if self.MinimalRestore then
+			ang = reset_ent:GetAngles()
+			if not physics_point_ent_classes[reset_ent:GetClass()] then
+				ang.r = 0
+				ang.p = 0
+			end
+		end
+
 		timer.Simple(math.min(self.RestoreDelay,5), function()
 			if pac.LocalPlayer == self:GetPlayerOwner() then
 				if not convar_combat_enforce_netrate:GetBool() then
 					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 				end
 				net.Start("pac_request_angle_reset_on_entity")
-				net.WriteAngle(Angle(0,0,0))
+				net.WriteAngle(ang)
 				net.WriteFloat(self.RestoreDelay)
 				net.WriteEntity(reset_ent)
 				net.WriteEntity(self:GetPlayerOwner())
@@ -519,7 +597,8 @@ function PART:DecideTarget()
 							chosen_ent = ent_candidate
 							table.insert(ents_candidates, ent_candidate)
 						end
-					elseif self.PhysicsProps and (physics_point_ent_classes[ent_candidate:GetClass()] or string.find(ent_candidate:GetClass(),"item_") or string.find(ent_candidate:GetClass(),"ammo_")) then
+					elseif self.PhysicsProps and (ent_candidate ~= self:GetRootPart():GetOwner()) and (physics_point_ent_classes[ent_candidate:GetClass()] or string.find(ent_candidate:GetClass(),"item_") or string.find(ent_candidate:GetClass(),"ammo_")) then
+						if ent_candidate:GetClass() == "pac_projectile" and self.ExcludeProjectiles then continue end
 						chosen_ent = ent_candidate
 						table.insert(ents_candidates, ent_candidate)
 					elseif self.NPC and (ent_candidate:IsNPC() or ent_candidate:IsNextBot() or ent_candidate.IsDrGEntity or ent_candidate.IsVJBaseSNPC) then

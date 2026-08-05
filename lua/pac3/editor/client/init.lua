@@ -32,6 +32,7 @@ include("about.lua")
 include("animation_timeline.lua")
 include("render_scores.lua")
 include("wires.lua")
+include("proxy_graphing.lua")
 
 include("wear_filter.lua")
 include("show_outfit_on_use.lua")
@@ -200,7 +201,7 @@ function pace.RefreshFiles()
 		pace.Editor:MakeBar()
 	end
 
-	if pace.SpawnlistBrowser:IsValid() then
+	if IsValid(pace.SpawnlistBrowser) then
 		pace.SpawnlistBrowser:PopulateFromClient()
 	end
 end

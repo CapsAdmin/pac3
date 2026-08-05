@@ -38,6 +38,8 @@ end
 function PART:SetOwner(ent)
 	if self:HasParent() then
 		self.Owner = ent or NULL
+		self.ModelTracker = ""
+		self.ClassTracker = ""
 	else
 		local owner = self:GetOwner()
 

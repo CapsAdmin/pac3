@@ -984,6 +984,28 @@ do -- serializing
 		return self.StorableVars
 	end
 
+	function PART:GetAlteredStorableVars()
+		local altered_bools = {}
+		local altered_values = {}
+		local defaults = self.DefaultVars
+		for key,value in pairs(defaults) do
+			if isvector(value) or isangle(value) then
+				if not self[key]:IsEqualTol(value, 0.01) then
+					altered_bools[key] = true
+				end
+			elseif IsColor(value) then
+				local col = self[key]
+				if not (col.r == value.r and col.g == value.g and col.b == value.b) then
+					altered_bools[key] = true
+				end
+			elseif self[key] ~= value then
+				altered_bools[key] = true
+			end
+			if altered_bools[key] then altered_values[key] = value end
+		end
+		return altered_bools, altered_values
+	end
+
 	function PART:Clear()
 		self:RemoveChildren()
 	end
@@ -1238,6 +1260,15 @@ do -- serializing
 
 			if key == "Name" and self[key] == "" then
 				var = ""
+			end
+
+			--optimization: To save altered variables only. Indeed, one reason outfit sizes have been ballooning over time is that we've been adding new properties but people don't necessarily use them
+			--drawback: if we change a default value, it won't be protected
+			--as such, the option will be... an option. Users will see it in the new save menu
+			if pac.no_save_default_variables then
+				if var == self.DefaultVars[key] then
+					continue
+				end
 			end
 
 			-- these arent needed because parent system uses the tree structure

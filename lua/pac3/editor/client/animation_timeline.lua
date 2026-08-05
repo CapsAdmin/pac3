@@ -696,7 +696,11 @@ do
 			self:SetPos(0, ScrH()-self:GetTall())
 		end
 
-		if input.IsKeyDown(KEY_SPACE) then
+		local focus = vgui.GetKeyboardFocus()
+		local noplay = false
+		if focus and (focus:GetClassName() == "TextEntry" or focus:GetClassName() == "DTextEntry") then noplay = true end
+
+		if input.IsKeyDown(KEY_SPACE) and not noplay then
 			if not self.toggled then
 				self:Toggle()
 				self.toggled = true

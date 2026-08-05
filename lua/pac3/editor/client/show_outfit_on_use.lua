@@ -6,6 +6,7 @@ local string_upper = string.upper
 local pac_onuse_only = CreateClientConVar("pac_onuse_only", "0", true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
 local pac_onuse_only_override = CreateClientConVar("pac_onuse_only_override", "0", true, false, "Ignore value of pac_onuse_only_force")
 local pac_onuse_only_force = CreateConVar("pac_onuse_only_force", "0", FCVAR_REPLICATED, "Sets pac_onuse_only for clients")
+local pac_onuse_distance = CreateClientConVar("pac_onuse_only_distance", "270", true, false, "distance where you can see overlay prompt for pac_onuse_only")
 
 function pac.IsPacOnUseOnly()
 	if pac_onuse_only_override:GetBool() then
@@ -22,6 +23,7 @@ pac.AddHook("PlayerBindPress", "onuse_only", function(ply, bind, isPressed)
 	if bind ~= "+use" and isPressed then return end
 	if not pac_IsPacOnUseOnly() then return end
 	local eyes, aim = ply:EyePos(), ply:GetAimVector()
+	MAX_DIST = pac_onuse_distance:GetInt()
 
 	local tr = util.TraceLine({
 		start = eyes,
@@ -51,6 +53,7 @@ do
 		if not pac_IsPacOnUseOnly() then return end
 		local ply = pac.LocalPlayer
 		local eyes, aim = ply:EyePos(), ply:GetAimVector()
+		MAX_DIST = pac_onuse_distance:GetInt()
 
 		local tr = util.TraceLine({
 			start = eyes,

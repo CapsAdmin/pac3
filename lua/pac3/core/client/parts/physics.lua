@@ -38,6 +38,8 @@ BUILDER:StartStorableVars()
 		:GetSet("MaxSpeedDamp", 1000)
 		:GetSet("MaxAngularDamp", 1000)
 		:GetSet("DampFactor", 1)
+		:GetSet("DampFactorPost", 0)
+		:GetSet("AngleDampFactorPost", 0)
 	BUILDER:SetPropertyGroup("Speeds")
 
 		:GetSet("ConstantVelocity", Vector(0,0,0))
@@ -226,6 +228,14 @@ function PART:OnThink()
 					local extra_dist = current_dist - self.ConstrainSphere
 					phys:AddVelocity(0.5 * vec:GetNormalized() * extra_dist / math.Clamp(self.SecondsToArrive,0.05,10))
 				end
+			end
+			if self.DampFactorPost ~= 0 then
+				local vel = phys:GetVelocity()
+				phys:SetVelocity((1 - self.DampFactorPost) * vel)
+			end
+			if self.AngleDampFactorPost ~= 0 then
+				local angvel = phys:GetAngleVelocity()
+				phys:SetAngleVelocity((1 - self.AngleDampFactorPost) * angvel)
 			end
 		else
 			if self.ConstrainSphere ~= 0 then

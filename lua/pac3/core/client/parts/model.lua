@@ -800,6 +800,10 @@ function PART:ApplyMatrix()
 			StandingHullHeight = self.StandingHullHeight,
 			CrouchingHullHeight = self.CrouchingHullHeight,
 			HullWidth = self.HullWidth,
+			StepSize = self.StepSize,
+			StandingViewOffset = self.StandingViewOffset,
+			CrouchingViewOffset = self.CrouchingViewOffset,
+			OverrideStepAndView = self.OverrideStepAndView
 		})
 
 		if self.Size == 1 and self.Scale == vec_one then

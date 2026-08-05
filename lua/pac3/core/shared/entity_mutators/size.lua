@@ -2,13 +2,25 @@ local MUTATOR = {}
 
 MUTATOR.ClassName = "size"
 
+--it's kind of jank when in firstperson because the view moves at a constant speed which is very slow when applied to big step sizes
+local allow_step = CreateConVar("pac_modifier_stepsize", "0", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
+local allow_viewoffset = CreateConVar("pac_modifier_viewoffset", "0", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
+
 function MUTATOR:WriteArguments(multiplier, other)
 	net.WriteFloat(multiplier)
-	if other then
+	if other and (other.StandingHullHeight ~= nil and other.CrouchingHullHeight ~= nil and other.HullWidth ~= nil and other.StandingHullHeight ~= nil and other.StepSize ~= nil and other.StandingViewOffset ~= nil and other.CrouchingViewOffset ~= nil) then
 		net.WriteBool(true)
 		net.WriteFloat(other.StandingHullHeight)
 		net.WriteFloat(other.CrouchingHullHeight)
 		net.WriteFloat(other.HullWidth)
+		if other.OverrideStepAndView and (allow_step:GetBool() or allow_viewoffset:GetBool()) then
+			net.WriteBool(true)
+			net.WriteFloat(other.StepSize)
+			net.WriteFloat(other.StandingViewOffset)
+			net.WriteFloat(other.CrouchingViewOffset)
+		else
+			net.WriteBool(false)
+		end
 	else
 		net.WriteBool(false)
 	end
@@ -36,6 +48,12 @@ function MUTATOR:ReadArguments()
 		other.StandingHullHeight = net.ReadFloat()
 		other.CrouchingHullHeight = net.ReadFloat()
 		other.HullWidth = net.ReadFloat()
+		other.OverrideStepAndView = net.ReadBool()
+		if other.OverrideStepAndView then
+			other.StepSize = net.ReadFloat()
+			other.StandingViewOffset = net.ReadFloat()
+			other.CrouchingViewOffset = net.ReadFloat()
+		end
 	end
 
 	if net.ReadBool() then
@@ -112,6 +130,23 @@ function MUTATOR:Mutate(multiplier, other, hidden_state)
 
 			ent:SetHull(smin, smax)
 			ent:SetHullDuck(cmin, cmax)
+
+			if other.OverrideStepAndView then
+				if ent.SetStepSize and allow_step:GetBool() then
+					ent:SetStepSize(math.max(other.StepSize,0))
+				end
+				if allow_viewoffset:GetBool() then
+					local soffset = other.StandingViewOffset
+					if ent.SetViewOffset then
+						ent:SetViewOffset(Vector(0,0,soffset))
+					end
+					local coffset = other.CrouchingViewOffset
+					if ent.SetViewOffsetDucked then
+						ent:SetViewOffsetDucked(Vector(0,0,coffset))
+					end
+				end
+			end
+
 		else
 			ent:ResetHull()
 		end

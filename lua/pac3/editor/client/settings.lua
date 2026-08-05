@@ -605,6 +605,9 @@ local function encode_table_to_file(str)
 	elseif str == "eventwheel_colors" then
 		data = pace.command_colors or {}
 		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data, true))
+	elseif str == "pinned_properties" then
+		data = pace.pinned_properties or {}
+		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data, true))
 	end
 
 end
@@ -640,6 +643,8 @@ local function decode_table_from_file(str)
 		else
 			pace.command_colors = util.JSONToTable(data)
 		end
+	elseif str == "pinned_properties" then
+		pace.pinned_properties = util.JSONToTable(data, false, true)
 	end
 
 
@@ -1094,6 +1099,7 @@ function pace.FillEditorSettings(pnl)
 	local shortcutaction_choices = vgui.Create("DComboBox", LeftPanel)
 	shortcutaction_choices:SetText("Select a PAC action")
 	shortcutaction_choices:SetSortItems(false)
+	pace.shortcutaction_choices = shortcutaction_choices
 	local function rebuild_shortcut_box()
 		local display, active_action = shortcutaction_choices:GetSelected()
 		local active_action_count = 0
@@ -1831,8 +1837,9 @@ function pace.FillEditorSettings2(pnl)
 		forward_binder:SetTooltip("move forward" .. "\nbound to " .. pace.camera_movement_binds["forward"]:GetString())
 		forward_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["forward"]:GetString()))
 		function forward_binder:OnChange(num)
-			pace.camera_movement_binds["forward"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("move forward" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["forward"]:SetString(name)
+			self:SetTooltip("move forward" .. "\nbound to " .. name)
 		end
 
 	local back_binder = vgui.Create("DBinder", LeftPanel)
@@ -1841,8 +1848,9 @@ function pace.FillEditorSettings2(pnl)
 		back_binder:SetTooltip("move back" .. "\nbound to " .. pace.camera_movement_binds["back"]:GetString())
 		back_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["back"]:GetString()))
 		function back_binder:OnChange(num)
-			pace.camera_movement_binds["back"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("move back" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["back"]:SetString(name)
+			self:SetTooltip("move back" .. "\nbound to " .. name)
 		end
 
 	local moveleft_binder = vgui.Create("DBinder", LeftPanel)
@@ -1851,8 +1859,9 @@ function pace.FillEditorSettings2(pnl)
 		moveleft_binder:SetTooltip("move left" .. "\nbound to " .. pace.camera_movement_binds["moveleft"]:GetString())
 		moveleft_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["moveleft"]:GetString()))
 		function moveleft_binder:OnChange(num)
-			pace.camera_movement_binds["moveleft"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("move left" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["moveleft"]:SetString(name)
+			self:SetTooltip("move left" .. "\nbound to " .. name)
 		end
 
 	local moveright_binder = vgui.Create("DBinder", LeftPanel)
@@ -1861,8 +1870,9 @@ function pace.FillEditorSettings2(pnl)
 		moveright_binder:SetTooltip("move right" .. "\nbound to " .. pace.camera_movement_binds["moveright"]:GetString())
 		moveright_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["moveright"]:GetString()))
 		function moveright_binder:OnChange(num)
-			pace.camera_movement_binds["moveright"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("move right" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["moveright"]:SetString(name)
+			self:SetTooltip("move right" .. "\nbound to " .. name)
 		end
 
 	local up_binder = vgui.Create("DBinder", LeftPanel)
@@ -1871,8 +1881,9 @@ function pace.FillEditorSettings2(pnl)
 		up_binder:SetTooltip("move up" .. "\nbound to " .. pace.camera_movement_binds["up"]:GetString())
 		up_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["up"]:GetString()))
 		function up_binder:OnChange(num)
-			pace.camera_movement_binds["up"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("move up" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["up"]:SetString(name)
+			self:SetTooltip("move up" .. "\nbound to " .. name)
 		end
 
 	local down_binder = vgui.Create("DBinder", LeftPanel)
@@ -1881,8 +1892,9 @@ function pace.FillEditorSettings2(pnl)
 		down_binder:SetTooltip("move down" .. "\nbound to " .. pace.camera_movement_binds["down"]:GetString())
 		down_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["down"]:GetString()))
 		function down_binder:OnChange(num)
-			pace.camera_movement_binds["down"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("move down" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["down"]:SetString(name)
+			self:SetTooltip("move down" .. "\nbound to " .. name)
 		end
 
 	local slow_binder = vgui.Create("DBinder", LeftPanel)
@@ -1891,8 +1903,9 @@ function pace.FillEditorSettings2(pnl)
 		slow_binder:SetTooltip("go slow" .. "\nbound to " .. pace.camera_movement_binds["slow"]:GetString())
 		slow_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["slow"]:GetString()))
 		function slow_binder:OnChange(num)
-			pace.camera_movement_binds["slow"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("go slow" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["slow"]:SetString(name)
+			self:SetTooltip("go slow" .. "\nbound to " .. name)
 		end
 
 	local speed_binder = vgui.Create("DBinder", LeftPanel)
@@ -1901,8 +1914,9 @@ function pace.FillEditorSettings2(pnl)
 		speed_binder:SetTooltip("go fast" .. "\nbound to " .. pace.camera_movement_binds["speed"]:GetString())
 		speed_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["speed"]:GetString()))
 		function speed_binder:OnChange(num)
-			pace.camera_movement_binds["speed"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("go fast" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["speed"]:SetString(name)
+			self:SetTooltip("go fast" .. "\nbound to " .. name)
 		end
 
 	local roll_binder = vgui.Create("DBinder", LeftPanel)
@@ -1911,8 +1925,9 @@ function pace.FillEditorSettings2(pnl)
 		roll_binder:SetTooltip("roll drag (hold & drag to tilt, tap to reset)" .. "\nbound to " .. pace.camera_movement_binds["roll_drag"]:GetString())
 		roll_binder:SetValue(input.GetKeyCode(pace.camera_movement_binds["roll_drag"]:GetString()))
 		function roll_binder:OnChange(num)
-			pace.camera_movement_binds["roll_drag"]:SetString(input.GetKeyName( num ))
-			self:SetTooltip("roll drag (hold & drag to tilt, tap to reset)" .. "\nbound to " .. input.GetKeyName( num ))
+			local name = input.GetKeyName( num ) or ""
+			pace.camera_movement_binds["roll_drag"]:SetString(name)
+			self:SetTooltip("roll drag (hold & drag to tilt, tap to reset)" .. "\nbound to " .. name)
 		end
 
 	local Parts = pac.GetRegisteredParts()
@@ -2501,6 +2516,19 @@ end
 decode_table_from_file("pac_editor_shortcuts")
 decode_table_from_file("pac_editor_partmenu_layouts")
 decode_table_from_file("eventwheel_colors")
+decode_table_from_file("pinned_properties")
+if not pace.pinned_properties then
+	pace.pinned_properties = {
+		"Name",
+		"Hide",
+		"Bone", "Position", "Angles",
+		"Notes"
+	}
+end
+
+function pac.UpdateConfigFile(str)
+	encode_table_to_file(str)
+end
 
 if not file.Exists("pac_part_categories_experimental.txt", "DATA") then
 	file.Write("pac3_config/pac_part_categories_experimental.txt", util.TableToKeyValues(pace.partmenu_categories_experimental))

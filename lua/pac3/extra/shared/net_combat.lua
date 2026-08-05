@@ -62,6 +62,8 @@ local enforce_distance = CreateConVar("pac_sv_combat_distance_enforced", 0, CLIE
 local ENFORCE_DISTANCE_SQR = math.pow(enforce_distance:GetInt(),2)
 cvars.AddChangeCallback("pac_sv_combat_distance_enforced", function() ENFORCE_DISTANCE_SQR = math.pow(enforce_distance:GetInt(),2) end)
 
+local pvs = CreateConVar("pac_sv_combat_pvs_broadcasts", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Only send pac combat feedback broadcasts to PVS instead of broadcasts to all players")
+
 
 local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force...).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
 local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
@@ -95,7 +97,8 @@ if SERVER then
 		["item_item_crate"] = true,
 		["func_breakable_surf"] = true,
 		["func_breakable"] = true,
-		["physics_cannister"] = true
+		["physics_cannister"] = true,
+		["pac_projectile"] = true,
 	}
 
 	local contraption_classes = {
@@ -426,12 +429,13 @@ if SERVER then
 		if ulx and (ent.frozen or ent.jail) then return end
 		--the grab imposes MOVETYPE_NONE and no collisions
 		--reverting the state requires to reset the eyeang roll in case it was modified
+		local phys = ent:GetPhysicsObject()
 		if ent:IsPlayer() then
 			if bool then --apply lock
 				active_grabbed_ents[ent] = true
 				if nocollide then
 					ent:SetMoveType(MOVETYPE_NONE)
-					ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+					ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS_TRIGGER)
 				else
 					ent:SetMoveType(MOVETYPE_WALK)
 					ent:SetCollisionGroup(COLLISION_GROUP_NONE)
@@ -460,7 +464,7 @@ if SERVER then
 				active_grabbed_ents[ent] = true
 				if nocollide then
 					ent:SetMoveType(MOVETYPE_NONE)
-					ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+					ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS_TRIGGER)
 				else
 					ent:SetMoveType(MOVETYPE_STEP)
 					ent:SetCollisionGroup(COLLISION_GROUP_NONE)
@@ -473,6 +477,20 @@ if SERVER then
 				ent_ang.r = 0
 				ent:SetAngles(ent_ang)
 			end
+		else
+			if IsValid(phys) then
+				phys:EnableGravity(false)
+				if bool then
+					if nocollide then
+						ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS_TRIGGER)
+					else
+						ent:SetCollisionGroup(COLLISION_GROUP_NONE)
+					end
+				else
+					ent:SetCollisionGroup(COLLISION_GROUP_NONE)
+				end
+			end
+			if bool then return end
 		end
 
 		if bool == nil then
@@ -489,6 +507,9 @@ if SERVER then
 		ent:PhysWake()
 		ent:SetGravity(1)
 
+		if IsValid(phys) then
+			phys:EnableGravity(true)
+		end
 	end
 
 	local function maximized_ray_mins_maxs(startpos,endpos,padding)
@@ -807,7 +828,11 @@ if SERVER then
 				net.WriteUInt(value,24)
 			end
 		end
-		net.Broadcast()
+		if pvs:GetBool() then
+			net.SendPVS(target:GetPos())
+		else
+			net.Broadcast()
+		end
 	end
 
 	--healthbars work with a 2 levels-deep table
@@ -1866,7 +1891,11 @@ if SERVER then
 			net.Start("pac_send_ragdoll")
 			net.WriteUInt(ent:EntIndex(), 12)
 			net.WriteEntity(rag)
-			net.Broadcast()
+			if pvs:GetBool() then
+				net.SendPVS(rag:GetPos())
+			else
+				net.Broadcast()
+			end
 		end)
 
 		net.Receive("pac_request_ragdoll_sends", function(len, ply)
@@ -2123,7 +2152,11 @@ if SERVER then
 				local _,bits_after_kill = net.BytesWritten()
 				--print("table is length " .. bits_after_kill - bits_after_hit .. " for " .. table.Count(successful_kill_ents) .. " ents killed, or about " .. ((bits_after_kill - bits_after_hit) / table.Count(successful_kill_ents) - 16) .. " per ent")
 			end
-			net.Broadcast()
+			if pvs:GetBool() then
+				net.SendPVS(pos)
+			else
+				net.Broadcast()
+			end
 		end)
 
 	end
@@ -2136,6 +2169,7 @@ if SERVER then
 		util.AddNetworkString("pac_lock_imposecalcview")
 		util.AddNetworkString("pac_signal_stop_lock")
 		util.AddNetworkString("pac_request_lock_break")
+		util.AddNetworkString("pac_request_lock_toss")
 		util.AddNetworkString("pac_mark_grabbed_ent")
 		util.AddNetworkString("pac_notify_grabbed_player")
 		--The lock part grab request net message
@@ -2339,7 +2373,11 @@ if SERVER then
 					net.WriteEntity(targ_ent)
 					net.WriteBool(did_grab)
 					net.WriteString(lockpart_UID)
-					net.Broadcast()
+					if pvs:GetBool() then
+						net.SendPVS(pos)
+					else
+						net.Broadcast()
+					end
 
 					if targ_ent:IsPlayer() then
 						net.Start("pac_notify_grabbed_player")
@@ -2403,6 +2441,20 @@ if SERVER then
 			targ_ent:SetAngles(ang)
 			ApplyLockState(targ_ent, false)
 
+		end)
+
+		net.Receive("pac_request_lock_toss", function(len, ply)
+			local ent = net.ReadEntity()
+			local vec = net.ReadVector()
+			local phys_ent = ent:GetPhysicsObject()
+			if Is_NPC(ent) then
+				phys_ent = ent
+			end
+			if ent:IsPlayer() then
+				ent:SetVelocity(-ent:GetVelocity() + vec)
+				return
+			end
+			phys_ent:SetVelocity(vec)
 		end)
 
 

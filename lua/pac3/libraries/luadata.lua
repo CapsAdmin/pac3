@@ -331,6 +331,9 @@ do -- file extension
 			return false,"file does not exist"
 		end
 		local encoded = luadata.Encode(tbl)
+		if pac.save_lzma then
+			encoded = "LZMA COMPRESSED\n" .. util.Compress(encoded)
+		end
 		file.Write(path, encoded)
 		--if not file.Exists(path,'DATA') then return false,"could not write" end
 		return encoded
@@ -342,6 +345,8 @@ do -- file extension
 			if noinvalid then return end
 			return false,"invalid file"
 		end
+		--decode the header
+		if file:StartsWith("LZMA COMPRESSED\n") then file = file:gsub("^LZMA COMPRESSED\n","") file = util.Decompress(file) end
 		return luadata.Decode(file)
 	end
 end

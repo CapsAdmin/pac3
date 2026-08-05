@@ -186,6 +186,8 @@ local tracked_events = {
 	damage_zone_kill = true,
 	lockpart_grabbing = true
 }
+
+local pref_cmd_op = CreateClientConVar("pac_event_command_default_operator", "find simple", true, false, "operator to set when setting up a command event through the shortcut method of typing an arbitrary text in the event field")
 function PART:SetEvent(event)
 	local reset = (self.Arguments == "") or
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
@@ -233,6 +235,7 @@ function PART:SetEvent(event)
 					timer.Simple(0.2, function()
 						if not self.pace_properties or self ~= pace.current_part then return end
 						self:SetEvent("command")
+						self:SetOperator(pref_cmd_op:GetString())
 						self:SetArguments(event .. "@@0")
 						pace.PopulateProperties(self)
 					end)
@@ -267,9 +270,9 @@ function PART:SetProperty(key, val)
 		if self["Get" .. key](self) ~= val then
 			self["Set" .. key](self, val)
 		end
-	elseif self.GetDynamicProperties then
+	else
 		local info = self:GetDynamicProperties()[key]
-		if info and info then
+		if info then
 			if isnumber(val) then
 				val = math.Round(val, 7)
 			end
@@ -286,6 +289,7 @@ end
 
 function PART:SetArguments(str)
 	self.Arguments = str
+	if self ~= pace.current_part then return end
 	if pace.IsActive() and pac.LocalPlayer == self:GetPlayerOwner() then
 		if not self:GetShowInEditor() then return end
 		pace.PopulateProperties(self)
@@ -1104,7 +1108,7 @@ PART.OldEvents = {
 
 	viewed_by_owner = {
 		operator_type = "none",
-		tutorial = "viewed_by_owner shows for only you. uninvert to show only to other players",
+		tutorial_explanation = "viewed_by_owner shows for only you. uninvert to show only to other players",
 		callback = function(self, ent)
 			return self:GetPlayerOwner() == pac.LocalPlayer
 		end,
@@ -1112,7 +1116,7 @@ PART.OldEvents = {
 
 	seen_by_player = {
 		operator_type = "none",
-		tutorial = "looked_at_by_player activates when a player is looking at you, determined by whether a box around you touches the direct eyeangle line",
+		tutorial_explanation = "looked_at_by_player activates when a player is looking at you, determined by whether a box around you touches the direct eyeangle line",
 		arguments = {{extra_radius = "number"}, {require_line_of_sight = "boolean"}},
 		userdata = {{editor_panel = "seen_by_player"}},
 		callback = function(self, ent, extra_radius, require_line_of_sight)
@@ -2436,8 +2440,9 @@ PART.OldEvents = {
 		callback = function(self, ent)
 			if not ent:IsPlayer() then return false end
 			local vehicle = ent:GetVehicle()
-			if ent.GetSitting then return ent:GetSitting() end --sit anywhere script
-			return IsValid(vehicle) and vehicle:GetModel() ~= "models/vehicles/prisoner_pod_inner.mdl" --no prison pod!
+			local fallback = IsValid(vehicle) and (vehicle:GetModel() ~= "models/vehicles/prisoner_pod_inner.mdl") --but no prison pod!
+			if ent.GetSitting then return ent:GetSitting() or fallback end --sit anywhere script
+			return fallback
 		end
 	},
 
@@ -3038,7 +3043,7 @@ PART.OldEvents = {
 
 	is_no_draw = {
 		operator_type = "none",
-		tutorial = "activates when the current entity is flagged with nodraw",
+		tutorial_explanation = "activates when the current entity is flagged with nodraw",
 		callback = function(self, ent)
 			return ent:GetNoDraw()
 		end,
@@ -3046,7 +3051,7 @@ PART.OldEvents = {
 
 	viewer_steamid = {
 		operator_type = "string", preferred_operator = "equal",
-		tutorial = "activates when the local player has the steamID specified",
+		tutorial_explanation = "activates when the local player has the steamID specified",
 		arguments = {{find = "string"}, {include_owner = "boolean"}},
 		callback = function(self, ent, find, include_owner)
 			local owner = self:GetPlayerOwner()
@@ -3071,6 +3076,25 @@ PART.OldEvents = {
 			return string.format("steamid: [%s %s]", self.Operator, idSumm)
 		end
 	},
+
+	text = {
+		operator_type = "string",
+		tutorial_explanation = "compares a text part's text\nthis can be useful with the changed operator",
+		arguments = {{uid = "string"}, {compare = "string"}, {truncated = "boolean"}},
+		callback = function(self, ent, uid, compare, truncated)
+			local part = self:GetOrFindCachedPart(uid)
+			if part and part:IsValid() and part.ClassName == "text" then
+				if not truncated then
+					return self:StringOperator(part.DisplayTextPreTruncate, compare)
+				else
+					return self:StringOperator(part.DisplayTextPostTruncate, compare)
+				end
+			end
+			return false
+		end,
+	},
+
+
 }
 
 
@@ -3705,11 +3729,12 @@ PART.last_event_triggered = false
 
 function PART:fix_args()
 	local args = string.Split(self.Arguments, "@@")
-	if self.Events[self.Event] then
-		if self.Events[self.Event].__registeredArguments then
+	local event_data = self.Events[self.Event] --caching to save on index calls
+	if event_data then
+		if event_data.__registeredArguments then
 			--PrintTable(self.Events[self.Event].__registeredArguments)
-			if #self.Events[self.Event].__registeredArguments ~= #args then
-				for argn,arg in ipairs(self.Events[self.Event].__registeredArguments) do
+			if #event_data.__registeredArguments ~= #args then
+				for argn,arg in ipairs(event_data.__registeredArguments) do
 					if not args[argn] or args[argn] == "" then
 						local added_arg = "0"
 						if arg[2] == "boolean" then
@@ -3731,13 +3756,10 @@ function PART:fix_args()
 			end
 		end
 	end
+	self.fixed_args = self.Arguments
 end
 
 function PART:OnThink()
-	self.nextactivationrefresh = self.nextactivationrefresh or CurTime()
-	if not self.singleactivatestate and self.nextactivationrefresh < CurTime() then
-		self.singleactivatestate = true
-	end
 
 	local ent = get_owner(self)
 	if not ent:IsValid() then return end
@@ -3746,7 +3768,7 @@ function PART:OnThink()
 
 	if not data then return end
 
-	self:fix_args()
+	if self.fixed_args ~= self.Arguments then self:fix_args() end
 	self:TriggerEvent(should_trigger(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
@@ -3864,6 +3886,7 @@ PART.Operators = {
 	"find simple",
 
 	"maybe",
+	"changed",
 }
 
 pac.EventArgumentCache = {}
@@ -3977,6 +4000,8 @@ function PART:StringOperator(a, b)
 end
 
 function PART:NumberOperator(a, b)
+	self.compare_a = a
+	self.compare_b = b
 	if not self.Operator or not a or not b then
 		return false
 	elseif self.Operator == "equal" then
@@ -4022,7 +4047,6 @@ function PART:OnShow()
 		self.number = 0
 	end
 	self.showtime = CurTime()
-	self.singleactivatestate = true
 end
 
 function PART:OnAnimationEvent(ent)
@@ -4153,6 +4177,9 @@ net.Receive("pac_event_set_sequence", function(len)
 	local ply = net.ReadEntity()
 	local event = net.ReadString()
 	local num = net.ReadUInt(8)
+
+	if not ply:IsValid() then return end
+
 	ply.pac_command_events = ply.pac_command_events or {}
 	ply.pac_command_event_sequencebases = ply.pac_command_event_sequencebases or {}
 	ply.pac_command_event_sequencebases[event] = ply.pac_command_event_sequencebases[event] or {name = event}

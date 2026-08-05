@@ -26,6 +26,11 @@ BUILDER:SetPropertyGroup("generic")
 	BUILDER:GetSet("OnHideString", "", {description = "An alternate command when the part is hidden. Governed by execute on show", editor_panel = "code_script"})
 	BUILDER:GetSet("DelayedString", "", {description = "An alternate command after a delay. Governed by execute on show", editor_panel = "code_script"})
 	BUILDER:GetSet("Delay", 1)
+	BUILDER:GetSet("PriorityMode", "Default", {enums = {
+		["Default: PacEvent bypasses OnHide when hiding"] = "Default",
+		["OnHide bypasses PacEvent when hiding"] = "OnHidePriority",
+		["Run Both "] = "AllowBoth"
+	}, description = "What should happen when an OnHide call is run while you have both an OnHide string and a PacEvent preset present (CommandName non-empty).\nDefault bypasses the OnHide in favor of the PacEvent (legacy unintended behavior)\nOnHidePriority bypasses the PacEvent in favor of the OnHide string\nAllowBoth does both."})
 
 	--we might as well have a section for command events since they are so useful for logic, and often integrated with command parts
 	--There should be a more convenient front-end for pac_event stuff and to fix the issue where people want to randomize their command (e.g. random attacks) when cs lua isn't allowed on some servers.
@@ -269,6 +274,8 @@ function PART:Execute(commandstring)
 				self:SetError("Concommand is blocked")
 				return
 			end
+
+			if self.PriorityMode == "OnHidePriority" and commandstring ~= nil then goto SKIP_PACEVENT end
 			if self.String == "" and self.CommandName ~= "" then
 				--[[
 					["Default: single-shot"] = "Default",
@@ -302,8 +309,10 @@ function PART:Execute(commandstring)
 					local randnum = math.floor(math.Rand(self.Minimum, self.Maximum + 1))
 					ent:ConCommand("pac_event_sequenced " .. self.CommandName .. " set " .. randnum)
 				end
+				if self.PriorityMode == "AllowBoth" then goto SKIP_PACEVENT end
 				return
 			end
+			::SKIP_PACEVENT::
 
 			if self.DynamicMode then
 				ent:ConCommand(self.String .. " " .. self.AppendedNumber)

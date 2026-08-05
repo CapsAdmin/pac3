@@ -139,7 +139,7 @@ do -- from server
 
 		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
 		if pace.ShouldIgnorePlayer(owner) and owner ~= LocalPlayer() then pace.RemovePartFromServer(owner, "__ALL__", data) return end
-		
+
 		local dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
 
 		if dupepart:IsValid() then
@@ -280,8 +280,52 @@ net.Receive("pac_submit_acknowledged", function(umr)
 end)
 
 do
-	local function LoadUpDefault()
-		if not GetConVar("pac_prompt_for_autoload"):GetBool() then
+	local function empty_func() end
+	local function get_prompt_args()
+		local backup_files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
+		local latest_autosave = ""
+		local latest_outfit = cookie.GetString( "pac_last_loaded_outfit", "" )
+		local no_autoload = not file.Exists("pac3/autoload.txt", "DATA")
+		local no_backups = #backup_files == 0
+		if backup_files[1] then latest_autosave = backup_files[1] end
+
+		local str1 = no_autoload and
+			"<no autoload>" or
+			"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA"))
+		local func1 = no_autoload and
+			empty_func or
+			function()
+				pac.Message("Wearing autoload...")
+				pace.LoadParts("autoload")
+				pace.WearParts()
+			end
+		local str2 = no_backups and "<no backups>" or "load latest backup : " .. latest_autosave .. " " .. string.NiceSize(file.Size("pac3/__backup/" .. latest_autosave, "DATA") or 0)
+		local func2 = no_backups and
+			empty_func or
+			function()
+				pac.Message("Wearing latest backup outfit...")
+				pace.LoadParts("__backup/" .. backup_files[1], true)
+				pace.WearParts()
+			end
+
+		local str3 = latest_outfit == "" and "<no latest outfit>" or "load latest outfit : pac3/" .. latest_outfit .. " " .. string.NiceSize(file.Size("pac3/" .. latest_outfit .. ".txt", "DATA") or 0)
+		local func3 = latest_outfit == "" and
+			empty_func or
+			function()
+				pac.Message("Wearing latest outfit...")
+				pace.LoadParts(latest_outfit, true)
+				pace.WearParts()
+			end
+		local bypass_prompt = false
+		if no_backups and (latest_outfit == "") and no_autoload then
+			bypass_prompt = true
+		end
+		return str1, func1, str2, func2, str3, func3, bypass_prompt
+	end
+
+	local function LoadUpDefault(override_mode)
+		local mode = override_mode or GetConVar("pac_prompt_for_autoload"):GetString()
+		if mode == "0" then
 			--legacy behavior
 			if next(pac.GetLocalParts()) then
 				pac.Message("not wearing autoload outfit, already wearing something")
@@ -303,69 +347,31 @@ do
 
 		else
 			--prompt
-			local backup_files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
-			local latest_outfit = cookie.GetString( "pac_last_loaded_outfit", "" )
-			if not backup_files then
-				local pnl = Derma_Query("Do you want to load your autoload outfit?\nclick outside the window to cancel", "PAC3 autoload (pac_prompt_for_autoload)",
-					"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
-						pac.Message("Wearing autoload...")
-						pace.LoadParts("autoload")
-						pace.WearParts()
-					end,
-
-					"load latest outfit : pac3/" .. latest_outfit .. " " .. string.NiceSize(file.Size("pac3/" .. latest_outfit, "DATA")), function()
-
-						if latest_outfit and file.Exists("pac3/" .. latest_outfit, "DATA") then
-							pac.Message("Wearing latest outfit...")
-							pace.LoadParts(latest_outfit, true)
-							pace.WearParts()
-						end
-					end,
-
-					"don't show this again", function() GetConVar("pac_prompt_for_autoload"):SetBool(false) end
-				)
-				pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
-			else
-				if backup_files[1] then
-					local latest_autosave = "pac3/__backup/" .. backup_files[1]
-					local pnl = Derma_Query("Do you want to load an outfit?\nclick outside the window to cancel", "PAC3 autoload (pac_prompt_for_autoload)",
-						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
-							pac.Message("Wearing autoload...")
-							pace.LoadParts("autoload")
-							pace.WearParts()
-						end,
-
-						"load latest backup : " .. latest_autosave .. " " .. string.NiceSize(file.Size(latest_autosave, "DATA")), function()
-							pac.Message("Wearing latest backup outfit...")
-							pace.LoadParts("__backup/" .. backup_files[1], true)
-							pace.WearParts()
-						end,
-
-						"load latest outfit : pac3/" .. latest_outfit .. " " .. string.NiceSize(file.Size("pac3/" .. latest_outfit, "DATA")), function()
-							if latest_outfit and file.Exists("pac3/" .. latest_outfit, "DATA") then
-								pac.Message("Wearing latest outfit...")
-								pace.LoadParts(latest_outfit, true)
-								pace.WearParts()
-							end
-						end,
-
-						"don't show this again", function() GetConVar("pac_prompt_for_autoload"):SetBool(false) end
-					)
-					pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
-				else
-					local pnl = Derma_Query("Do you want to load your autoload outfit?\nclick outside the window to cancel", "PAC3 autoload (pac_prompt_for_autoload)",
-						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
-							pac.Message("Wearing autoload...")
-							pace.LoadParts("autoload")
-							pace.WearParts()
-						end,
-
-						"don't show this again", function() GetConVar("pac_prompt_for_autoload"):SetBool(false) end
-					)
-					pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
+			if mode ~= "1" then
+				if mode == "autoload" then
+					pace.LoadParts("autoload")
+				elseif mode == "autosave" then
+					local backup_files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
+					local latest_outfit = cookie.GetString( "pac_last_loaded_outfit", "" )
+					pace.LoadParts("__backup/" .. backup_files[1], true)
+				elseif mode == "last_loaded" then
+					pace.LoadParts(cookie.GetString( "pac_last_loaded_outfit", "" ), true)
 				end
+				goto BYPASS_PROMPT
 			end
+			--I think it's more readable, and avoids duplication if I don't use excessive if-else branches for different combinations of whether files exist
+			--the strs are the labels; the funcs are either the loading func pre-loaded with the file/url, or an empty function
+			local str1, func1, str2, func2, str3, func3, bypass_prompt = get_prompt_args()
+			if bypass_prompt then pac.Message("No autoload, autosave or recent outfit to load") goto BYPASS_PROMPT end
+			local pnl = Derma_Query("Do you want to load an outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+				str1, func1, -- autoload
+				str2, func2, -- latest autosave
+				str3, func3, -- latest loaded outfit
+				"cancel", function() pac.Message("Not loading autoload or backups...") end
+			)
+			pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
 		end
+		::BYPASS_PROMPT::
 
 		pac.RemoveHook("Think", "request_outfits")
 		pac.Message("Requesting outfits in 8 seconds...")
@@ -375,6 +381,7 @@ do
 			RunConsoleCommand("pac_request_outfits")
 		end)
 	end
+	concommand.Add("pac_autoload_now", function(ply, cmd, args) LoadUpDefault(args[1]) end)
 
 	local function Initialize()
 		pac.RemoveHook("KeyRelease", "request_outfits")

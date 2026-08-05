@@ -56,6 +56,29 @@ function PART:SetBone(val)
 	self.bone_index = self:GetModelBoneIndex(self.Bone)
 end
 
+--overridden from base_part
+function PART:Clone()
+	local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
+	if not part then return end
+
+	-- ugly workaround for cloning bugs
+	if self:GetOwner() == self:GetPlayerOwner() then
+		part:SetOwner(self:GetOwner())
+	end
+
+	part:SetTable(self:ToTable(), true)
+
+	if self:GetParent():IsValid() then
+		part:SetParent(self:GetParent())
+	end
+
+	--workaround for cloning in certain cases
+	--seems to be fine on main player entity and entity part...
+	--but not model2 parts or npc
+	if not self:IsHidden() then part:OnShow() end
+	return part
+end
+
 function PART:OnShow()
 	self:SetBone(self:GetBone())
 

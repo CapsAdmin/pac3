@@ -626,7 +626,10 @@ function PART:OnDraw()
 		end
 	end
 
+	DisplayText = tostring(DisplayText)
 	::DRAW::
+	self.DisplayTextLengthPreTruncate = #DisplayText
+	self.DisplayTextPreTruncate = DisplayText
 	if self.Truncate then
 		
 		if self.TruncateSkipCharacters_tbl then
@@ -665,7 +668,9 @@ function PART:OnDraw()
 		DisplayText = string.Replace(DisplayText,"! ","!\n")
 		DisplayText = string.Replace(DisplayText,"? ","?\n")
 	end
-
+	self.DisplayTextPostTruncate = DisplayText
+	self.DisplayTextLengthPostTruncate = #DisplayText
+	
 	if self.Wrap or self.ForceNewline then
 		if (self.lines == nil) or (self.previous_str ~= DisplayText) or self.request_line_recalculation then
 			self.lines = self:WrapString(DisplayText, self.WrapWidth)

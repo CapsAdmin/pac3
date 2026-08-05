@@ -8,6 +8,8 @@ local pac_sv_projectile_max_mass = CreateConVar("pac_sv_projectile_max_mass", 50
 local pac_sv_projectile_allow_custom_collision_mesh = CreateConVar("pac_sv_projectile_allow_custom_collision_mesh", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to allow other models' collision mesh as a physical projectile, rather than just box and sphere")
 local pac_sv_projectile_max_spawn_radius = CreateConVar("pac_sv_projectile_max_spawn_radius", 2000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to limit how far away physical projectiles should be able to spawn, set to 0 to disable this limit altogether.")
 
+local pac_sv_projectile_max_count_per_player = CreateConVar("pac_sv_projectile_max_count_per_player", 50, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum number of physical projectiles per player")
+
 do -- projectile entity
 	local ENT = {}
 
@@ -558,6 +560,7 @@ if SERVER then
 		part.BulletImpact = net.ReadBool()
 		part.Freeze = net.ReadBool()
 		part.ImpactSounds = net.ReadBool()
+		part.IndependentMaximum = net.ReadBool()
 
 		--vectors
 		part.RandomAngleVelocity = net.ReadVector()
@@ -590,16 +593,16 @@ if SERVER then
 
 		local radius_limit = pac_sv_projectile_max_spawn_radius:GetFloat()
 
-		if radius_limit > 0 then
-			if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
-				local ok = false
+        if radius_limit > 0 then
+            if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
+                local ok = false
 
-				for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
-					if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
-						ok = true
-						break
-					end
-				end
+                for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
+                    if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
+                        ok = true
+                        break
+                    end
+                end
 
                 if not ok then
                     pos = ply:EyePos()
@@ -612,7 +615,13 @@ if SERVER then
 
 			ply.pac_projectiles = ply.pac_projectiles or {}
 
+			local uid = part.UniqueID
+			ply.pac_projectiles_uid = ply.pac_projectiles_uid or {}
+			ply.pac_projectiles_uid[uid] = ply.pac_projectiles_uid[uid] or {}
+
 			local projectile_count = 0
+			local self_projectile_count = 0
+
 			for ent in pairs(ply.pac_projectiles) do
 				if ent:IsValid() then
 					projectile_count = projectile_count + 1
@@ -621,12 +630,25 @@ if SERVER then
 				end
 			end
 
-			if projectile_count > 50 then
-				pac.Message("Player ", ply, " has more than 50 projectiles spawned! No more will be spawned until some expire.")
-				return
+			if part.IndependentMaximum then
+				for ent in pairs(ply.pac_projectiles_uid[uid]) do
+					if ent:IsValid() and ent.part_uid == uid then
+						self_projectile_count = self_projectile_count + 1
+					else
+						ply.pac_projectiles_uid[uid][ent] = nil
+					end
+				end
+				if part.Maximum > 0 and self_projectile_count >= part.Maximum then
+					return
+				end
+			else
+				if part.Maximum > 0 and projectile_count >= part.Maximum then
+					return
+				end
 			end
 
-			if part.Maximum > 0 and projectile_count >= part.Maximum then
+			if projectile_count >= pac_sv_projectile_max_count_per_player:GetInt() then
+				pac.Message("Player ", ply, " has the maximum of " .. pac_sv_projectile_max_count_per_player:GetInt() .. " projectiles spawned! No more will be spawned until some expire.")
 				return
 			end
 
@@ -664,8 +686,10 @@ if SERVER then
 			ent.pac_projectile_uid = part.UniqueID
 
 			ply.pac_projectiles[ent] = ent
+			ply.pac_projectiles_uid[uid][ent] = ent
 
 			ent.pac_projectile_owner = ply
+			ent.part_uid = uid
 		end
 
 		local function multispawn()
@@ -682,7 +706,7 @@ if SERVER then
 				end
 			end
 
-			local remaining_projectile_slots = math.max(50 - projectile_count,0)
+			local remaining_projectile_slots = math.max(pac_sv_projectile_max_count_per_player:GetInt() - projectile_count,0)
 
 			if (multi_projectile_count > remaining_projectile_slots) then
 				if remaining_projectile_slots == 0 then

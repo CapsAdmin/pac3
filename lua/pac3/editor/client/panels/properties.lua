@@ -4,6 +4,16 @@ local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "
 local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_asset_series", "0", true, false)
 local extra_dynamic = CreateClientConVar("pac_special_property_update_dynamically", "1", true, false, "Whether proxies should refresh the properties, and some booleans may show more information.")
 local special_property_text_color = CreateClientConVar("pac_special_property_text_color", "160 0 80", true, false, "R G B color of special property text\npac_special_property_text_color \"\" will make it not change the color\nSpecial contexts like proxies and hidden parts can show a different color to show that changes are happening in real time.")
+local prettify_names = CreateClientConVar("pac_property_reformating", "2", true, false, "How much to reformat the names of properties.\n2 will run the full editor friendly conversion.\n1 will partially run the editor friendly conversion on most cases except faceposer where an option exists to show the raw flex names\n0 will show the raw keys for everything")
+local faceposer_regroup = CreateClientConVar("pac_faceposer_property_regrouping", "1", true, false, "Whether to regroup flexes by category as brows, eyes, look, mouth and other flexes.\n0 = never\n1 = if the owner has a head bone\n2 = always")
+local preview_hovers = CreateClientConVar("pac_property_hovering_previews", "1", true, false, "Whether to preview the effect of most properties using the search list panel as well as materials via the asset browser and bookmarks")
+
+local pins = CreateClientConVar("pac_editor_pins", 0, true)
+cvars.AddChangeCallback("pac_editor_pins", function(cvar, old, new)
+	pace.PopulateProperties(pace.current_part)
+end, "pac_change_special_property_text_color")
+
+local line_height = 16
 
 pace.special_property_text_color = Color(160,0,80)
 if special_property_text_color:GetString() ~= "" then
@@ -60,6 +70,21 @@ function pace.GoToPart(part)
 		pace.tree:ScrollToChild(part.pace_tree_node)
 	end end)
 end
+
+local function install_generic_preview_hover(option, key, preview_value)
+	if not key then return end
+	option.Think = function()
+		option.hovering = option:IsHovered()
+		if option.hovering then
+			pace.current_part:SetProperty(key, preview_value)
+			option.was_hovering = true
+		elseif option.was_hovering then
+			pace.current_part:SetProperty(key, pace.current_part.properties_not_edited_by_previews[key])
+			option.was_hovering = false
+		end
+	end
+end
+
 ---returns table
 --start_index is the first known index
 --continuous is whether it's continuous (some series have holes)
@@ -125,7 +150,7 @@ function pace.FindAssetSeriesBounds(base_directory, base_file, extension)
 end
 
 
-function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, base_directory)
+function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, base_directory, key)
 	if extension == "vmt" then base_directory = "materials" end --prescribed format: short
 	if extension == "mdl" then base_directory = "models" end --prescribed format: full
 	if extension == "wav" or extension == "mp3" or extension == "ogg" then base_directory = "sound" end  --prescribed format: no trunk
@@ -193,7 +218,8 @@ function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, ba
 			path_no_trunk = string.gsub(path, base_directory .. "/", "")
 			if base_directory == "materials" then
 				local mat = string.gsub(path_no_trunk, "." .. string.GetExtensionFromFilename(path_no_trunk), "")
-				pnl2:AddOption(mat, function() func(mat) end):SetMaterial(pace.get_unlit_mat(path))
+				local option = pnl2:AddOption(mat, function() func(mat) end) option:SetMaterial(pace.get_unlit_mat(path))
+				if preview_hovers:GetBool() then install_generic_preview_hover(option, key, mat) end
 
 			elseif base_directory == "models" then
 				local mdl = path
@@ -390,14 +416,11 @@ local function populate_bookmarks(menu, mode, self)
 
 				for i,file in ipairs(files) do
 					local mat_no_ext = string.StripExtension(string.sub(file,11,#file)) --"materials/"
-					menu3:AddOption(mat_no_ext, function()
+					local option = menu3:AddOption(mat_no_ext, function()
 						self:SetValue(mat_no_ext)
-						if self.CurrentKey == "Material" then
-							pace.current_part:SetMaterial(mat_no_ext)
-						elseif self.CurrentKey == "SpritePath" then
-							pace.current_part:SetSpritePath(mat_no_ext)
-						end
-					end):SetMaterial(mat_no_ext)
+						pace.current_part:SetProperty(self.CurrentKey, mat_no_ext)
+					end) option:SetMaterial(mat_no_ext)
+					if preview_hovers:GetBool() then install_generic_preview_hover(option, self.CurrentKey, mat_no_ext) end
 				end
 			elseif string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
 				mat_no_ext = string.gsub(mat_no_ext, "%[%d+,%d+%]", "")
@@ -405,22 +428,14 @@ local function populate_bookmarks(menu, mode, self)
 					str = str or ""
 					str = string.StripExtension(string.gsub(str, "^materials/", ""))
 					self:SetValue(str)
-					if self.CurrentKey == "Material" then
-						pace.current_part:SetMaterial(str)
-					elseif self.CurrentKey == "SpritePath" then
-						pace.current_part:SetSpritePath(str)
-					end
-				end, mat_no_ext, "vmt", "materials")
-
+					pace.current_part:SetProperty(self.CurrentKey, str)
+				end, mat_no_ext, "vmt", "materials", self.CurrentKey)
 			else
-				menu2:AddOption(string.StripExtension(mat), function()
+				local option = menu2:AddOption(string.StripExtension(mat), function()
 					self:SetValue(mat_no_ext)
-					if self.CurrentKey == "Material" then
-						pace.current_part:SetMaterial(mat_no_ext)
-					elseif self.CurrentKey == "SpritePath" then
-						pace.current_part:SetSpritePath(mat_no_ext)
-					end
-				end):SetMaterial(mat)
+					pace.current_part:SetProperty(self.CurrentKey, mat_no_ext)
+				end) option:SetMaterial(mat)
+				if preview_hovers:GetBool() then install_generic_preview_hover(option, self.CurrentKey, mat) end
 			end
 
 		end
@@ -449,25 +464,74 @@ local function populate_bookmarks(menu, mode, self)
 				local shader_submenu = menu2:AddSubMenu("pac3 materials - " .. shader)
 				for mat,tbl in pairs(mats) do
 					local part = tbl.part
-					local pnl2 = shader_submenu:AddOption(mat, function()
+					local option = shader_submenu:AddOption(mat, function()
 						self:SetValue(mat)
-						if self.CurrentKey == "Material" then
-							pace.current_part:SetMaterial(mat)
-						elseif self.CurrentKey == "SpritePath" then
-							pace.current_part:SetSpritePath(mat)
-						end
+						pace.current_part:SetProperty(self.CurrentKey, mat)
 					end)
-					pnl2:SetMaterial(pac.Material(mat, part))
-					pnl2:SetTooltip(tbl.shader)
+					option:SetMaterial(pac.Material(mat, part))
+					option:SetTooltip(tbl.shader)
+					if preview_hovers:GetBool() then install_generic_preview_hover(option, self.CurrentKey, mat) end
 				end
 			end
 		end
 
 		if self.CurrentKey == "Material" and pace.current_part.ClassName == "particles" then
-			pnl:SetTooltip("Appropriate shaders for particles are UnlitGeneric materials.\nOOtherwise, they should usually be additive or use VertexAlpha")
+			pnl:SetTooltip("Appropriate shaders for particles are UnlitGeneric materials.\nOtherwise, they should usually be additive or use VertexAlpha")
 		elseif self.CurrentKey == "SpritePath" then
-			pnl:SetTooltip("Appropriate shaders for sprites are UnlitGeneric materials.\nOOtherwise, they should usually be additive or use VertexAlpha")
+			pnl:SetTooltip("Appropriate shaders for sprites are UnlitGeneric materials.\nOtherwise, they should usually be additive or use VertexAlpha")
 		end
+
+		local part_material = pace.current_part:GetProperty(self.CurrentKey)
+		local mat_name = part_material:match(".+/(.+)") or ""
+
+		mat_name = mat_name .. "_" .. string.sub(pace.current_part.UniqueID,1,6)
+		mat_name = string.Replace(mat_name, " ", "")
+		local material_class = "material_2d"
+		-- models will use vertexlitgeneric
+		if pace.current_part.is_model_part or pace.current_part.is_entity_part then
+			material_class = "material_3d"
+		end
+
+		local function create_material(path, shader)
+			local newmaterial = pace.current_part:CreatePart(shader)
+			if self.CurrentKey == "SpritePath" then
+				newmaterial:SetParent(pace.current_part:GetParent())
+				newmaterial:SetDrawOrder(pace.current_part:GetDrawOrder() - 1)
+			end
+			newmaterial:SetName(mat_name)
+			newmaterial:SetProperty("LoadVmt", path)
+			pace.current_part:SetProperty(self.CurrentKey, mat_name)
+
+			return newmaterial
+		end
+
+		local menu2, pnl = menu:AddSubMenu("Edit Material (will be named " .. mat_name .. ")", function()
+			create_material(part_material, material_class)
+		end)
+		pnl:SetImage("icon16/paintcan.png")
+		pnl:SetTooltip(material_class)
+
+		--duplicate in case people don't know they can click the parent submenu
+		menu2:AddOption("simple load VMT (" .. material_class .. ")",  function()
+			create_material(part_material, material_class)
+		end):SetImage("icon16/paintcan.png")
+
+		local menu3, pnl2 = menu2:AddSubMenu("choose specific shader...")
+		pnl2:SetImage("icon16/chart_organisation.png")
+		menu3:AddOption("material_3d", function() create_material(part_material, "material_3d") end):SetImage("icon16/paintcan.png")
+		menu3:AddOption("material_2d", function() create_material(part_material, "material_2d") end):SetImage("icon16/paintcan.png")
+		menu3:AddOption("material_refract", function() create_material(part_material, "material_refract") end):SetImage("icon16/paintcan.png")
+		menu3:AddOption("material_eyerefract", function() create_material(part_material, "material_eyerefract") end):SetImage("icon16/paintcan.png")
+
+		menu2:AddOption("Make transparent (vertex alpha) (for transparent textures)", function()
+			local newmaterial = create_material(part_material, material_class)
+			newmaterial:Setvertexalpha(true)
+		end):SetImage("icon16/paintcan.png")
+
+		menu2:AddOption("Make transparent (additive) (for black backgrounds)", function()
+			local newmaterial = create_material(part_material, material_class)
+			newmaterial:Setadditive(true)
+		end):SetImage("icon16/paintcan.png")
 	elseif mode == "sound" then
 		pace.bookmarked_ressources = pace.bookmarked_ressources or {}
 		if not pace.bookmarked_ressources["sound"] then
@@ -564,6 +628,86 @@ local function populate_bookmarks(menu, mode, self)
 	end
 end
 
+local function populate_proxy_info(menu, self, key)
+	pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+	pace.bookmarked_ressources["proxy"] = pace.bookmarked_ressources["proxy"]
+
+	local menu0, pnl0 = menu:AddSubMenu(L"Lua syntax rules", function()
+	end)
+	pnl0:SetIcon("icon16/application_xp_terminal.png")
+	menu0:AddOption("basic numbers supported"):SetTooltip("basic numbers can be whole e.g. 1\ndecimals e.g. 0.5 or .5")
+	menu0:AddOption("basic math operators"):SetTooltip("+  :  addition e.g. 2 + 2\n-  :  subtraction e.g. 4 - 2\n*  :  multiplication e.g. 0.3*10\n/  :  division e.g. 1/2\n^  :  exponentiation e.g. 2^3\n%  :  remainder\n(...)  :  parentheses e.g. 2*(0.5 + 1)")
+	menu0:AddOption("other Lua operators"):SetTooltip("This shouldn't matter, but it might come up.\n-- creates a code comment\n.. is concatenation for strings")
+	menu0:AddOption("order of operations"):SetTooltip("PEMDAS : parentheses, exponentiation, multiplication, division, addition, subtraction\n\nPlease use parentheses to force the order of operations you want")
+	menu0:AddSpacer()
+
+	menu0:AddOption("functions  :  f()"):SetTooltip("next to a name, parentheses indicate a function to evaluates\n\nsome example functions:\ntimeex()\nsin(time())\npart_distance(\"part_A\", \"part_B\")\nif_else(3, \">\", 2, 1, 0))")
+	menu0:AddOption("how many arguments?  :  f(...)"):SetTooltip("Some functions have no arguments e.g. time()\nsome contain arguments e.g. sin(x), some have mandatory arguments e.g. clamp(x,min,max)\nsome have optional or implicit arguments e.g. ezfade() = ezfade(1). ezfade supports up to 3 arguments: speed, starttime, endtime\npart_distance(\"pointA\") takes pointA for one position, and implicitly takes the proxy's parent part as the second position.\n\nsome functions have varargs (variable number of arguments means it's flexible)")
+	menu0:AddOption("Lua is case-sensitive."):SetTooltip("this is important for function names")
+	menu0:AddOption("basic rule of composition : functions lead to numbers"):SetTooltip("... so you can treat them as numbers. You can use functions inside functions.\nconsider sin(0)\nnow consider sin(timeex())\nit will be like it takes the 0 and changes it to a bigger and bigger number over time")
+	menu0:AddOption("types: numbers, \"strings\""):SetTooltip("most math inputs and outputs will be numbers, but certain functions require string argument, requiring quotes\npart_distance(\"point A\",\"point B\"), if_else(3, \">=\", 2, 1, 0))\nhealthmod_uidvalue(\"healthmodifier_name\")\n\nIt's usually designating part names or UIDs")
+	menu0:AddSpacer()
+
+	menu0:AddOption("vector notation  :  x,y,z"):SetTooltip("vector types, such as Position, Angles, and Color, can have up to three components")
+	menu0:AddOption("nil  :  nil,nil,5"):SetTooltip("Instead of using the Axis field, you may use null variables to skip certain axes\nnil,0,0 will leave room for another proxy to control x for example") 
+	menu0:AddOption("expanded outputs  :  f() -> x,y,z"):SetTooltip("hsv_to_color(h,s,v) expands to a vararg, which is then reconstructed into the color-vector.\nsame goes with command(\"cmd_name\") the console command pac_proxy can be set with up to 3 components, but if you use command() with another operator it'll use the first number only, so you can very much use it normally as a standard variable setter")
+	menu0:AddSpacer()
+	menu0:AddOption("open wiki", function() pace.ShowWiki("https://wiki.pac3.info/part/proxy") end):SetImage("icon16/information.png")
+
+	local menu1, pnl1 = menu:AddSubMenu(L"Proxy template bits", function()
+	end)
+	pnl1:SetIcon("icon16/cart_go.png")
+	for group, tbl in pairs(pace.bookmarked_ressources["proxy"]) do
+		local icon = "icon16/bullet_white.png"
+		if group == "user" then icon = "icon16/user.png"
+		elseif group == "fades and transitions" then icon = "icon16/shading.png"
+		elseif group == "pulses" then icon = "icon16/transmit_blue.png"
+		elseif group == "facial expressions" then icon = "icon16/emoticon_smile.png"
+		elseif group == "spatial" then icon = "icon16/world.png"
+		elseif group == "experimental things" then icon = "icon16/ruby.png"
+		end
+		local menu2, pnl2 = menu1:AddSubMenu(group)
+		pnl2:SetIcon(icon)
+
+		if not table.IsEmpty(tbl) then
+			for i,tbl2 in pairs(tbl) do
+				--print(tbl2.nicename)
+				local str = tbl2.nicename or "invalid name"
+				local pnl3 = menu2:AddOption(str, function()
+					if pace.current_part.ClassName == "proxy" then
+						local expression = pace.current_part.Expression
+						if expression == "" then --blank: bare insert
+							expression = tbl2.expression
+						elseif true then --something present: multiply the existing bit?
+							expression = expression .. " * " .. tbl2.expression
+						end
+
+						pace.current_part:SetProperty(key, expression)
+						self:SetValue(expression)
+					end
+
+				end)
+				pnl3:SetIcon(icon)
+				pnl3:SetTooltip(tbl2.explanation)
+			end
+
+		end
+	end
+
+	local tutorials, pnl2 = menu:AddSubMenu(L"Tutorials for the active functions")
+		for i, kw in ipairs(pace.current_part:GetActiveFunctions()) do
+			pace.current_part.errors_override = true --hack to stop competing SetInfo, SetWarning and SetError buttons
+			local tutorial = pace.current_part:GetTutorial(kw) if tutorial == nil then continue end
+			local pnl3 = tutorials:AddOption(kw, function()
+				pace.alternate_message_prompts = true
+				pace.current_part:SetInfo(tutorial)
+				pace.current_part:AttachEditorPopup(tutorial, true)
+			end) pnl3:SetIcon("icon16/calculator.png")
+			pnl3:SetTooltip(tutorial)
+		end
+	pnl2:SetImage("icon16/information.png")
+end
+
 function pace.CreateSearchList(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
 	select_value = select_value or function(val, key) return val end
 	select_value_search = select_value_search or select_value
@@ -596,6 +740,14 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 
 	local first = NULL
 
+	local hoverpreview_excluded = {
+		["VariableName"] = true, --proxy will write irreversible changes early
+		["ToVariableName"] = true, --same as above
+		["FromVariableName"] = true, --same as above
+		["animation"] = true, --the one from custom animation frame event: ends up working wrong and reverting for some reason, there's a special onchange function that I think gets called twice
+		["Event"] = true, --doesn't integrate well with refreshing the dynamic properties, clears arguments early
+	}
+
 	local function build(find)
 		list:Clear()
 
@@ -621,6 +773,21 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 					pnl:SetTooltip(pace.TUTORIALS["proxy_functions"][key] or "")
 				elseif name == "Event" then --insert event tutorials as tooltips
 					pnl:SetTooltip(pace.TUTORIALS["events"][key])
+				end
+
+				if preview_hovers:GetBool() and not hoverpreview_excluded[property.CurrentKey] then
+					pnl.Think = function()
+						if not IsValid(pace.current_part) then return end
+						if not property or not property.CurrentKey then return end
+						pnl.hovering = pnl:IsHovered()
+						if pnl.hovering then
+							pace.current_part:SetProperty(property.CurrentKey, val)
+							pnl.was_hovering = true
+						elseif pnl.was_hovering then
+							pace.current_part:SetProperty(property.CurrentKey, pace.current_part.properties_not_edited_by_previews[property.CurrentKey])
+							pnl.was_hovering = false
+						end
+					end
 				end
 
 				if not first:IsValid() then
@@ -721,6 +888,9 @@ do -- container
 		do	--scroll to the property
 			local _,y = self:LocalToScreen(0,0)
 			local _,py = pace.properties:LocalToScreen(0,0)
+			if pace.pinned_properties_keyed[self.CurrentKey] then
+				_,py = pace.properties2:LocalToScreen(0,0)
+			end
 			local scry = pace.properties.scr:GetScroll()
 
 			if y > ScrH() then
@@ -773,6 +943,9 @@ do -- container
 
 	pace.RegisterPanel(PANEL)
 end
+
+pace.pinned_properties_keyed = {}
+pace.property_internals = {}
 
 do -- list
 	local PANEL = {}
@@ -989,6 +1162,10 @@ do -- list
 	end
 
 	function PANEL:AddKeyValue(key, var, pos, obj, udata, group)
+		pace.current_part.properties_not_edited_by_previews[key] = pace.current_part:GetProperty(key)
+		line_height = self:GetItemHeight()
+		self.line_heights = self.line_heights or 0
+		self.line_heights = self.line_heights + line_height
 		local btn = pace.CreatePanel("properties_label")
 			btn:SetTall(self:GetItemHeight())
 
@@ -1002,7 +1179,19 @@ do -- list
 					key = key:sub(1, -4)
 				end
 
-				btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
+				local nicenames = prettify_names:GetInt()
+				if nicenames == 2 then
+					if udata and udata.override_case then
+						btn:SetValue(L((udata and udata.editor_friendly or key)):Trim())
+					else
+						btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
+					end
+				elseif nicenames == 1 then
+					btn:SetValue(L((udata and udata.editor_friendly or key)):Trim())
+				else
+					btn:SetValue(key:Trim())
+				end
+
 				pace.current_part["pac_property_label_"..key] = btn
 				if udata then
 					if udata.group == "bodygroups" then
@@ -1039,7 +1228,7 @@ do -- list
 					local goto_btn = vgui.Create("DButton", pnl)
 					goto_btn:SetText("")
 					goto_btn:SetTooltip("jump to...")
-					goto_btn:SetSize(self:GetItemHeight(), self:GetItemHeight())
+					goto_btn:SetSize(line_height / 1.5, line_height / 1.5)
 					goto_btn:Dock(RIGHT)
 					goto_btn:SetImage("icon16/arrow_turn_right.png")
 
@@ -1059,19 +1248,18 @@ do -- list
 				pace.current_part.hide_property_pnl = var
 			elseif key == "Model" then
 				local btn2 = vgui.Create("DImageButton", pnl)
-				btn2:SetSize(self:GetItemHeight(), self:GetItemHeight())
+				btn2:SetSize(line_height / 1.5, line_height / 1.5)
 				btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
 				btn2:SetTooltip("bookmarks")
 				btn2:SetImage("icon16/cart_go.png")
 				btn2.DoClick = function()
 					local menu = DermaMenu()
 					menu:SetPos(input.GetCursorPos())
-					menu:MakePopup()
 					populate_bookmarks(menu, "models", var)
 				end
 			elseif key == "Material" or key == "SpritePath" then
 				local btn2 = vgui.Create("DImageButton", pnl)
-				btn2:SetSize(self:GetItemHeight(), self:GetItemHeight())
+				btn2:SetSize(line_height / 1.5, line_height / 1.5)
 				btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
 				btn2:SetTooltip("bookmarks")
 				btn2:SetImage("icon16/cart_go.png")
@@ -1084,7 +1272,7 @@ do -- list
 			elseif string.find(pace.current_part.ClassName, "sound") then
 				if key == "Sound" or key == "Path" then
 					local btn2 = vgui.Create("DImageButton", pnl)
-					btn2:SetSize(self:GetItemHeight(), self:GetItemHeight())
+					btn2:SetSize(line_height / 1.5, line_height / 1.5)
 					btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
 					btn2:SetTooltip("bookmarks")
 					btn2:SetImage("icon16/cart_go.png")
@@ -1094,6 +1282,18 @@ do -- list
 						menu:MakePopup()
 						populate_bookmarks(menu, "sound", var)
 					end
+				end
+			elseif pace.current_part.ClassName == "proxy" and (key == "Expression" or key == "ExpressionOnHide" or pac.StringFind(key, "Extra")) then
+				local btn2 = vgui.Create("DImageButton", pnl)
+				btn2:SetSize(line_height / 1.5, line_height / 1.5)
+				btn2:Dock(RIGHT) pnl:DockPadding(0,0,self:GetItemHeight(),0)
+				btn2:SetTooltip("templates and tutorials")
+				btn2:SetImage("icon16/information.png")
+				btn2.DoClick = function()
+					local menu = DermaMenu()
+					menu:SetPos(input.GetCursorPos())
+					menu:MakePopup()
+					populate_proxy_info(menu, var, key)
 				end
 			end
 		end
@@ -1184,143 +1384,374 @@ do -- list
 	function PANEL:Populate(flat_list)
 		if pace.bypass_tree then return end
 		self:Clear()
+		self:InvalidateLayout()
 
+		pace.current_part.properties_not_edited_by_previews = {}
+
+		if self.pins_counterpart then self.pins_counterpart:Clear() end
+		local class = pace.current_part.ClassName
+		if not pace.property_internals[class] then
+			pace.property_internals[class] = {}
+			for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
+				for pos, prop in ipairs(data.props) do
+					pace.property_internals[class][prop.key] = prop
+				end
+			end
+		end
+
+		local function populate(prop, pin)
+			local self = self
+			--redirect the populate to the pin panel
+			if pin then self = self.pins_counterpart end
+			if prop == nil then return end
+			if pace.current_part:GetProperty(prop.key) == nil then return end --I found it to happen with events' dynamic properties
+			local val = prop.get()
+			local T = type(val):lower()
+
+			if prop.udata and prop.udata.editor_panel then
+				T = prop.udata.editor_panel or T
+			elseif pace.PanelExists("properties_" .. prop.key:lower()) then
+				--is it code bloat to fix weird edge cases like bodygroups on specific models???
+				--idk but it's more egregious to allow errors just because of what bodygroups the model has
+				if prop.key:lower() ~= "container" then
+					T = prop.key:lower()
+				end
+			elseif not pace.PanelExists("properties_" .. T) then
+				T = "string"
+			end
+
+			if pin then
+				if pace.CollapsedProperties["pinned"] ~= nil and pace.CollapsedProperties["pinned"] then
+					goto CONTINUE
+				end
+			else
+				if pace.CollapsedProperties[prop.udata.group] ~= nil and pace.CollapsedProperties[prop.udata.group] then
+					goto CONTINUE
+				end
+			end
+			local pnl = pace.CreatePanel("properties_" .. T)
+
+			if pnl.PostInit then
+				pnl:PostInit()
+			end
+
+			if prop.udata and prop.udata.description then
+				pnl:SetTooltip(L(prop.udata.description))
+			end
+
+			local part = pace.current_part
+			part.pace_properties = part.pace_properties or {}
+			part.pace_properties[prop.key] = pnl
+			pnl.part = part
+			pnl.udata = prop.udata
+
+			if prop.udata.enums then
+				DefineMoreOptionsLeftClick(pnl, function(self)
+					pace.CreateSearchList(
+						self,
+						self.CurrentKey,
+						L(prop.key),
+
+						function(list)
+							list:AddColumn("enum")
+						end,
+
+						function()
+							local tbl
+
+							if isfunction(prop.udata.enums) then
+								if pace.current_part:IsValid() then
+									tbl = prop.udata.enums(pace.current_part)
+								end
+							else
+								tbl = prop.udata.enums
+							end
+
+							local enums = {}
+
+							if tbl then
+								for k, v in pairs(tbl) do
+									if not isstring(v) then
+										v = k
+									end
+
+									if not isstring(k) then
+										k = v
+									end
+
+									enums[k] = v
+								end
+							end
+
+							return enums
+						end,
+
+						function()
+							return pace.current_part[prop.key]
+						end,
+
+						function(list, key, val)
+							return list:AddLine(key)
+						end,
+
+						function(val, key)
+							return val
+						end
+					)
+				end)
+			end
+			if prop.udata.editor_sensitivity or prop.udata.editor_clamp or prop.udata.editor_round then
+				pnl.LimitValue = function(self, num)
+					if prop.udata.editor_sensitivity then
+						self.sens = prop.udata.editor_sensitivity
+					end
+					if prop.udata.editor_clamp then
+						num = math.Clamp(num, unpack(prop.udata.editor_clamp))
+					end
+					if prop.udata.editor_round then
+						num = math.Round(num)
+					end
+					return num
+				end
+			elseif prop.udata.editor_onchange then
+				pnl.LimitValue = prop.udata.editor_onchange
+			end
+
+			pnl.CurrentKey = prop.key
+			pnl.udata = prop.udata
+
+			if pnl.ExtraPopulate then
+				table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
+				pnl:Remove()
+				goto CONTINUE
+			end
+
+			pnl:SetValue(val)
+
+			pnl.OnValueChanged = function(val)
+				if T == "number" then
+					val = tonumber(val) or 0
+				elseif T == "string" then
+					val = tostring(val)
+				end
+
+				pace.Call("VariableChanged", pace.current_part, prop.key, val)
+			end
+
+			self:AddKeyValue(prop.key, pnl, pos, flat_list, prop.udata)
+			if pin then
+				pnl:SetValue(pace.current_part:GetProperty(prop.key))
+			end
+
+			::CONTINUE::
+		end
+
+		if pins:GetBool() and pace.pinned_properties and pace.property_internals[class] then
+			pace.properties2.line_heights = 0
+			for _, key in ipairs(pace.pinned_properties) do
+				pace.pinned_properties_keyed[key] = true
+				local prop = pace.property_internals[class][key]
+				populate(prop, true)
+			end
+		end
+		if IsValid(pace.properties) then pace.properties.line_heights = 0 end
+		if class == "faceposer" then
+			local grouping = false
+			if faceposer_regroup:GetInt() == 1 then
+				local ent = pace.current_part:GetOwner()
+				if IsValid(ent) then
+					--assume valvebiped head is an indicator of facial flexes
+					if ent:LookupBone("ValveBiped.Bip01_Head1") then
+						grouping = true
+					end
+				end
+			elseif faceposer_regroup:GetInt() == 2 then
+				grouping = true
+			end
+
+			--first pass : normal properties
+			for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
+				if data.group == "flexes" then continue end
+				self:AddCollapser("generic")
+				for pos, prop in ipairs(data.props) do
+
+					if pins:GetBool() and pace.pinned_properties_keyed[prop.key] and not pace.CollapsedProperties["pinned"] then continue end
+
+					if prop.udata and prop.udata.hide_in_editor then
+						continue
+					end
+					populate(prop)
+
+				end
+			end
+
+			if grouping then
+				local facepose_categories = {}
+				local mouth = {}
+				local eyes = {}
+				local look = {}
+				local brow = {}
+				local other = {}
+
+				local known_outliers_mouth = {
+					["A"] = true,
+					["Ah"] = true,
+					["Oh"] = true,
+					["O"] = true,
+					["E"] = true,
+					["Ch"] = true,
+					["U"] = true,
+				}
+				local known_outliers_brows = {
+					["Anger"] = true,
+					["Sadness"] = true,
+					["Cheer"] = true,
+					["Cheerful"] = true,
+					["Upper"] = true,
+					["Lower"] = true,
+				}
+				local known_outliers_look = {
+					["Eyes Down"] = true,
+					["Eyes Up"] = true,
+					["Eyes Left"] = true,
+					["Eyes Right"] = true,
+					["Eye Down"] = true,
+					["Eye Up"] = true,
+					["Eye Left"] = true,
+					["Eye Right"] = true,
+				}
+
+				local valve_m = {
+					["right_upper_raiser"] = true,
+					["left_upper_raiser"] = true,
+					["right_corner_puller"] = true,
+					["left_corner_puller"] = true,
+					["right_corner_depressor"] = true,
+					["left_corner_depressor"] = true,
+					["chin_raiser"] = true,
+					["smile"] = true,
+					["lower_lip"] = true,
+
+					["right_part"] = true,
+					["left_part"] = true,
+					["right_puckerer"] = true,
+					["left_puckerer"] = true,
+					["right_funneler"] = true,
+					["left_funneler"] = true,
+					["right_stretcher"] = true,
+					["left_stretcher"] = true,
+					["bite"] = true,
+					["presser"] = true,
+					["tightener"] = true,
+					["jaw_clencher"] = true,
+					["jaw_drop"] = true,
+					["right_mouth_drop"] = true,
+					["left_mouth_drop"] = true,
+				}
+
+				local valve_e = {
+					["right_lid_raiser"] = true,
+					["left_lid_raiser"] = true,
+					["left_lid_tightener"] = true,
+					["right_lid_tightener"] = true,
+					["left_lid_droop"] = true,
+					["right_lid_droop"] = true,
+					["left_lid_closer"] = true,
+					["right_lid_closer"] = true,
+					["half_closed"] = true,
+					["blink"] = true,
+				}
+
+				local valve_b = {
+					["right_inner_raiser"] = true,
+					["left_inner_raiser"] = true,
+					["right_outer_raiser"] = true,
+					["left_outer_raiser"] = true,
+					["right_lowerer"] = true,
+					["left_lowerer"] = true,
+				}
+
+				for i, data in ipairs(flat_list) do
+					local name = data.key
+					local sub_name = string.lower(name)
+					if data.udata.group == "flexes" then
+						--mouth
+						if valve_m[sub_name] or known_outliers_mouth[name] or string.find(sub_name, "mouth") or string.find(name, "Mouth") then
+							table.insert(mouth, data)
+						--brows
+						elseif valve_b[sub_name] or known_outliers_brows[name] or string.find(sub_name, "brow") or string.find(name, "Brow") then
+							table.insert(brow, data)
+						--eye look
+						elseif known_outliers_look[sub_name] or string.find(sub_name, "look") or string.find(name, "Look") then
+							table.insert(look, data)
+						--eyes
+						elseif valve_e[sub_name] or string.find(sub_name, "eye") or string.find(name, "Eye") or string.find(sub_name, "blink") or string.find(sub_name, "lid") then
+							table.insert(eyes, data)
+						--other
+						else
+							table.insert(other, data)
+						end
+					end
+				end
+				if not table.IsEmpty(mouth) then
+					facepose_categories.mouth = mouth
+				end
+				if not table.IsEmpty(eyes) then
+					facepose_categories.eyes = eyes
+				end
+				if not table.IsEmpty(look) then
+					facepose_categories.look = look
+				end
+				if not table.IsEmpty(brow) then
+					facepose_categories.brow = brow
+				end
+				if not table.IsEmpty(other) then
+					facepose_categories.other = other
+				end
+				--second pass : flexes
+				for name, props in SortedPairs(facepose_categories) do
+					local temp = {}
+					for i, prop in ipairs(props) do
+						temp[prop.key] = prop
+					end
+					self:AddCollapser(name)
+					for key, prop in SortedPairs(temp) do
+						prop.udata.group = name
+						if pins:GetBool() and pace.pinned_properties_keyed[prop.key] and not pace.CollapsedProperties["pinned"] then continue end
+
+						if prop.udata and prop.udata.hide_in_editor then
+							continue
+						end
+						populate(prop)
+					end
+				end
+			else
+				self:AddCollapser("flexes")
+				local flexes = pace.current_part:GetDynamicProperties() or {}
+				--second pass : flexes (uncategorized)
+				for key, prop in SortedPairs(flexes) do
+					if pins:GetBool() and pace.pinned_properties_keyed[prop.key] and not pace.CollapsedProperties["pinned"] then continue end
+
+					if prop.udata and prop.udata.hide_in_editor then
+						continue
+					end
+					populate(prop)
+				end
+			end
+
+			return
+		end
 		for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
 			self:AddCollapser(data.group or "generic")
 			for pos, prop in ipairs(data.props) do
 
+				if pins:GetBool() and pace.pinned_properties_keyed[prop.key] and not pace.CollapsedProperties["pinned"] then continue end
+
 				if prop.udata and prop.udata.hide_in_editor then
 					continue
 				end
+				populate(prop)
 
-				local val = prop.get()
-				local T = type(val):lower()
-
-				if prop.udata and prop.udata.editor_panel then
-					T = prop.udata.editor_panel or T
-				elseif pace.PanelExists("properties_" .. prop.key:lower()) then
-					--is it code bloat to fix weird edge cases like bodygroups on specific models???
-					--idk but it's more egregious to allow errors just because of what bodygroups the model has
-					if prop.key:lower() ~= "container" then
-						T = prop.key:lower()
-					end
-				elseif not pace.PanelExists("properties_" .. T) then
-					T = "string"
-				end
-
-				if pace.CollapsedProperties[prop.udata.group] ~= nil and pace.CollapsedProperties[prop.udata.group] then goto CONTINUE end
-
-				local pnl = pace.CreatePanel("properties_" .. T)
-
-				if pnl.PostInit then
-					pnl:PostInit()
-				end
-
-				if prop.udata and prop.udata.description then
-					pnl:SetTooltip(L(prop.udata.description))
-				end
-
-				local part = pace.current_part
-				part.pace_properties = part.pace_properties or {}
-				part.pace_properties[prop.key] = pnl
-				pnl.part = part
-				pnl.udata = prop.udata
-
-				if prop.udata.enums then
-					DefineMoreOptionsLeftClick(pnl, function(self)
-						pace.CreateSearchList(
-							self,
-							self.CurrentKey,
-							L(prop.key),
-
-							function(list)
-								list:AddColumn("enum")
-							end,
-
-							function()
-								local tbl
-
-								if isfunction(prop.udata.enums) then
-									if pace.current_part:IsValid() then
-										tbl = prop.udata.enums(pace.current_part)
-									end
-								else
-									tbl = prop.udata.enums
-								end
-
-								local enums = {}
-
-								if tbl then
-									for k, v in pairs(tbl) do
-										if not isstring(v) then
-											v = k
-										end
-
-										if not isstring(k) then
-											k = v
-										end
-
-										enums[k] = v
-									end
-								end
-
-								return enums
-							end,
-
-							function()
-								return pace.current_part[prop.key]
-							end,
-
-							function(list, key, val)
-								return list:AddLine(key)
-							end,
-
-							function(val, key)
-								return val
-							end
-						)
-					end)
-				end
-				if prop.udata.editor_sensitivity or prop.udata.editor_clamp or prop.udata.editor_round then
-					pnl.LimitValue = function(self, num)
-						if prop.udata.editor_sensitivity then
-							self.sens = prop.udata.editor_sensitivity
-						end
-						if prop.udata.editor_clamp then
-							num = math.Clamp(num, unpack(prop.udata.editor_clamp))
-						end
-						if prop.udata.editor_round then
-							num = math.Round(num)
-						end
-						return num
-					end
-				elseif prop.udata.editor_onchange then
-					pnl.LimitValue = prop.udata.editor_onchange
-				end
-
-				pnl.CurrentKey = prop.key
-
-				if pnl.ExtraPopulate then
-					table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
-					pnl:Remove()
-					goto CONTINUE
-				end
-
-				pnl:SetValue(val)
-
-				pnl.OnValueChanged = function(val)
-					if T == "number" then
-						val = tonumber(val) or 0
-					elseif T == "string" then
-						val = tostring(val)
-					end
-
-					pace.Call("VariableChanged", pace.current_part, prop.key, val)
-				end
-
-				self:AddKeyValue(prop.key, pnl, pos, flat_list, prop.udata)
-
-				::CONTINUE::
 			end
 		end
 	end
@@ -1403,6 +1834,76 @@ do -- non editable string
 
 	function PANEL:GetValue()
 		return self.lbl:GetValue()
+	end
+
+	function PANEL:Think()
+		if not pins:GetBool() then return end
+		if not input.IsMouseDown(MOUSE_RIGHT) then self.popup = false return end
+		if self == self:GetParent().left then return end
+		local x,y = self:LocalToScreen(0,0)
+		local w,h = self:GetSize()
+		local mx, my = input.GetCursorPos()
+		if not ((mx > x) and (mx < x + w) and (my > y) and (my < y + h)) then return end
+		if not self.popup then
+			local menu = DermaMenu()
+			menu:SetPos(input.GetCursorPos())
+			menu:MakePopup()
+			self.popup = true
+			if table.HasValue(pace.pinned_properties, self.key_name) then
+				menu:AddOption("unpin", function()
+					table.RemoveByValue(pace.pinned_properties, self.key_name)
+					pace.pinned_properties_keyed[self.key_name] = false
+					pace.PopulateProperties(pace.current_part)
+					pac.UpdateConfigFile("pinned_properties")
+				end):SetImage("icon16/collision_off.png")
+
+				--there may be hidden keys from other part classes, so we have to check and offset until we snap to an existing key
+				local i = table.KeyFromValue(pace.pinned_properties, self.key_name)
+				if i > 1 then
+					local check_i = i
+					local snap_i = i - 1
+					while (check_i > 1) do
+						check_i = check_i - 1
+						if pace.current_part[pace.pinned_properties[check_i]] ~= nil then
+							snap_i = check_i
+							break
+						end
+						
+					end
+					menu:AddOption("move up (" .. snap_i .. ")", function()
+						table.RemoveByValue(pace.pinned_properties, self.key_name)
+						table.insert(pace.pinned_properties, snap_i, self.key_name)
+						pace.PopulateProperties(pace.current_part)
+						pac.UpdateConfigFile("pinned_properties")
+					end):SetImage("icon16/arrow_up.png")
+				end
+				if i < #pace.pinned_properties then
+					local check_i = i
+					local snap_i = i + 1
+					while (check_i < #pace.pinned_properties) do
+						check_i = check_i + 1
+						if pace.current_part["Get"..pace.pinned_properties[check_i]] ~= nil then
+							snap_i = check_i
+							break
+						end
+					end
+					menu:AddOption("move down (" .. snap_i .. ")", function()
+						table.RemoveByValue(pace.pinned_properties, self.key_name)
+						table.insert(pace.pinned_properties, snap_i, self.key_name)
+						pace.PopulateProperties(pace.current_part)
+						pac.UpdateConfigFile("pinned_properties")
+					end):SetImage("icon16/arrow_down.png")
+				end
+			else
+				menu:AddOption("pin", function()
+					pins:SetBool(true)
+					table.insert(pace.pinned_properties, self.key_name)
+					pace.pinned_properties_keyed[self.key_name] = true
+					pace.PopulateProperties(pace.current_part)
+					pac.UpdateConfigFile("pinned_properties")
+				end):SetImage("icon16/attach.png")
+			end
+		end
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -1534,6 +2035,11 @@ do -- base editable
 		return DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	end
 
+	function PANEL:OnValueSet(val)
+		if self.CurrentKey == nil then return end
+		pace.current_part.properties_not_edited_by_previews[self.CurrentKey] = val
+	end
+
 	function PANEL:SetValue(var, skip_encode)
 		if self.editing then return end
 
@@ -1606,6 +2112,13 @@ do -- base editable
 			menu:SetPos(input.GetCursorPos())
 			menu:MakePopup()
 			self:PopulateContextMenu(menu)
+			pac.RunNextFrameSimple(function()
+				local x,y = input.GetCursorPos()
+				local w,h = menu:GetCanvas():GetParent():GetSize()
+				if ScrH() < y + h then
+					menu:SetPos(x, ScrH() - h)
+				end
+			end)
 		end
 	end
 
@@ -1831,63 +2344,7 @@ do -- base editable
 		end
 
 		--proxy expression
-		if self.CurrentKey == "Expression" then
-
-
-			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
-			pace.bookmarked_ressources["proxy"] = pace.bookmarked_ressources["proxy"]
-			local menu1, pnl1 = menu:AddSubMenu(L"Proxy template bits", function()
-            end)
-			pnl1:SetIcon("icon16/cart_go.png")
-			for group, tbl in pairs(pace.bookmarked_ressources["proxy"]) do
-				local icon = "icon16/bullet_white.png"
-				if group == "user" then icon = "icon16/user.png"
-				elseif group == "fades and transitions" then icon = "icon16/shading.png"
-				elseif group == "pulses" then icon = "icon16/transmit_blue.png"
-				elseif group == "facial expressions" then icon = "icon16/emoticon_smile.png"
-				elseif group == "spatial" then icon = "icon16/world.png"
-				elseif group == "experimental things" then icon = "icon16/ruby.png"
-				end
-				local menu2, pnl2 = menu1:AddSubMenu(group)
-				pnl2:SetIcon(icon)
-
-				if not table.IsEmpty(tbl) then
-					for i,tbl2 in pairs(tbl) do
-						--print(tbl2.nicename)
-						local str = tbl2.nicename or "invalid name"
-						local pnl3 = menu2:AddOption(str, function()
-							if pace.current_part.ClassName == "proxy" then
-								local expression = pace.current_part.Expression
-								if expression == "" then --blank: bare insert
-									expression = tbl2.expression
-								elseif true then --something present: multiply the existing bit?
-									expression = expression .. " * " .. tbl2.expression
-								end
-
-								pace.current_part:SetExpression(expression)
-								self:SetValue(expression)
-							end
-
-						end)
-						pnl3:SetIcon(icon)
-						pnl3:SetTooltip(tbl2.explanation)
-					end
-
-				end
-			end
-
-			local tutorials, pnl2 = menu:AddSubMenu(L"Tutorials for the active functions")
-				for i, kw in ipairs(pace.current_part:GetActiveFunctions()) do
-					pace.current_part.errors_override = true --hack to stop competing SetInfo, SetWarning and SetError buttons
-					local tutorial = pace.current_part:GetTutorial(kw) if tutorial == nil then continue end
-					local pnl3 = tutorials:AddOption(kw, function()
-						pace.alternate_message_prompts = true
-						pace.current_part:SetInfo(tutorial)
-						pace.current_part:AttachEditorPopup(tutorial, true)
-					end) pnl3:SetIcon("icon16/calculator.png")
-					pnl3:SetTooltip(tutorial)
-				end
-			pnl2:SetImage("icon16/information.png")
+		if pace.current_part.ClassName == "proxy" and (key == "Expression" or key == "ExpressionOnHide" or pac.StringFind(key, "Extra")) then	populate_proxy_info(menu, self, self.CurrentKey)
 		end
 
 		if self.CurrentKey == "Function" or self.CurrentKey == "Input" then
@@ -1980,35 +2437,8 @@ do -- base editable
 			populate_bookmarks(menu, "models", self)
 		end
 
-		if self.CurrentKey == "Material" or self.CurrentKey == "SpritePath" then
+		if self.udata.editor_panel == "material" then
 			populate_bookmarks(menu, "materials", self)
-
-			local part_material = pace.current_part:GetProperty(self.CurrentKey)
-			local mat_name = part_material:match(".+/(.+)") or ""
-			mat_name = mat_name .. "_" .. string.sub(pace.current_part.UniqueID,1,6)
-			mat_name = string.Replace(mat_name, " ", "")
-			local menu2, pnl = menu:AddSubMenu("Edit Material (will be named " .. mat_name .. ")", function()
-				local newmaterial = pac.CreatePart("material_2d") newmaterial:SetParent(pace.current_part)
-				newmaterial:SetName(mat_name)
-				newmaterial:SetProperty("LoadVmt", part_material)
-				pace.current_part:SetProperty(self.CurrentKey, mat_name)
-			end)
-			pnl:SetImage("icon16/paintcan.png")
-
-			menu2:AddOption("Make transparent (vertex alpha) (for transparent textures)", function()
-				local newmaterial = pac.CreatePart("material_2d") newmaterial:SetParent(pace.current_part)
-				newmaterial:SetName(mat_name)
-				newmaterial:SetProperty("LoadVmt", part_material)
-				pace.current_part:SetProperty(self.CurrentKey, mat_name)
-				newmaterial:Setvertexalpha(true)
-			end):SetImage("icon16/paintcan.png")
-			menu2:AddOption("Make transparent (additive) (for black backgrounds)", function()
-				local newmaterial = pac.CreatePart("material_2d") newmaterial:SetParent(pace.current_part)
-				newmaterial:SetName(mat_name)
-				newmaterial:SetProperty("LoadVmt", part_material)
-				pace.current_part:SetProperty(self.CurrentKey, mat_name)
-				newmaterial:Setadditive(true)
-			end):SetImage("icon16/paintcan.png")
 		end
 
 		if string.find(pace.current_part.ClassName, "sound") then
@@ -2124,6 +2554,21 @@ do -- base editable
 			end
 		end
 
+		if pace.current_part.ClassName == "event" then
+			if string.find(self.CurrentKey, "uid") then
+				for i, uid in ipairs(string.Split(self:GetValue(),";")) do
+					local part = pace.current_part:GetOrFindCachedPart(uid)
+					if IsValid(part) then
+						menu:AddOption("jump to " .. tostring(part), function()
+							pace.GoToPart(part)
+						end):SetImage("icon16/arrow_turn_right.png")
+					else
+						menu:AddOption("<error>"):SetImage("icon16/cancel.png")
+					end
+				end
+			end
+		end
+
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
@@ -2226,6 +2671,9 @@ do -- base editable
 			if not self:IsValid() then pnl:Remove() return end
 			local x, y = self:LocalToScreen()
 			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			if pace.pinned_properties_keyed[self.CurrentKey] then
+				_,prop_y = pace.properties2:LocalToScreen(0,0)
+			end
 			y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
 
 			pnl:SetPos(x + 5 + inset_x, y)
@@ -2249,6 +2697,9 @@ do -- base editable
 		pac.AddHook('PostRenderVGUI', hookID .. "2", function(code)
 			if not IsValid(self) or not IsValid(pnl) or self.CurrentKey == nil  then pac.RemoveHook('Think', hookID .. "2") return end
 			local _,prop_y = pace.properties:LocalToScreen(0,0)
+			if pace.pinned_properties_keyed[self.CurrentKey] then
+				_,prop_y = pace.properties2:LocalToScreen(0,0)
+			end
 			local x, y = self:LocalToScreen()
 			local overflow = y < prop_y or y > ScrH() - self:GetTall()
 			if overflow then
@@ -2441,8 +2892,8 @@ do -- vector
 
 					--screen color picker
 					local btn2 = vgui.Create("DImageButton", self)
-					btn2:SetSize(16, 16)
-					btn2:Dock(RIGHT) btn2:DockPadding(0,0,16,0)
+					btn2:SetSize(line_height / 1.5, line_height / 1.5)
+					btn2:Dock(RIGHT) btn2:DockPadding(0,0,line_height / 1.5,0)
 					btn2:SetTooltip("Color picker")
 					btn2:SetImage("icon16/sitemap_color.png")
 					btn2.DoClick = function()
@@ -2507,7 +2958,7 @@ do -- vector
 							end
 							
 							local color = Color(0,0,0)
-							if r + g + a < 400 then
+							if r + g + b < 400 then
 								color = Color(255,255,255)
 							end
 
@@ -2587,7 +3038,7 @@ do -- vector
 					end
 				end
 			end) pnl:SetImage(pace.MiscIcons.paste) pnl:SetTooltip(pace.clipboardtooltip)
-
+			menu:AddSpacer()
 			menu:AddOption(L"apply proxy", function()
 				local proxy = pac.CreatePart("proxy")
 				proxy:SetParent(pace.current_part)
@@ -2956,6 +3407,7 @@ do -- boolean
 		chck.DoRightClick = function()
 			local menu = DermaMenu()
 			menu:SetPos(input.GetCursorPos())
+			menu:MakePopup()
 			if self.user_proxies then
 				for _,part in pairs(self.user_proxies) do
 					menu:AddOption("jump to " .. tostring(part), function()
@@ -3083,7 +3535,13 @@ do -- boolean
 					self.OnValueChanged(val)
 				end
 			end):SetImage(pace.MiscIcons.clear)
-			menu:MakePopup()
+			pac.RunNextFrameSimple(function()
+				local x,y = input.GetCursorPos()
+				local w,h = menu:GetCanvas():GetParent():GetSize()
+				if ScrH() < y + h then
+					menu:SetPos(x, ScrH() - h)
+				end
+			end)
 		end
 		self.chck = chck
 

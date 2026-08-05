@@ -4,6 +4,7 @@ CreateClientConVar("pac_asset_browser_remember_layout", "1")
 CreateClientConVar("pac_asset_browser_extra_options", "1")
 CreateClientConVar("pac_favorites_try_to_get_asset_series", "1")
 CreateClientConVar("pac_favorites_try_to_build_asset_series", "0")
+local preview_mats = CreateClientConVar("pac_asset_browser_preview_materials_on_hover", "1")
 
 local function rebuild_bookmarks()
 	pace.bookmarked_ressources = pace.bookmarked_ressources or {}
@@ -494,6 +495,23 @@ local function create_material_icon(path, grid_panel)
 
 	end)
 
+	
+	icon.Think = function()
+		if not preview_mats:GetBool() then return end
+		if not pace.model_browser_part_key then return end
+		if not IsValid(pace.current_part) then return end
+		if not pace.IsActive() then return end
+		if not pace.current_part.SetProperty then return end
+		icon.hovering = icon:IsHovered()
+		if icon.hovering then
+			pace.current_part:SetProperty(pace.model_browser_part_key, mat_path)
+			icon.was_hovering = true
+		elseif icon.was_hovering then
+			pace.current_part:SetProperty(pace.model_browser_part_key, pace.current_part.properties_not_edited_by_previews[pace.model_browser_part_key])
+			icon.was_hovering = false
+		end
+	end
+
 	grid_panel:Add(icon)
 
 	return icon
@@ -804,6 +822,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 	function frame:OnClose()
 		self:SetVisible(false)
+		pace.model_browser_part_key = nil
 	end
 
 	local menu_bar = vgui.Create("DMenuBar", frame)
@@ -832,6 +851,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	options_menu:AddCVar(L"close browser on select", "pac_asset_browser_close_on_select", "1", "0")
 	options_menu:AddCVar(L"remember layout", "pac_asset_browser_remember_layout", "1", "0")
 	options_menu:AddCVar(L"additional right click options", "pac_asset_browser_extra_options", "1", "0")
+	options_menu:AddCVar(L"preview materials when hovering", "pac_asset_browser_preview_materials_on_hover", "1", "0")
 	options_menu:AddCVar(L"try to find asset series for saving favorites", "pac_favorites_try_to_get_asset_series", "1", "0")
 	options_menu:AddCVar(L"try to build asset series in the editor", "pac_favorites_try_to_build_asset_series", "1", "0")
 
