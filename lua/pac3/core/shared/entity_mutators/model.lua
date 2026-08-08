@@ -273,7 +273,7 @@ if SERVER then
 		if not ply:IsValid() then return end
 		if not GetConVar("pac_modifier_model"):GetBool() then return end
 		local function helptext()
-			for i=1,ply:GetFlexNum()-1 do
+			for i=0,ply:GetFlexNum()-1 do
 				ply:PrintMessage(HUD_PRINTCONSOLE, "[" .. i .. "] " .. ply:GetFlexName(i))
 			end
 		end
