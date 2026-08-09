@@ -47,7 +47,7 @@ do
 			if tbl then
 				for i, data in pairs(tbl) do
                     if ply:LookupPoseParameter(data.key) ~= -1 then 
-                        pac.SetPoseParameter(ply, data.key, data.val)
+                        ply:SetPoseParameter(data.key, data.val)
 					end
 				end
 			end
