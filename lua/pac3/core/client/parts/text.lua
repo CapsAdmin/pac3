@@ -994,7 +994,7 @@ function PART:WrapString(str, max_w, font_override)
 	end
 	local delta = SysTime() - stime
 	
-	if game.SinglePlayer() then wrap_calculation_time = SysTime() else wrap_calculation_time = SysTime() + 0.5 end
+	if game.SinglePlayer() then wrap_calculation_time = SysTime() else wrap_calculation_time = SysTime() + delta end
 	self.request_line_recalculation = false
 	return lines_pushed
 end
