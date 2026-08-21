@@ -901,18 +901,46 @@ function PART:SetForceNewline(b)
 end
 
 local font = ""
-local wrap_calculation_time = 0
-local frame_reset = 0
+local width_cache = {}
+
+local function get_width(str, tbl)
+	if not tbl then return 0 end
+	if tbl[str] then
+		return tbl[str]
+	else
+		tbl[str] = surface.GetTextSize(str)
+		return tbl[str]
+	end
+end
+
+local wrap_performance_debug = CreateClientConVar("pac_text_wordwrap_debug", "0", true, false)
+local max_wordwrap_lines = CreateClientConVar("pac_text_wordwrap_max_lines", "30", true, false)
 function PART:WrapString(str, max_w, font_override)
 	local stime = SysTime()
 	if self.UsedFont == "" then self.previous_str = nil return {} end
 	if not self.ForceNewline and #str > 5000 then self.previous_str = nil return {} end
-	if stime < wrap_calculation_time then return self.lines or {} end --rate limit
+
+	local font = font_override or self.UsedFont
 	if font_override then
 		surface.SetFont(font_override)
 	else
 		surface.SetFont(self.UsedFont)
 	end
+
+	--build an initial cache of characters and current words
+	if not width_cache[font] then
+		width_cache[font] = {}
+		for i=33,126 do
+			local char = string.char(i)
+			width_cache[font][char] = get_width(char, width_cache[font])
+			if wrap_performance_debug:GetBool() then print(i, char, width_cache[font][char]) end
+		end
+		for i,str in ipairs(string.Split(str, " ")) do
+			width_cache[font][str] = get_width(str, width_cache[font])
+		end
+	end
+	width_cache[font] = width_cache[font] or {}
+	local F_width_cache = width_cache[font]
 	
 	local lines = string.Split(str, "\n")
 	local lines_pushed = {}
@@ -946,7 +974,8 @@ function PART:WrapString(str, max_w, font_override)
 							end
 						end
 						local concatenated = table.concat(sentence, " ")
-						local w,_ = surface.GetTextSize(concatenated)
+						
+						local w = get_width(concatenated, F_width_cache)
 						if w > max_w then
 							continue
 						else
@@ -964,14 +993,14 @@ function PART:WrapString(str, max_w, font_override)
 				for i2, word in ipairs(words) do
 					local word = word
 					local remain = word
-					local w,_ = surface.GetTextSize(word)
+					local w = get_width(word, F_width_cache)
 
 					if w > max_w then --overflow
 						local guard = 0
-						while (#remain > 0 and guard < 15) do
+						while (#remain > 0 and guard < max_wordwrap_lines:GetInt()) do
 							for c=#word,1,-1 do
 								local split_word = string.sub(word,1,c)
-								local w2,_ = surface.GetTextSize(split_word)
+								local w2 = get_width(split_word, F_width_cache)
 								if w2 > max_w then
 									continue
 								else
@@ -993,8 +1022,12 @@ function PART:WrapString(str, max_w, font_override)
 		end
 	end
 	local delta = SysTime() - stime
+
 	
-	if game.SinglePlayer() then wrap_calculation_time = SysTime() else wrap_calculation_time = SysTime() + 0.5 end
+	if wrap_performance_debug:GetBool() then
+		self:SetInfo("calc time = " .. delta)
+		if self == pace.current_part then pace.FlashNotification("text wordwrap calc time = " .. math.Round(delta * 1000,2) .. " ms", 0.5) end
+	end
 	self.request_line_recalculation = false
 	return lines_pushed
 end
