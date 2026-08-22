@@ -9,7 +9,7 @@ PART.Icon = 'icon16/disconnect.png'
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
 	BUILDER:GetSet("Range", 0)
-    BUILDER:GetSet("UseRange", false, {description="Limits the output range of the Pose Parameter to be within the legal ranges defined by the model"})
+    BUILDER:GetSet("RawRange", false, {description="Passes the raw value of Range to SetPoseParameter instead of remapping.\nFor example with head_yaw, a range of [-1,1] would then need to use [-75,75]"})
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
@@ -52,19 +52,10 @@ function PART:UpdateParams()
 		if data then
 			local num
 
-            if self.UseRange then 
+            if self.RawRange then 
                 num = self.Range
             else
-                -- backwards compatibility; reverts the math in the new setter 
-                -- old calculation
-                
                 num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
-                
-                num = pac.ToPoseParameterRange( 
-                    ent, 
-                    data.name, 
-                    num
-                )
             end
 
 			ent.pac_pose_params = ent.pac_pose_params or {}
@@ -73,7 +64,7 @@ function PART:UpdateParams()
 			ent.pac_pose_params[self.UniqueID].key  = data.name
 			ent.pac_pose_params[self.UniqueID].val = num
 
-			pac.SetPoseParameter(ent, data.name, num)
+			ent:SetPoseParameter(data.name, num)
 		end
 	end
 end
