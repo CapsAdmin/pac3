@@ -37,58 +37,7 @@ local lib = {
 	round = math.Round,
 }
 
-local blacklist = {
-    "function";
-    "for"; "break";
-    "while"; "do";
-    "repeat"; "until";
-}
-
-local function_intro = "local IN = (...); "
-
-local function_formats = {
-    function_intro .. "return %s";
-    function_intro .. "%s"; -- allows <code>return</code> semantics
-}
-
-local function TryCompile(code, identifier)
-    local result = CompileString(code, identifier, false)
-    
-    return not isstring(result), result
-end
-
-local function CompileStringAdvanced(code, identifier)
-    local success, func = false, nil
-    
-    for _, structure in pairs(function_formats) do
-        success, func = TryCompile(structure:format(code), identifier)
-        
-        print(structure, code)
-        
-        if success then break end
-    end
-    
-    return success, func
-end
-
-local function readonlyError()
-    error("Not allowed to assign to globals", 3)
-end
-
-local function makeReadonly(t)
-    return setmetatable(
-        {}, 
-        {
-            __index = t,
-            __newindex = readonlyError,
-            __metatable = "This metatable is locked."
-        }
-    )
-end
-
-local function copyInto(t1, t2)
-    for k,v in pairs(t1) do t2[k] = v end
-end
+local blacklist = {"repeat", "until", "function", "end"}
 
 local function compile_expression(str, extra_lib)
 	for _, word in pairs(blacklist) do
@@ -97,28 +46,25 @@ local function compile_expression(str, extra_lib)
 		end
 	end
 
-	local success, func = CompileStringAdvanced(str, "pac_expression")
+	local functions = {}
 
-	if success then
-        local functions = {}
+	for k,v in pairs(lib) do functions[k] = v end
 
-        copyInto(lib, functions)
+	if extra_lib then
+		for k,v in pairs(extra_lib) do functions[k] = v end
+	end
 
-        if extra_lib then
-            copyInto(extra_lib, functions)
-        end
+	functions.select = select
+	str = "local IN = select(1, ...) return " .. str
 
-        functions.select = select
-        
-        setfenv(
-            func, 
-            makeReadonly(functions)
-        )
-        
+	local func = CompileString(str, "pac_expression", false)
+
+	if isstring(func) then
+		return false, func
+	else
+		setfenv(func, functions)
 		return true, func
 	end
-    
-    return false, func
 end
 
 return compile_expression
