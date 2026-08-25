@@ -720,7 +720,7 @@ local function install_fontsize_buttons(frame, editor, add_execute, key, propert
 		centered_mode:SetBool(not b)
 		move(not b)
 	end
-
+	
 	--position it initially
 	move(centered_mode:GetBool())
 
@@ -781,7 +781,7 @@ local function install_fontsize_buttons(frame, editor, add_execute, key, propert
 				timer.Simple(0.2, function() pace.current_part:Execute(pace.current_part[key]) end)
 			else
 				pace.current_part:Execute()
-			end
+			end		
 		end
 		function frame:PerformLayout()
 			if lua_editor_previous_dimensions then
@@ -800,7 +800,7 @@ local function install_fontsize_buttons(frame, editor, add_execute, key, propert
 			btn_fontminus:SetX(self:GetWide() - 140 + 4)
 			btn_fontedit:SetX(self:GetWide() - 310 + 2)
 			btn_centered_mode:SetX(self:GetWide() - 250 + 4)
-			perflayout(self)
+			perflayout(self, self:GetSize())
 		end
 		frame:RequestFocus()
 	else
@@ -820,10 +820,10 @@ local function install_fontsize_buttons(frame, editor, add_execute, key, propert
 			btn_fontminus:SetX(self:GetWide() - 140 + 4)
 			btn_fontedit:SetX(self:GetWide() - 260 + 2)
 			btn_centered_mode:SetX(self:GetWide() - 200 + 4)
-			perflayout(self)
+			perflayout(self, self:GetSize())
 		end
 	end
-
+	
 end
 
 do -- script
@@ -1328,7 +1328,7 @@ do -- script proxy
 				y = math.Clamp(y,prop_y,ScrH() - self:GetTall())
 				surface.SetFont(pnl:GetFont())
 				local w2 = surface.GetTextSize(str .. " " .. self.CurrentKey .. " " .. str)
-
+				
 				surface.SetDrawColor(col)
 				surface.DrawRect(x - w2, y, w2, pnl:GetTall())
 				surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
