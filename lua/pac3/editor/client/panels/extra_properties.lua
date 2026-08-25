@@ -672,7 +672,6 @@ local function install_fontsize_buttons(frame, editor, add_execute, key)
 		editor.FontWidth, editor.FontHeight = surface.GetTextSize(" ")
 	end
 
-
 	local btn_remember_dimensions = vgui.Create("DButton", frame) btn_remember_dimensions:SetSize(18, 18) btn_remember_dimensions:SetImage("icon16/computer_link.png")
 	btn_remember_dimensions:SetTooltip("Remember winbdow size") btn_remember_dimensions:SetY(3)
 	function btn_remember_dimensions:DoClick()
@@ -743,7 +742,7 @@ local function install_fontsize_buttons(frame, editor, add_execute, key)
 			btn_run:SetX(self:GetWide() - 190 + 4)
 			btn_fontplus:SetX(self:GetWide() - 120 + 4)
 			btn_fontminus:SetX(self:GetWide() - 140 + 4)
-			perflayout(self)
+			perflayout(self, self:GetSize())
 		end
 		frame:RequestFocus()
 	else
@@ -761,7 +760,7 @@ local function install_fontsize_buttons(frame, editor, add_execute, key)
 			btn_remember_dimensions:SetX(self:GetWide() - 160 + 4)
 			btn_fontplus:SetX(self:GetWide() - 120 + 4)
 			btn_fontminus:SetX(self:GetWide() - 140 + 4)
-			perflayout(self)
+			perflayout(self, self:GetSize())
 		end
 	end
 	

@@ -389,7 +389,7 @@ local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
 function PANEL:PerformLayout()
 	if not self.okay then return end
 
-	DFrame.PerformLayout(self)
+	DFrame.PerformLayout(self, self:GetSize())
 
 	for i, val in pairs(self.pac3_PanelsToRemove) do
 		if IsValid(self[val]) then

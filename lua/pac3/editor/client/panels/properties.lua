@@ -887,20 +887,12 @@ do -- list
 
 		self.div = divider
 
-		--emergency hotfix
-		pac.AddHook("PerformLayout", divider, function()
-			local self = divider
+		function divider:PerformLayout()
+			DHorizontalDivider.PerformLayout(self, self:GetSize())
 			if self.m_pLeft then
 				self.m_pLeft:SetWide( self.m_iLeftWidth + self.m_iDividerWidth )
 			end
-		end)
-
-		--[[function divider:PerformLayout()
-			DHorizontalDivider.PerformLayout(self)
-			if self.m_pLeft then
-				self.m_pLeft:SetWide( self.m_iLeftWidth + self.m_iDividerWidth )
-			end
-		end]]
+		end
 
 		local scroll = vgui.Create("DVScrollBar", self)
 		scroll:Dock(RIGHT)
