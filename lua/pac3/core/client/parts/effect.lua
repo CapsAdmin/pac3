@@ -32,45 +32,12 @@ end
 
 function PART:Initialize()
 	self:SetEffect(self.Effect)
-
-	if not pac.particle_list then
-		local found = {}
-
-		for file_name in pairs(pac_loaded_particle_effects) do
-			local ok, err = pcall(function()
-				local data = file.Read("particles/"..file_name, "GAME", "b")
-				if data then
-					for str in data:gmatch("\3%c([%a_]+)%c") do
-						if #str > 1 then
-							found[str] = str
-						end
-					end
-				end
-			end)
-
-			if not ok then
-				local msg = "unable to parse particle file " .. file_name .. ": " .. err
-				self:SetError(msg)
-				pac.Message(Color(255, 50, 50), msg)
-			end
-		end
-
-		pac.particle_list = found
-	end
 end
 
 PART.last_spew = 0
 
 if not pac_loaded_particle_effects then
 	pac_loaded_particle_effects = {}
-
-	for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
-			game.AddParticles("particles/" .. file_name)
-		end
-
-		pac_loaded_particle_effects[file_name] = true
-	end
 end
 
 local already = {}
@@ -89,9 +56,10 @@ function PART:SetEffect(name)
 	self.Effect = name
 	self.Ready = alreadyServer[name] or false
 
-	if not alreadyServer[name] then
+	if name and not alreadyServer[name] then
+		pac.pcfprovider.LoadEffect(name)
 		pac_request_precache(name)
-	else
+	elseif alreadyServer[name] then
 		self.waitingForServer = false
 	end
 end

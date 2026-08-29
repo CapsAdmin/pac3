@@ -7,6 +7,7 @@ include("entity_mutator.lua")
 include("hash.lua")
 
 pac.StringStream = include("pac3/libraries/string_stream.lua")
+pac.pcfparser = include("pac3/libraries/pcfparser.lua")
 
 CreateConVar("pac_sv_draw_distance", 0, CLIENT and FCVAR_REPLICATED or bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 

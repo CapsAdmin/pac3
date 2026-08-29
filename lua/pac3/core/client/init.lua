@@ -48,6 +48,10 @@ pac.animations = include("pac3/libraries/animations.lua")
 
 include("pac3/core/shared/init.lua")
 
+pac.pcfprovider = include("pac3/libraries/pcfprovider.lua")
+
+pac.pcfprovider.Initialize()
+
 pac.urltex = include("pac3/libraries/urltex.lua")
 
 include("parts.lua")
