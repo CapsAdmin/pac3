@@ -102,7 +102,7 @@ function _G.pac_Restart()
 
 		for _, ent in pairs(ents.GetAll()) do
 			for k in pairs(ent:GetTable()) do
-				if k:sub(0, 4) == "pac_" then
+				if isstring(k) and k:sub(0, 4) == "pac_" then
 					ent[k] = nil
 				end
 			end
