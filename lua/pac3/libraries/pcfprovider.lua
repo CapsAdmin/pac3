@@ -168,43 +168,46 @@ function pcfprovider.LoadEffect(effectName)
 		local fullpath = "particles/" .. filename
 
 		if loadedPCFs[filename] ~= true then
-			local ok, err = pcall(game.AddParticles, fullpath)
-			loadedPCFs[filename] = ok and true or false
-
-			if not ok then
-				pac.Message(Color(255, 50, 50), string.format(
-					"failed to load particle file %s: %s", filename, tostring(err)
-				))
-			end
+			game.AddParticles(fullpath)
+			loadedPCFs[filename] = true
 		end
 
-		if loadedPCFs[filename] then
-			loaded = true
-		end
+		loaded = true
 	end
 
 	if loaded and not precachedNames[effectName] then
 		precachedNames[effectName] = true
-		pcall(PrecacheParticleSystem, effectName)
+		PrecacheParticleSystem(effectName)
 	end
 
 	return loaded
 end
 
+local effectFilenames = {}
+
 function pcfprovider.IsEffectLoaded(effectName)
 	if not effectName or effectName == "" then return false end
 
-	if IsBlacklisted(string.lower(effectName)) then return false end
+	local name = string.lower(effectName)
+	if IsBlacklisted(name) then return false end
 
-	local rows = Query(
-		string.format("SELECT p.filename FROM pac3_pcfcache_names n " ..
-			"JOIN pac3_pcfcache_pcfs p ON n.pcfid = p.pcfid " ..
-			"WHERE n.particleeffectname = %s", sql.SQLStr(string.lower(effectName)))
-	)
-	if not rows then return false end
+	if not effectFilenames[name] then
+		local rows = Query(
+			string.format("SELECT p.filename FROM pac3_pcfcache_names n " ..
+				"JOIN pac3_pcfcache_pcfs p ON n.pcfid = p.pcfid " ..
+				"WHERE n.particleeffectname = %s", sql.SQLStr(name))
+		)
+		if not rows then return false end
 
-	for _, row in ipairs(rows) do
-		if loadedPCFs[row.filename] then
+		local filenames = {}
+		for _, row in ipairs(rows) do
+			table.insert(filenames, row.filename)
+		end
+		effectFilenames[name] = filenames
+	end
+
+	for _, filename in ipairs(effectFilenames[name]) do
+		if loadedPCFs[filename] then
 			return true
 		end
 	end
@@ -218,6 +221,7 @@ function pcfprovider.ClearCache()
 	initialized = false
 	loadedPCFs = {}
 	precachedNames = {}
+	effectFilenames = {}
 	pac.particle_list = {}
 	pac.Message("particle cache cleared")
 end
