@@ -286,8 +286,6 @@ function ss_methods:skip(length)
 				self.subindex = 1
 			end
 		else
-			self.index = #self.index + 1
-			self.subindex = 1
 			break
 		end
 	end
