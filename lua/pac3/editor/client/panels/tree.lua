@@ -170,7 +170,11 @@ do
 			if part.ClassName == "custom_animation" then
 				local anim = part:GetLuaAnimation()
 				if anim then
-					node:SetText(part:GetName() .. " [" .. string.format("%.2f", anim.Frame + anim.FrameDelta) .. "]")
+					local ent = part:GetOwner()
+					local cycle = pac.animations.GetEntityAnimationCycle(ent, part:GetAnimID())
+					local duration = pac.animations.GetAnimationDuration(ent, part:GetAnimID())
+					local time = cycle ~= nil and duration and (cycle * duration) or 0
+					node:SetText(part:GetName() .. " [" .. string.format("%.2fs", time) .. "]")
 				end
 			end
 
