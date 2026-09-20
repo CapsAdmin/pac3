@@ -8,6 +8,14 @@ local Vector = Vector
 local util = util
 local SysTime = SysTime
 
+-- localization helper
+local function L(str)
+	if pace and pace.LanguageString then
+		return pace.LanguageString(str)
+	end
+	return str
+end
+
 
 local BUILDER, PART = pac.PartTemplate("base")
 
@@ -3337,18 +3345,31 @@ do
 			return self.extra_nice_name(part, ent, part:GetParsedArgumentsForObject(self))
 		end
 
-		local str = part:GetEvent()
+		local str = L(pac.PrettifyName(part:GetEvent()))
 
 		if part:GetArguments() ~= "" then
-			local args = part:GetArguments():gsub(";", " or ")
-
-			if not tonumber(args) then
-				args = [["]] .. args .. [["]]
+			local args = {part:GetParsedArgumentsForObject(self)}
+			local labeled = {}
+			for pos, argData in ipairs(self:GetArguments()) do
+				local val = args[pos]
+				if val ~= nil then
+					if isstring(val) then
+						val = val:gsub(";", " or ")
+					end
+					labeled[#labeled + 1] = L(pac.PrettifyName(argData[1])) .. " " .. tostring(val)
+				end
 			end
-			str = str .. " " .. part:GetOperator() .. " " .. args
+
+			if #labeled > 0 then
+				local operator = part:GetOperator()
+				if operator ~= "" then
+					str = str .. " " .. L(operator)
+				end
+				str = str .. " " .. table.concat(labeled, ", ")
+			end
 		end
 
-		return pac.PrettifyName(str)
+		return str
 	end
 
 	local eventMetaTable = {
@@ -3483,12 +3504,28 @@ do
 		operator_type = "none",
 		tutorial_explanation = "selecting a custom animation part via UID,\nthis event activates whenever the linked custom animation is currently playing somewhere between the frames specified",
 		name = "custom_animation_frame",
-		nice = function(self, ent, animation)
-			if animation == "" then self:SetWarning("no animation selected") return "no animation" end
+		nice = function(self, ent, animation, frame_start, frame_end)
+			if animation == "" then self:SetWarning("no animation selected") return L("no animation") end
 			local part = pac.GetLocalPart(animation)
-			if not IsValid(part) then self:SetError("invalid animation selected") return "invalid animation" end
+			if not IsValid(part) then self:SetError("invalid animation selected") return L("invalid animation selected") end
 			self:SetWarning()
-			return part:GetName()
+
+			local label = part:GetName()
+			local data = get_registered_animation_data(part:GetAnimID())
+			local total = data and #data.FrameData or "--"
+
+			local start = frame_start or 1
+			if start < 1 then start = 1 end
+			local endf = frame_end and frame_end > 0 and frame_end or total
+			local window = start .. "-" .. tostring(endf)
+
+			if ent:IsValid() then
+				local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+				if frame and delta then
+					return label .. " [" .. L("frame") .. " " .. frame .. "/" .. total .. " | " .. window .. "]"
+				end
+			end
+			return label .. " [" .. L("frame") .. " --/" .. total .. " | " .. window .. "]"
 		end,
 		args = {
 			{"animation", "string", {editor_panel = "custom_animation_frame"}},
@@ -3566,21 +3603,37 @@ do
 		operator_type = "none",
 		tutorial_explanation = "selecting a custom animation part via UID,\nthis event activates whenever the linked custom animation's playback time is somewhere between the seconds specified,\nbased on the same time readout as the animation editor's timeline",
 		name = "custom_animation_time",
-		nice = function(self, ent, animation)
-			if animation == "" then self:SetWarning("no animation selected") return "no animation" end
+		nice = function(self, ent, animation, time_start, time_end)
+			if animation == "" then self:SetWarning("no animation selected") return L("no animation") end
 			local part = pac.GetLocalPart(animation)
-			if not IsValid(part) then self:SetError("invalid animation selected") return "invalid animation" end
+			if not IsValid(part) then self:SetError("invalid animation selected") return L("invalid animation selected") end
 			self:SetWarning()
+
+			local label = part:GetName()
+			local duration = get_animation_duration(part:GetAnimID())
+
+			local t_start = time_start or 0
+			if t_start < 0 then t_start = 0 end
+			local t_end
+			if time_end and time_end > t_start then
+				t_end = time_end
+			elseif duration > 0 then
+				t_end = duration
+			else
+				t_end = time_end or 0
+			end
+			local window = string.format("%.2f-%.2f%s", t_start, t_end, L("s"))
+
 			if ent:IsValid() then
 				local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
 				if frame and delta then
 					local cycle = animations.GetEntityAnimationCycle(ent, part:GetAnimID())
-					local duration = animations.GetAnimationDuration(ent, part:GetAnimID())
-					local time = cycle ~= nil and duration and (cycle * duration) or 0
-					return part:GetName() .. " [" .. string.format("%.2f / %.2fs", time, get_animation_duration(part:GetAnimID())) .. "]"
+					local duration_live = animations.GetAnimationDuration(ent, part:GetAnimID())
+					local time = cycle ~= nil and duration_live and (cycle * duration_live) or 0
+					return label .. " [" .. string.format("%.2f%s", time, L("s")) .. " | " .. window .. "]"
 				end
 			end
-			return part:GetName()
+			return label .. " [--.--" .. L("s") .. " | " .. window .. "]"
 		end,
 		args = {
 			{"animation", "string", {editor_panel = "custom_animation_frame"}},

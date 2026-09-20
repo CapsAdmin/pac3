@@ -183,6 +183,80 @@ do
 				node:SetText(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			end
 
+			--live frame/time readout for named custom_animation_frame/custom_animation_time events (unnamed parts already get it via GetNiceName)
+			if part.ClassName == "event" and part.Name ~= "" then
+				local event_name = part:GetEvent()
+				if event_name == "custom_animation_frame" or event_name == "custom_animation_time" then
+					local base = pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName()
+					local animation = part:GetProperty("animation")
+					local anim_part = animation ~= "" and pac.GetLocalPart(animation) or nil
+					local ent, anim_id
+					if IsValid(anim_part) and anim_part.ClassName == "custom_animation" then
+						ent = anim_part:GetOwner()
+						anim_id = anim_part:GetAnimID()
+					end
+
+					local total
+					local duration
+					if anim_id then
+						local data = pac.animations.GetRegisteredAnimations()[anim_id]
+						if data then
+							total = #data.FrameData
+							local dur = 0
+							for i = 1, #data.FrameData do
+								dur = dur + (1 / (data.FrameData[i].FrameRate or 1))
+							end
+							duration = dur
+						end
+					end
+
+					local window
+					if event_name == "custom_animation_frame" then
+						local start = part:GetProperty("frame_start")
+						if not start or start < 1 then start = 1 end
+						local endf = part:GetProperty("frame_end")
+						endf = endf and endf > 0 and endf or (total or "--")
+						window = start .. "-" .. tostring(endf)
+					else
+						local t_start = part:GetProperty("time_start") or 0
+						if t_start < 0 then t_start = 0 end
+						local t_end = part:GetProperty("time_end")
+						if t_end and t_end > t_start then
+							-- explicit end time
+						elseif duration and duration > 0 then
+							t_end = duration
+						else
+							t_end = t_end or 0
+						end
+						window = string.format("%.2f-%.2f%s", t_start, t_end, L("s"))
+					end
+
+					local suffix
+					if IsValid(ent) and anim_id then
+						local frame, delta = pac.animations.GetEntityAnimationFrame(ent, anim_id)
+						if frame and delta then
+							if event_name == "custom_animation_frame" then
+								suffix = "[" .. L("frame") .. " " .. frame .. "/" .. (total or "--") .. " | " .. window .. "]"
+							else
+								local cycle = pac.animations.GetEntityAnimationCycle(ent, anim_id)
+								local dur = pac.animations.GetAnimationDuration(ent, anim_id)
+								local time = cycle ~= nil and dur and (cycle * dur) or 0
+								suffix = "[" .. string.format("%.2f%s", time, L("s")) .. " | " .. window .. "]"
+							end
+						end
+					end
+					if not suffix then
+						if event_name == "custom_animation_frame" then
+							suffix = "[" .. L("frame") .. " --/" .. (total or "--") .. " | " .. window .. "]"
+						else
+							suffix = "[--.--" .. L("s") .. " | " .. window .. "]"
+						end
+					end
+
+					node:SetText(base .. " " .. suffix)
+				end
+			end
+
 			if part:IsHiddenCached() then
 				if not node.Icon.event_icon then
 					local pnl = vgui.Create("DImage", node.Icon)
