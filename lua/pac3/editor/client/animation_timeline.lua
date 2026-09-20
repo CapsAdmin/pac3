@@ -688,6 +688,15 @@ do
 	function TIMELINE:Think()
 		DFrame.Think(self)
 
+		-- a gesture animation plays once and is removed from the entity when done,
+		-- so flip the play button back to "play" when it's no longer on the entity
+		if self.playing and timeline.animation_part then
+			local anim = animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
+			if not anim then
+				self.playing = false
+			end
+		end
+
 		if pace.Editor:GetPos() + pace.Editor:GetWide() / 2 < ScrW() / 2 then
 			self:SetSize(ScrW()-(pace.Editor.x+pace.Editor:GetWide()), 93)
 			self:SetPos(pace.Editor.x+pace.Editor:GetWide(), ScrH()-self:GetTall())
