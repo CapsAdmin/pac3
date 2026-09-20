@@ -452,7 +452,7 @@ function PART:GetDynamicProperties(reset_to_default)
 			if udata.default then
 				arg.set(udata.default)
 			else
-				arg.set(nil)
+				arg.set(get_default(typ))
 			end
 		end
 	end
@@ -3454,6 +3454,28 @@ do
 	end)
 end
 
+-- helpers shared by the custom animation events
+local function get_registered_animation_data(anim_id)
+	return pac.animations.GetRegisteredAnimations()[anim_id]
+end
+
+local function get_animation_duration(anim_id)
+	local data = get_registered_animation_data(anim_id)
+	if not data or not data.FrameData then return 0 end
+
+	local total = 0
+	for i = 1, #data.FrameData do
+		total = total + (1 / (data.FrameData[i].FrameRate or 1))
+	end
+	return total
+end
+
+local function get_animation_frame_count(anim_id)
+	local data = get_registered_animation_data(anim_id)
+	if not data or not data.FrameData then return 1 end
+	return #data.FrameData
+end
+
 -- custom animation event
 do
 	local animations = pac.animations
@@ -3475,9 +3497,8 @@ do
 					local anim = pace.current_part:GetProperty("animation")
 					if anim ~= "" then
 						local part = pac.GetLocalPart(anim)
-						-- GetAnimationDuration only works while editor is active for some reason
-						local data = util.JSONToTable(part:GetData())
-						return math.Clamp(math.ceil(num), 1, #data.FrameData)
+						if not IsValid(part) then return end
+						return math.Clamp(math.ceil(num), 1, get_animation_frame_count(part:GetAnimID()))
 					end
 				end
 			}},
@@ -3487,9 +3508,8 @@ do
 					local start = pace.current_part:GetProperty("frame_start")
 					if anim ~= "" then
 						local part = pac.GetLocalPart(anim)
-						-- GetAnimationDuration only works while editor is active for some reason
-						local data = util.JSONToTable(part:GetData())
-						return math.Clamp(math.ceil(num), start, #data.FrameData)
+						if not IsValid(part) then return end
+						return math.Clamp(math.ceil(num), start, get_animation_frame_count(part:GetAnimID()))
 					end
 				end
 			}},
@@ -3511,7 +3531,107 @@ do
 					if part.ClassName ~= "custom_animation" then return end
 					local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
 					if not frame or not delta then return end -- different animation part is playing
+					frame_start = math.max(frame_start, 1) -- frames are 1-based
+					-- frame_end stays 0 unless touched, so treat 0 as "until the animation ends"
+					if frame_end <= 0 then
+						frame_end = #animations.GetEntityAnimation(ent, part:GetAnimID()).FrameData
+					end
 					return frame >= frame_start and frame <= frame_end
+				end
+			end
+		end
+	}
+
+	local eventObject = pac.CreateEvent(event.name, event.args)
+	eventObject.Think = event.func
+	eventObject.IsAvailable = event.available
+	eventObject.extra_nice_name = event.nice
+
+	data = event
+
+	local operator_type = data.operator_type
+	local preferred_operator = data.preferred_operator
+	local tutorial_explanation = data.tutorial_explanation
+	eventObject.operator_type = operator_type
+	eventObject.preferred_operator = preferred_operator
+	eventObject.tutorial_explanation = tutorial_explanation
+
+	pac.RegisterEvent(eventObject)
+end
+
+-- custom animation time event
+do
+	local animations = pac.animations
+	local event = {
+		operator_type = "none",
+		tutorial_explanation = "selecting a custom animation part via UID,\nthis event activates whenever the linked custom animation's playback time is somewhere between the seconds specified,\nbased on the same time readout as the animation editor's timeline",
+		name = "custom_animation_time",
+		nice = function(self, ent, animation)
+			if animation == "" then self:SetWarning("no animation selected") return "no animation" end
+			local part = pac.GetLocalPart(animation)
+			if not IsValid(part) then self:SetError("invalid animation selected") return "invalid animation" end
+			self:SetWarning()
+			if ent:IsValid() then
+				local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+				if frame and delta then
+					local cycle = animations.GetEntityAnimationCycle(ent, part:GetAnimID())
+					local duration = animations.GetAnimationDuration(ent, part:GetAnimID())
+					local time = cycle ~= nil and duration and (cycle * duration) or 0
+					return part:GetName() .. " [" .. string.format("%.2f / %.2fs", time, get_animation_duration(part:GetAnimID())) .. "]"
+				end
+			end
+			return part:GetName()
+		end,
+		args = {
+			{"animation", "string", {editor_panel = "custom_animation_frame"}},
+			{"time_start", "number", {
+				editor_onchange = function(self, num)
+					local anim = pace.current_part:GetProperty("animation")
+					if anim ~= "" then
+						local part = pac.GetLocalPart(anim)
+						if not IsValid(part) then return end
+						return math.Clamp(num, 0, get_animation_duration(part:GetAnimID()))
+					end
+				end
+			}},
+			{"time_end", "number", {
+				editor_onchange = function(self, num)
+					local anim = pace.current_part:GetProperty("animation")
+					local start = pace.current_part:GetProperty("time_start")
+					if anim ~= "" then
+						local part = pac.GetLocalPart(anim)
+						if not IsValid(part) then return end
+						return math.Clamp(num, start, get_animation_duration(part:GetAnimID()))
+					end
+				end
+			}}
+		},
+		available = function(self, eventPart)
+			return next(animations.registered) and true or false
+		end,
+		func = function (self, eventPart, ent, animation, time_start, time_end)
+			local time_start = time_start or 0
+			local time_end = time_end or 0
+			if not animation or animation == "" then return end
+			if not IsValid(ent) then return end
+			if not next(animations.playing) then return end
+			for i,v in ipairs(animations.playing) do
+				if v == ent then
+					local part = pac.GetPartFromUniqueID(pac.Hash(ent), animation)
+					if not IsValid(part) then return end
+					if part.ClassName ~= "custom_animation" then return end
+					local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+					if not frame or not delta then return end -- different animation part is playing
+					local cycle = animations.GetEntityAnimationCycle(ent, part:GetAnimID())
+					if not cycle then return end
+					local duration = animations.GetAnimationDuration(ent, part:GetAnimID())
+					-- time_end stays 0 unless touched, so treat any end that is not
+					-- after the start as "until the animation ends"
+					if time_end <= time_start then
+						time_end = duration
+					end
+					local time = cycle * duration
+					return time >= time_start and time <= time_end
 				end
 			end
 		end
