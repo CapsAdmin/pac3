@@ -57,6 +57,9 @@ function pace.OnOpenEditor()
 	pace.SetViewAngles(pac.LocalPlayer:EyeAngles())
 	pace.EnableView(true)
 
+	pace.Focused = true
+	pace.UnfocusedVisible = nil
+
 	if table.Count(pac.GetLocalParts()) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit")
 	end

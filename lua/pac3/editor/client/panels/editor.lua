@@ -564,6 +564,7 @@ function pace.GainFocus(show_editor)
 		if self.allowclick ~= false then
 			self:MakePopup()
 			pace.Focused = true
+			pace.UnfocusedVisible = nil
 
 			timer.Remove("pac_editor_visibility")
 
@@ -586,6 +587,7 @@ function pace.KillFocus(show_editor)
 		self:SetKeyBoardInputEnabled(false)
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
+		pace.UnfocusedVisible = show_editor == true
 
 		if not show_editor then
 			self:AlphaTo(0, fade_time, 0)

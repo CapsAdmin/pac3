@@ -739,7 +739,34 @@ function pace.PostRenderVGUI()
 		surface.DrawText(notifText)
 	end
 
+	if not pace.Focused and pace.Editor and pace.Editor:IsValid() then
+		local action = pace.UnfocusedVisible and "hide_editor_visible" or "hide_editor"
+		local binds = pace.PACActionShortcut and pace.PACActionShortcut[action]
+
+		-- fall back to the hide_editor binding if the mode's action is unbound
+		if not (binds and binds[1]) then
+			binds = pace.PACActionShortcut and pace.PACActionShortcut["hide_editor"]
+		end
+
+		local keys = binds and binds[1] and table.concat(binds[1], " + "):lower() or "ctrl + e"
+
+		local text = pace.UnfocusedVisible
+			and L("input passthrough active - press '" .. keys .. "' to get the editor back")
+			or L("editor hidden - press '" .. keys .. "' to get the editor back")
+
+		surface.SetFont('Trebuchet18')
+		surface.SetTextColor(255, 255, 255, 230)
+		local w = surface.GetTextSize(text)
+		surface.SetTextPos(ScrW() / 2 - w / 2, 10)
+		surface.DrawText(text)
+	end
+
 	if not isHoldingMovement then return end
+
+	if not pace.Focused then
+		isHoldingMovement = false
+		return
+	end
 
 	if pace.mctrl.LastThinkCall ~= FrameNumber() then
 		surface.SetFont('Trebuchet18')
