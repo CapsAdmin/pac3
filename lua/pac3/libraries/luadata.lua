@@ -346,7 +346,12 @@ do -- file extension
 			return false,"invalid file"
 		end
 		--decode the header
-		if file:StartsWith("LZMA COMPRESSED\n") then file = file:gsub("^LZMA COMPRESSED\n","") file = util.Decompress(file) end
+		if file:StartsWith("LZMA COMPRESSED\n") then
+			file = util.Decompress(file:gsub("^LZMA COMPRESSED\n", ""))
+			if not file then
+				return false, "file is LZMA compressed but could not be decompressed (the file is corrupted)"
+			end
+		end
 		return luadata.Decode(file)
 	end
 end

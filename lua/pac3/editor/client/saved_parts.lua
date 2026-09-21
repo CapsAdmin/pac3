@@ -23,7 +23,7 @@ file.CreateDir("pac3/__backup_save/")
 ]]
 
 local save_reduce = CreateClientConVar("pac_save_reduced", "1", true, false, "Whether to skip saving variables that stayed with the default values for pac3 parts. This will reduce file size.\nThe only possible problem is that if default values get changed (which shouldn't happen), it would change these values when loading.")
-local save_compress = CreateClientConVar("pac_save_compressed", "0", true, false, "Whether to compress your pac3 outfits when saving. This will greatly reduce file size.\nThe only problem is that it'll render the outfit's txt unreadable for humans.\nWe do know people sometimes like to review outfit txt files, run searches or batch-replaces, keep that in mind.")
+local save_compress = CreateClientConVar("pac_save_compressed", "0", true, false, "Whether to compress your pac3 outfits when saving. This will greatly reduce file size.\nThe only problem is that it'll render the outfit's txt unreadable for humans.\nWe do know people sometimes like to review outfit txt files, run searches or batch-replaces, keep that in mind.\nCompressed outfits can only be loaded by PAC3 versions from May 2026 or newer. When joining a server, PAC3 runs the server's version, so don't use this for outfits you wear on servers that might not be up to date.")
 
 local saveload_menu = NULL
 function pace.OutfitSaveMenu(title, subtitle, default, func, name, clear, override_part)
@@ -52,6 +52,7 @@ function pace.OutfitSaveMenu(title, subtitle, default, func, name, clear, overri
 	compress:SetConVar("pac_save_compressed")
 	reduce:SetTextColor(frame:GetSkin().Colours.Label.Dark)
 	compress:SetTextColor(frame:GetSkin().Colours.Label.Dark)
+	compress:SetTooltip("Compressed outfits can only be read by PAC3 versions from May 2026 or newer.\nWhen you're on a server, PAC3 runs the server's version, so an outdated server will fail to load compressed outfits and show them as empty.\nLeave this unchecked for outfits you share with others or wear on servers that might not be up to date.")
 
 	local encoded = ""
 	local function check_conflict()
@@ -166,38 +167,64 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 
 	data = pac.CallHook("pace.SaveParts", data) or data
 
-	if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
-		pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
-	else
-		if file.Exists("pac3/" .. name .. ".txt", "DATA") then
-			local date = os.date("%y-%m-%d-%H_%M_%S")
-			local read = file.Read("pac3/" .. name .. ".txt", "DATA")
-			file.Write("pac3/__backup_save/" .. name .. "_" .. date .. ".txt", read)
+	local is_session = not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/")
+	local path = is_session and "pac3/sessions/" .. name .. ".txt" or "pac3/" .. name .. ".txt"
 
-			local files, folders = file.Find("pac3/__backup_save/*", "DATA")
+	local function do_write()
+		if is_session then
+			pace.luadata.WriteFile(path, data)
+		else
+			if file.Exists(path, "DATA") then
+				local date = os.date("%y-%m-%d-%H_%M_%S")
+				local read = file.Read(path, "DATA")
+				file.Write("pac3/__backup_save/" .. name .. "_" .. date .. ".txt", read)
 
-			if #files > 30 then
-				local targetFiles = {}
+				local files, folders = file.Find("pac3/__backup_save/*", "DATA")
 
-				for i, filename in ipairs(files) do
-					local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
-					table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
-				end
+				if #files > 30 then
+					local targetFiles = {}
 
-				table.sort(targetFiles, function(a, b)
-					return a[2] > b[2]
-				end)
+					for i, filename in ipairs(files) do
+						local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
+						table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
+					end
 
-				for i = 31, #files do
-					file.Delete(targetFiles[i][1])
+					table.sort(targetFiles, function(a, b)
+						return a[2] > b[2]
+					end)
+
+					for i = 31, #files do
+						file.Delete(targetFiles[i][1])
+					end
 				end
 			end
+
+			pace.luadata.WriteFile(path, data)
 		end
 
-		pace.luadata.WriteFile("pac3/" .. name .. ".txt", data)
+		pace.Backup(data, name)
 	end
 
-	pace.Backup(data, name)
+	-- guard against destroying an outfit by saving an empty (or near empty) over it.
+	-- this happens when an outfit failed to load
+	if file.Exists(path, "DATA") and (file.Size(path, "DATA") or 0) >= 2048 then
+		local encoded = pace.luadata.Encode(data)
+		if #encoded < 1024 then
+			Derma_Query(
+				("You are about to overwrite %s (%s) with a much smaller outfit (%s).\nThis usually means the outfit failed to load and you're about to save an empty outfit over the real outfit.\nThe current file will be backed up to pac3/__backup_save/.\n\nOverwrite anyway?"):format(
+					path,
+					string.NiceSize(file.Size(path, "DATA")),
+					string.NiceSize(#encoded)
+				),
+				"PAC3 - confirm overwrite",
+				"overwrite anyway", do_write,
+				"cancel", function() pac.Message(("Save cancelled: %s"):format(path)) end
+			)
+			return
+		end
+	end
+
+	do_write()
 end
 
 local last_backup
@@ -357,7 +384,13 @@ function pace.LoadParts(name, clear, override_part)
 					return
 				end
 
-				if str:StartsWith("LZMA COMPRESSED\n") then str = str:gsub("^LZMA COMPRESSED\n","") str = util.Decompress(str) end
+				if str:StartsWith("LZMA COMPRESSED\n") then
+					str = util.Decompress(str:gsub("^LZMA COMPRESSED\n", ""))
+					if not str then
+						pace.MessagePrompt("The outfit at the URL is LZMA compressed but could not be decompressed. The file may be corrupted or truncated.", "URL Failed", "OK")
+						return
+					end
+				end
 				local data, err = pace.luadata.Decode(str)
 				if not data then
 					local message = string.format("Failed to load pac3 outfit from url: %s : %s\n", name, err)
@@ -374,10 +407,42 @@ function pace.LoadParts(name, clear, override_part)
 		else
 			name = name:gsub("%.txt", "")
 
-			local data, err = pace.luadata.ReadFile("pac3/" .. name .. ".txt")
+			local path = "pac3/" .. name .. ".txt"
+			local data, err = pace.luadata.ReadFile(path)
+
+			-- fall back to the sessions folder for autoload when the outfit is missing or empty
+			if name == "autoload" and (not data or (istable(data) and not next(data))) then
+				path = "pac3/sessions/" .. name .. ".txt"
+				data, err = pace.luadata.ReadFile(path, nil, true)
+			end
+
+			if not data then
+				-- stay quiet when there simply is no autoload outfit
+				if err and name == "autoload" then
+					pace.MessagePrompt(err, "Autoload failed", "OK")
+				elseif name ~= "autoload" then
+					pace.MessagePrompt(
+						("Failed to load %s:\n%s\n\nIf this outfit was saved with the LZMA compress option, it needs a PAC3 version from May 2026 or newer to load.\nWhen you're on a server, PAC3 runs the server's version, so the server may have to be updated."):format(name, err or "unknown error"),
+						("Loading %s failed"):format(name),
+						"OK"
+					)
+				end
+				return
+			end
+
+			-- refuse to load it as an empty outfit, otherwise an empty outfits tends to get saved over the real outfit
+			if istable(data) and not next(data) and (file.Size(path, "DATA") or 0) >= 2048 then
+				pace.MessagePrompt(
+					("%s decoded to an empty outfit, but the file is %s.\nThe file is likely corrupted, or was saved in a format this PAC3 version cannot fully read (e.g. LZMA compression from a newer version).\nThe outfit was NOT loaded, so you can't accidentally overwrite it."):format(name, string.NiceSize(file.Size(path, "DATA"))),
+					("Loading %s failed"):format(name),
+					"OK"
+				)
+				return
+			end
+
 			local has_possible_prop_pacs = false
 
-			if data and istable(data) then
+			if istable(data) then
 				for i, part in pairs(data) do
 					if part.self and isnumber(tonumber(part.self.OwnerName)) then
 						has_possible_prop_pacs = true
@@ -413,19 +478,6 @@ function pace.LoadParts(name, clear, override_part)
 				end
 
 			else
-				if name == "autoload" and (not data or not next(data)) then
-					data,err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
-					if not data then
-						if err then
-							pace.MessagePrompt(err, "Autoload failed", "OK")
-						end
-						return
-					end
-				elseif not data then
-					pace.MessagePrompt(err, ("Decoding %s failed"):format(name), "OK")
-					return
-				end
-
 				pace.LoadPartsFromTable(data, clear, override_part)
 			end
 		end
