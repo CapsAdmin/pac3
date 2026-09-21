@@ -407,7 +407,7 @@ do -- bone manipulation for boneanimlib
 
 		if pac_boneanim then
 			for i = 0, count do
-				ManipulateBoneScale(ent, i, SCALE_RESET)
+				ManipulateBoneScale(ent, i, (pac_boneanim.scales and pac_boneanim.scales[i]) or SCALE_RESET)
 				ManipulateBonePosition(ent, i, pac_boneanim.positions[i] or ORIGIN_RESET)
 				ManipulateBoneAngles(ent, i, pac_boneanim.angles[i] or ANGLE_RESET)
 				ManipulateBoneJiggle(ent, i, 0)
@@ -452,12 +452,14 @@ do -- bone manipulation for boneanimlib
 	function pac.SetEntityBoneMatrix(ent, i, matrix)
 		pac.ManipulateBonePosition(ent, i, matrix:GetTranslation())
 		pac.ManipulateBoneAngles(ent, i, matrix:GetAngles())
+		pac.ManipulateBoneScale(ent, i, matrix:GetScale())
 	end
 
 
 	function pac.ResetEntityBoneMatrix(ent, i)
 		pac.ManipulateBoneAngles(ent, i, angle_zero)
 		pac.ManipulateBonePosition(ent, i, vector_origin)
+		pac.ManipulateBoneScale(ent, i, SCALE_RESET)
 	end
 
 	function pac.ManipulateBonePosition(ply, id, var)
@@ -477,6 +479,17 @@ do -- bone manipulation for boneanimlib
 
 		if not ply.pac_has_parts then
 			ply:ManipulateBoneAngles(id, var)
+		end
+	end
+
+	function pac.ManipulateBoneScale(ply, id, var)
+		ply.pac_boneanim = ply.pac_boneanim or {positions = {}, angles = {}}
+		ply.pac_boneanim.scales = ply.pac_boneanim.scales or {}
+
+		ply.pac_boneanim.scales[id] = var
+
+		if not ply.pac_has_parts then
+			ply:ManipulateBoneScale(id, var)
 		end
 	end
 end

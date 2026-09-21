@@ -232,6 +232,9 @@ function animations.RegisterAnimation(name, tInfo)
 				tBoneTable.RU = tBoneTable.RU or 0
 				tBoneTable.RF = tBoneTable.RF or 0
 				tBoneTable.RR = tBoneTable.RR or 0
+				tBoneTable.SX = tBoneTable.SX or 0
+				tBoneTable.SY = tBoneTable.SY or 0
+				tBoneTable.SZ = tBoneTable.SZ or 0
 			end
 		end
 
@@ -239,7 +242,7 @@ function animations.RegisterAnimation(name, tInfo)
 			for iBoneUsed in pairs(BonesUsed) do
 				for _, tFrame in ipairs(tInfo.FrameData) do
 					if not tFrame.BoneInfo[iBoneUsed] then
-						tFrame.BoneInfo[iBoneUsed] = {MU = 0, MF = 0, MR = 0, RU = 0, RF = 0, RR = 0}
+						tFrame.BoneInfo[iBoneUsed] = {MU = 0, MF = 0, MR = 0, RU = 0, RF = 0, RR = 0, SX = 0, SY = 0, SZ = 0}
 					end
 				end
 			end
@@ -300,11 +303,20 @@ local function CubicInterpolation(y0, y1, y2, y3, mu)
 	return a0 * mu * mu2 + (y0 - y1 - a0) * mu2 + (y2 - y0) * mu + y1
 end
 
-local EMPTYBONEINFO = {MU = 0, MR = 0, MF = 0, RU = 0, RR = 0, RF = 0}
+local EMPTYBONEINFO = {MU = 0, MR = 0, MF = 0, RU = 0, RR = 0, RF = 0, SX = 0, SY = 0, SZ = 0}
 local function GetFrameBoneInfo(ent, tGestureTable, iFrame, iBoneID)
 	local tPrev = tGestureTable.FrameData[iFrame]
 	if tPrev then
-		return tPrev.BoneInfo[iBoneID] or tPrev.BoneInfo[ent:GetBoneName(iBoneID)] or EMPTYBONEINFO
+		local info = tPrev.BoneInfo[iBoneID] or tPrev.BoneInfo[ent:GetBoneName(iBoneID)] or EMPTYBONEINFO
+
+		-- old animation data may not have the scale channels
+		if info.SX == nil then
+			info.SX = 0
+			info.SY = info.SY or 0
+			info.SZ = info.SZ or 0
+		end
+
+		return info
 	end
 
 	return EMPTYBONEINFO
@@ -369,6 +381,11 @@ local function ProcessAnimations(ent)
 			if not tBuffer[iBoneID] then tBuffer[iBoneID] = Matrix() end
 			local mBoneMatrix = tBuffer[iBoneID]
 
+			-- old animation data may not have the scale channels
+			tBoneInfo.SX = tBoneInfo.SX or 0
+			tBoneInfo.SY = tBoneInfo.SY or 0
+			tBoneInfo.SZ = tBoneInfo.SZ or 0
+
 			local vCurBonePos, aCurBoneAng = mBoneMatrix:GetTranslation(), mBoneMatrix:GetAngles()
 			if not tBoneInfo.Callback or not tBoneInfo.Callback(ent, mBoneMatrix, iBoneID, vCurBonePos, aCurBoneAng, fFrameDelta, fPower) then
 				local vUp = aCurBoneAng:Up()
@@ -380,6 +397,7 @@ local function ProcessAnimations(ent)
 					if tbl.Type == "posture" then
 						mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
 						mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF) * fAmount)
+						mBoneMatrix:Scale(Vector(1 + tBoneInfo.SX * fAmount, 1 + tBoneInfo.SY * fAmount, 1 + tBoneInfo.SZ * fAmount))
 					else
 						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
 
@@ -400,6 +418,14 @@ local function ProcessAnimations(ent)
 									Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
 								) * fPower
 							)
+
+							mBoneMatrix:Scale(
+								Vector(1, 1, 1) + LerpVector(
+									eases[curease](fFrameDelta),
+									Vector(bi1.SX, bi1.SY, bi1.SZ),
+									Vector(tBoneInfo.SX, tBoneInfo.SY, tBoneInfo.SZ)
+								) * fPower
+							)
 						else
 							mBoneMatrix:Translate(
 								LerpVector(
@@ -414,6 +440,14 @@ local function ProcessAnimations(ent)
 									fFrameDelta,
 									Angle(bi1.RR, bi1.RU, bi1.RF),
 									Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
+								) * fPower
+							)
+
+							mBoneMatrix:Scale(
+								Vector(1, 1, 1) + LerpVector(
+									fFrameDelta,
+									Vector(bi1.SX, bi1.SY, bi1.SZ),
+									Vector(tBoneInfo.SX, tBoneInfo.SY, tBoneInfo.SZ)
 								) * fPower
 							)
 						end
@@ -431,13 +465,22 @@ local function ProcessAnimations(ent)
 							Angle(bi3.RR, bi3.RU, bi3.RF),
 							fFrameDelta
 						) * fPower)
+						mBoneMatrix:Scale(Vector(1, 1, 1) + CubicInterpolation(
+							Vector(bi0.SX, bi0.SY, bi0.SZ),
+							Vector(bi1.SX, bi1.SY, bi1.SZ),
+							Vector(tBoneInfo.SX, tBoneInfo.SY, tBoneInfo.SZ),
+							Vector(bi3.SX, bi3.SY, bi3.SZ),
+							fFrameDelta
+						) * fPower)
 				elseif iInterp == "none" then
 					mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward))
 					mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF))
+					mBoneMatrix:Scale(Vector(1 + tBoneInfo.SX, 1 + tBoneInfo.SY, 1 + tBoneInfo.SZ))
 				else-- Default is Cosine
 					local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
 					mBoneMatrix:Translate(CosineInterpolation(bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward, tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward, fFrameDelta) * fPower)
 					mBoneMatrix:Rotate(CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower)
+					mBoneMatrix:Scale(Vector(1, 1, 1) + CosineInterpolation(Vector(bi1.SX, bi1.SY, bi1.SZ), Vector(tBoneInfo.SX, tBoneInfo.SY, tBoneInfo.SZ), fFrameDelta) * fPower)
 				end
 			end
 			::CONTINUE::

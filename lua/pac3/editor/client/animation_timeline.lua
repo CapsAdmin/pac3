@@ -16,10 +16,20 @@ do
 		Position = true,
 		Angles = true,
 		Bone = true,
+		Scale = true,
 	}
 
+	BUILDER
+		:StartStorableVars()
+			:SetPropertyGroup("orientation")
+			:PropertyOrder("Bone")
+			:PropertyOrder("Position")
+			:PropertyOrder("Angles")
+			:GetSet("Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		:EndStorableVars()
+
 	function PART:GetParentOwner()
-		return self:GetOwner()
+		return self.Owner
 	end
 
 	function PART:GetBonePosition()
@@ -111,16 +121,825 @@ function timeline.UpdateFrameData()
 	data.RU = data.RU or 0
 	data.RF = data.RF or 0
 
+	data.SX = data.SX or 0
+	data.SY = data.SY or 0
+	data.SZ = data.SZ or 0
+
 	timeline.dummy_bone:SetPosition(Vector(data.MF, -data.MR, data.MU))
 	timeline.dummy_bone:SetAngles(Angle(data.RR, data.RU, data.RF))
+	timeline.dummy_bone:SetScale(Vector(1 + data.SX, 1 + data.SY, 1 + data.SZ))
+end
+
+do -- changed bones in selected keyframe
+	local BONE_CHANNELS = { "MU", "MR", "MF", "RU", "RF", "RR", "SX", "SY", "SZ" }
+	local CHANNEL_LABELS = { MU = "up", MR = "right", MF = "forward", RR = "pitch", RU = "yaw", RF = "roll", SX = "scale x", SY = "scale y", SZ = "scale z" }
+	local ZERO_BONE = { MU = 0, MR = 0, MF = 0, RU = 0, RF = 0, RR = 0, SX = 0, SY = 0, SZ = 0 }
+
+	-- A bone is "changed" in a keyframe if any of its channels differ from the
+	-- previous keyframe (frame 0 = all zeros). This matches how the animation
+	-- interpolates
+	function timeline.GetFrameChangedBones(frameIndex)
+		local data = timeline.data
+		local changed = {}
+		local keyed = {}
+		local frameKeyed = {}
+
+		if not data or not data.FrameData then return changed, keyed, frameKeyed end
+
+		local curFrame = data.FrameData[frameIndex]
+		if not curFrame then return changed, keyed, frameKeyed end
+
+		local prevFrame = data.FrameData[frameIndex - 1]
+		local curBones = curFrame.BoneInfo or {}
+
+		for boneReal in pairs(curBones) do
+			frameKeyed[boneReal] = true
+		end
+
+		for i, frame in ipairs(data.FrameData) do
+			if frame and frame.BoneInfo then
+				for boneReal in pairs(frame.BoneInfo) do
+					keyed[boneReal] = true
+				end
+			end
+		end
+
+		-- map raw bone names to friendly names for display
+		local realToFriendly = {}
+		local boneData = pac.GetModelBones(timeline.entity)
+		for friendly, v in pairs(boneData) do
+			if v.real then realToFriendly[v.real] = friendly end
+		end
+
+		for boneReal, curInfo in pairs(curBones) do
+			local prevInfo = prevFrame and prevFrame.BoneInfo and prevFrame.BoneInfo[boneReal] or ZERO_BONE
+
+			local channels = {}
+			for _, ch in ipairs(BONE_CHANNELS) do
+				local diff = (curInfo[ch] or 0) - (prevInfo[ch] or 0)
+				if diff ~= 0 then
+					channels[ch] = diff
+				end
+			end
+
+			if next(channels) then
+				changed[boneReal] = {
+					friendly = realToFriendly[boneReal] or boneReal,
+					channels = channels,
+				}
+			end
+		end
+
+		return changed, keyed, frameKeyed
+	end
+
+	-- which channels belong to each property group
+	local CHANNEL_GROUPS = {
+		Position = {"MU", "MR", "MF"},
+		Angles = {"RR", "RU", "RF"},
+		Scale = {"SX", "SY", "SZ"},
+	}
+
+	function timeline.ResetBoneChannelsInFrame(boneReal, channels)
+		if not timeline.selected_keyframe or not timeline.data or not timeline.data.FrameData then return end
+
+		local index = timeline.selected_keyframe:GetAnimationIndex()
+		local frame = timeline.data.FrameData[index]
+		if not frame then return end
+
+		local prevFrame = timeline.data.FrameData[index - 1]
+		local prevInfo = prevFrame and prevFrame.BoneInfo and prevFrame.BoneInfo[boneReal]
+
+		frame.BoneInfo = frame.BoneInfo or {}
+		local info = frame.BoneInfo[boneReal]
+		if not info then
+			-- bone isn't keyed in this frame yet: treat current values as the
+			-- previous frame's (hold), so the reset is a no-op that just keys it
+			info = prevInfo and table.Copy(prevInfo) or table.Copy(ZERO_BONE)
+			frame.BoneInfo[boneReal] = info
+		end
+
+		for _, ch in ipairs(channels) do
+			if prevInfo then
+				info[ch] = prevInfo[ch] or 0
+			else
+				info[ch] = 0
+			end
+		end
+
+		if timeline.selected_bone == boneReal then
+			timeline.UpdateFrameData()
+
+			if pace.current_part == timeline.dummy_bone then
+				pace.PopulateProperties(timeline.dummy_bone)
+			end
+		end
+
+		timeline.Save()
+		timeline.SyncPreview()
+		timeline.UpdateChangedBonesPanel()
+		pace.RecordUndoHistory()
+	end
+
+	function timeline.ResetBoneInFrame(boneReal)
+		if not timeline.selected_keyframe or not timeline.data or not timeline.data.FrameData then return end
+
+		local index = timeline.selected_keyframe:GetAnimationIndex()
+		local frame = timeline.data.FrameData[index]
+		if not frame then return end
+
+		local prevFrame = timeline.data.FrameData[index - 1]
+		local prevInfo = prevFrame and prevFrame.BoneInfo and prevFrame.BoneInfo[boneReal]
+
+		frame.BoneInfo = frame.BoneInfo or {}
+		frame.BoneInfo[boneReal] = prevInfo and table.Copy(prevInfo) or table.Copy(ZERO_BONE)
+
+		if timeline.selected_bone == boneReal then
+			timeline.UpdateFrameData()
+
+			if pace.current_part == timeline.dummy_bone then
+				pace.PopulateProperties(timeline.dummy_bone)
+			end
+		end
+
+		timeline.Save()
+		timeline.SyncPreview()
+		timeline.UpdateChangedBonesPanel()
+		pace.RecordUndoHistory()
+	end
+
+	-- Removes every trace of this bone from the whole animation (all frames).
+	function timeline.RemoveBoneFromAnimation(boneReal)
+		if not timeline.data or not timeline.data.FrameData then return end
+
+		for _, frame in ipairs(timeline.data.FrameData) do
+			if frame.BoneInfo then
+				frame.BoneInfo[boneReal] = nil
+			end
+		end
+
+		timeline.Save()
+		timeline.SyncPreview()
+		timeline.UpdateChangedBonesPanel()
+		pace.RecordUndoHistory()
+	end
+
+	function timeline.AddBoneToFrame(friendly)
+		local boneData = pac.GetModelBones(timeline.entity)
+		local bone = friendly and boneData and boneData[friendly]
+		if not bone or not bone.real then return end
+
+		if not timeline.selected_keyframe or not timeline.data or not timeline.data.FrameData then return end
+
+		local frame = timeline.data.FrameData[timeline.selected_keyframe:GetAnimationIndex()]
+		if not frame then return end
+
+		frame.BoneInfo = frame.BoneInfo or {}
+		if not frame.BoneInfo[bone.real] then
+			timeline.ResetBoneInFrame(bone.real)
+			pace.RecordUndoHistory()
+		end
+
+		if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
+			timeline.dummy_bone:SetBone(friendly)
+			timeline.EditBone()
+		end
+	end
+
+	-- text content of a row, shared by the row painter and the width sizing
+	local function get_row_texts(info, state)
+		local name = info.friendly or "?"
+
+		if state == "changed" and info.channels then
+			local parts = {}
+			for _, ch in ipairs(BONE_CHANNELS) do
+				local v = info.channels[ch]
+				if v then
+					parts[#parts + 1] = CHANNEL_LABELS[ch] .. " " .. string.format("%+.2f", v)
+				end
+			end
+			if #parts > 0 then
+				return name, table.concat(parts, ", ")
+			end
+		elseif state == "held" then
+			return name, L"unchanged"
+		end
+
+		return name
+	end
+
+	local function add_bone_row(parent, boneReal, info, state, alt)
+		local row = parent:Add("DPanel")
+		row:Dock(TOP)
+		row:DockMargin(1, 1, 1, 0)
+		row:SetTall(18)
+		row:SetCursor("hand")
+
+		local remove = vgui.Create("DImageButton", row)
+		remove:SetImage("icon16/delete.png")
+		remove:SetTooltip(L"remove bone from the whole animation")
+		remove:SizeToContents()
+		remove:Dock(LEFT)
+		remove:DockMargin(2, 0, 2, 0)
+		remove.DoClick = function()
+			-- shift skips the confirmation and removes right away
+			if input.IsKeyDown(KEY_LSHIFT) or input.IsKeyDown(KEY_RSHIFT) then
+				timeline.RemoveBoneFromAnimation(boneReal)
+				return true
+			end
+
+			Derma_Query(
+				L"remove this bone from all keyframes of the animation? (hold shift while clicking the button to skip this prompt)",
+				L"remove bone",
+				L"remove", function() timeline.RemoveBoneFromAnimation(boneReal) end,
+				L"cancel", function() end
+			)
+			return true
+		end
+
+		local changed_groups = {}
+		if state == "changed" and info.channels then
+			for group, channels in pairs(CHANNEL_GROUPS) do
+				for _, ch in ipairs(channels) do
+					if info.channels[ch] then
+						changed_groups[group] = true
+						break
+					end
+				end
+			end
+		end
+
+		local changed_count = 0
+		for _ in pairs(changed_groups) do
+			changed_count = changed_count + 1
+		end
+
+		local reset
+		if changed_count > 1 then
+			reset = vgui.Create("DImageButton", row)
+			reset:SetImage("icon16/arrow_undo.png")
+			reset:SetTooltip(L"reset bone in this frame")
+			reset:SizeToContents()
+			reset:Dock(RIGHT)
+			reset:DockMargin(0, 0, 2, 0)
+			reset.DoClick = function()
+				timeline.ResetBoneInFrame(boneReal)
+				return true
+			end
+		end
+
+		local CHANNEL_BUTTON_COLORS = {
+			Position = Color(100, 200, 110),
+			Angles = Color(90, 140, 230),
+			Scale = Color(220, 90, 90),
+		}
+		local channel_buttons = {}
+
+		for _, group in ipairs({"Scale", "Angles", "Position"}) do
+			if changed_groups[group] then
+				local btn = vgui.Create("DImageButton", row)
+				btn:SetImage("icon16/arrow_refresh_small.png")
+				btn:SetColor(CHANNEL_BUTTON_COLORS[group])
+				btn:SetTooltip(L("reset " .. group:lower() .. " in this frame"))
+				btn:SizeToContents()
+				btn:Dock(RIGHT)
+				btn:DockMargin(0, 0, 1, 0)
+				btn.DoClick = function()
+					timeline.ResetBoneChannelsInFrame(boneReal, CHANNEL_GROUPS[group])
+					return true
+				end
+				table.insert(channel_buttons, 1, btn)
+			end
+		end
+
+		local lm, _, rm = remove:GetDockMargin()
+		local left_pad = remove:GetWide() + lm + rm + 4
+
+		-- space for whichever buttons actually exist
+		local buttons_w = 0
+		if reset then
+			buttons_w = reset:GetWide() + 2
+		end
+		for _, btn in ipairs(channel_buttons) do
+			local bl, _, br = btn:GetDockMargin()
+			buttons_w = buttons_w + btn:GetWide() + bl + br
+		end
+
+		surface.SetFont(pace.CurrentFont)
+		local name_text, delta_text = get_row_texts(info, state)
+		local content_w = left_pad + surface.GetTextSize(name_text) + 10
+		if delta_text then
+			content_w = content_w + surface.GetTextSize(delta_text)
+		end
+		row.ContentWidth = content_w + buttons_w + 14 -- gap between text and the right-docked buttons
+
+		row.OnCursorEntered = function(s) s.Hovered = true end
+		row.OnCursorExited = function(s) s.Hovered = false end
+
+		row.Paint = function(s, w, h)
+			local skin = s:GetSkin()
+			local selected = timeline.selected_bone == boneReal
+
+			-- same paint the keyframes use, so rows match the timeline look
+			derma.SkinHook("Paint", "CategoryButton", s, w, h)
+
+			if selected then
+				local c = skin.Colours.Category.Line.Button_Selected
+				surface.SetDrawColor(c.r, c.g, c.b, 250)
+				surface.DrawRect(0, 0, w, h)
+			elseif s.Hovered then
+				surface.SetDrawColor(0, 0, 0, 10)
+				surface.DrawRect(0, 0, w, h)
+			end
+
+			local text_color = selected and Color(40, 40, 40, 255) or skin.Colours.Label.Dark
+			local dim_color = selected and Color(40, 40, 40, 255) or Color(120, 120, 120, 220)
+
+			local name_text, delta_text = get_row_texts(info, state)
+			draw.SimpleText(name_text, pace.CurrentFont, left_pad, h / 2, state == "changed" and text_color or dim_color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			if delta_text then
+				surface.SetFont(pace.CurrentFont)
+				local nw = surface.GetTextSize(name_text)
+				local delta_color = state == "changed" and (selected and text_color or Color(40, 140, 70, 255)) or dim_color
+				draw.SimpleText(delta_text, pace.CurrentFont, left_pad + nw + 10, h / 2, delta_color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		end
+
+		row.OnMousePressed = function(_, mc)
+			if mc == MOUSE_LEFT and timeline.dummy_bone and timeline.dummy_bone:IsValid() then
+				timeline.dummy_bone:SetBone(info.friendly or boneReal)
+				timeline.EditBone()
+			end
+		end
+
+		return row
+	end
+
+	local function add_hint(parent, text)
+		local hint = parent:Add("DPanel")
+		hint:Dock(TOP)
+		hint:SetTall(18)
+		hint.Paint = function(_, w, h)
+			draw.SimpleText(text, pace.CurrentFont, 4, h / 2, Color(100, 100, 100, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		end
+		return hint
+	end
+
+	function timeline.UpdateChangedBonesPanel()
+		if timeline.bones_panel_queued then return end
+		timeline.bones_panel_queued = true
+		timer.Simple(0, function()
+			timeline.bones_panel_queued = nil
+			timeline.RebuildChangedBonesPanel()
+		end)
+	end
+
+	function timeline.RebuildChangedBonesPanel()
+		local bf = timeline.bones_frame
+		if not bf or not bf:IsValid() then return end
+
+		local list = bf.bones_list
+		local canvas = list:GetCanvas()
+
+		local children = canvas:GetChildren()
+		for i = #children, 1, -1 do
+			children[i]:Remove()
+		end
+
+		local frameIndex = timeline.selected_keyframe and timeline.selected_keyframe:GetAnimationIndex() or 0
+		local changed, keyed, frameKeyed = timeline.GetFrameChangedBones(frameIndex)
+
+		-- map raw bone names to friendly names for display
+		local realToFriendly = {}
+		local boneData = pac.GetModelBones(timeline.entity)
+		for friendly, v in pairs(boneData) do
+			if v.real then realToFriendly[v.real] = friendly end
+		end
+		local function fr(boneReal) return realToFriendly[boneReal] or boneReal end
+
+		local rows = {}
+		for boneReal in pairs(frameKeyed) do
+			local ch = changed[boneReal]
+			rows[#rows + 1] = {
+				boneReal = boneReal,
+				friendly = fr(boneReal),
+				changed = ch ~= nil,
+				channels = ch and ch.channels or nil,
+			}
+		end
+		table.sort(rows, function(a, b)
+			if a.changed ~= b.changed then return a.changed end
+			return a.friendly < b.friendly
+		end)
+
+		for i, row in ipairs(rows) do
+			add_bone_row(canvas, row.boneReal, row, row.changed and "changed" or "held", i % 2 == 0)
+		end
+
+		if #rows == 0 then
+			add_hint(canvas, L"no bones keyed in this frame")
+		end
+
+		-- bones that only exist in other frames' BoneInfo
+		local elsewhere = {}
+		for boneReal in pairs(keyed) do
+			if not frameKeyed[boneReal] then
+				elsewhere[#elsewhere + 1] = { boneReal = boneReal, friendly = fr(boneReal) }
+			end
+		end
+		table.sort(elsewhere, function(a, b) return a.friendly < b.friendly end)
+
+		if #elsewhere > 0 then
+			add_hint(canvas, L"keyed in other frames:")
+			for _, row in ipairs(elsewhere) do
+				add_bone_row(canvas, row.boneReal, row, "elsewhere", false)
+			end
+		end
+
+		-- auto-size the window width to the widest row's measured content
+		local maxw = 0
+		for _, pnl in ipairs(canvas:GetChildren()) do
+			if pnl.ContentWidth and pnl.ContentWidth > maxw then
+				maxw = pnl.ContentWidth
+			end
+		end
+
+		-- fit the window to the content
+		bf:SetTall(math.min(#canvas:GetChildren() * 18 + 68, 340))
+		if maxw > 0 then
+			bf:SetWide(math.Clamp(maxw, 240, 600))
+		end
+		bf:SetTitle(L"keyframe bones")
+
+		-- follow the selected keyframe
+		if bf.last_frame_index ~= frameIndex then
+			bf.last_frame_index = frameIndex
+			local f = timeline.frame
+			if f and f:IsValid() then
+				local kf = timeline.selected_keyframe
+				local x = f.x + f.keyframe_scroll.x
+				if kf and kf:IsValid() then
+					x = x + kf.x + kf:GetWide() / 2 - bf:GetWide() / 2
+				end
+				local y = f.y - bf:GetTall() - 4
+				local min_x = 0
+				if pace.Editor and pace.Editor:IsValid() then
+					min_x = pace.Editor.x + pace.Editor:GetWide()
+				end
+				bf:SetPos(math.Clamp(x, min_x, ScrW() - bf:GetWide()), math.Clamp(y, 0, ScrH() - bf:GetTall()))
+			end
+		end
+
+		list:InvalidateLayout()
+	end
+
+	function timeline.OpenBonesPanel()
+		if timeline.bones_frame and timeline.bones_frame:IsValid() then
+			timeline.bones_frame:Remove()
+		end
+
+		timeline.show_bones = true
+
+		local bf = vgui.Create("DFrame")
+		bf:SetSize(380, 240)
+		bf:SetTitle(L"keyframe bones")
+		bf:ShowCloseButton(true)
+		bf:SetDraggable(true)
+		bf:SetSizable(true)
+		bf:SetMinWidth(240)
+		bf:SetMinHeight(80)
+		bf:DockPadding(4, 24, 4, 4)
+		bf.last_frame_index = -1
+
+		bf.Paint = function(s, w, h)
+			derma.SkinHook("Paint", "ListBox", s, w, h)
+			s:GetSkin().tex.CategoryList.Header(0, 0, w, 22)
+		end
+		if IsValid(bf.lblTitle) then
+			bf.lblTitle:SetTextColor(Color(240, 240, 240, 255))
+		end
+
+		-- float above the pac editor, but don't steal keyboard focus
+		bf:MakePopup()
+		bf:SetKeyboardInputEnabled(false)
+
+		local toolbar = vgui.Create("DPanel", bf)
+		toolbar:Dock(TOP)
+		toolbar:SetTall(18)
+
+		local add_bone_btn = vgui.Create("DImageButton", toolbar)
+		add_bone_btn:SetImage("icon16/add.png")
+		add_bone_btn:SetTooltip(L"add a bone to this keyframe")
+		add_bone_btn:SizeToContents()
+		add_bone_btn:Dock(LEFT)
+		add_bone_btn:DockMargin(2, 1, 2, 1)
+		add_bone_btn.DoClick = function()
+			timeline.OpenBoneSelector()
+		end
+
+		local add_bone_lbl = vgui.Create("DLabel", toolbar)
+		add_bone_lbl:SetText(L"add bone")
+		add_bone_lbl:SetFont(pace.CurrentFont)
+		add_bone_lbl:SetTextColor(Color(120, 120, 120, 220))
+		add_bone_lbl:SizeToContents()
+		add_bone_lbl:Dock(LEFT)
+		add_bone_lbl:DockMargin(0, 1, 0, 1)
+
+		bf.bones_list = vgui.Create("DScrollPanel", bf)
+		bf.bones_list:Dock(FILL)
+
+		timeline.bones_frame = bf
+
+		-- open above the timeline, near the selected keyframe
+		local f = timeline.frame
+		if f and f:IsValid() then
+			local x = f.x + f.keyframe_scroll.x
+			local kf = timeline.selected_keyframe
+			if kf and kf:IsValid() then
+				x = x + kf.x + kf:GetWide() / 2 - bf:GetWide() / 2
+			end
+			local y = f.y - bf:GetTall() - 4
+			local min_x = 0
+			if pace.Editor and pace.Editor:IsValid() then
+				min_x = pace.Editor.x + pace.Editor:GetWide()
+			end
+			bf:SetPos(math.Clamp(x, min_x, ScrW() - bf:GetWide()), math.Clamp(y, 0, ScrH() - bf:GetTall()))
+		end
+
+		timeline.UpdateChangedBonesPanel()
+	end
+
+	function timeline.OpenBoneSelector()
+		if not timeline.entity or not timeline.entity:IsValid() then return end
+		if not timeline.selected_keyframe then return end
+
+		local boneData = pac.GetModelBones(timeline.entity)
+		if not boneData then return end
+
+		local bones = {}
+		for friendly, v in pairs(boneData) do
+			if v.real and not v.is_special and not v.is_attachment then
+				table.insert(bones, {friendly = friendly, real = v.real})
+			end
+		end
+		table.sort(bones, function(a, b) return a.friendly < b.friendly end)
+
+		pace.SafeRemoveSpecialPanel()
+
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"add bone")
+		frame:SetSize(280, 300)
+		frame:Center()
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn(L"name")
+
+		local search = vgui.Create("DTextEntry", frame)
+		search:Dock(BOTTOM)
+		search:RequestFocus()
+
+		local first_line
+		local building = false
+
+		local function build(find)
+			building = true
+			list:Clear()
+			first_line = nil
+			if find then find = find:lower() end
+			for _, bone in ipairs(bones) do
+				if not find or find == "" or bone.friendly:lower():find(find, nil, true) then
+					local line = list:AddLine(bone.friendly)
+					line.bone = bone
+					if not first_line then
+						first_line = line
+						list:SelectItem(line) -- preselect so enter picks it
+					end
+				end
+			end
+			building = false
+		end
+
+		search.OnTextChanged = function() build(search:GetValue()) end
+		search.OnEnter = function()
+			-- enter picks the first result 
+			if first_line and first_line:IsValid() and first_line.bone then
+				timeline.AddBoneToFrame(first_line.bone.friendly)
+				frame:Remove()
+			end
+		end
+
+		list.OnRowSelected = function(_, id, line)
+			if building then return end
+			if line.bone then
+				timeline.AddBoneToFrame(line.bone.friendly)
+			end
+			frame:Remove()
+		end
+
+		frame:MakePopup()
+		build()
+
+		pace.ActiveSpecialPanel = frame
+
+		return frame
+	end
+
+	local function draw_bone_marker(spos, size, r, g, b)
+		surface.SetDrawColor(r, g, b, 70)
+		surface.DrawRect(spos.x - size * 0.5, spos.y - size * 0.5, size, size)
+
+		surface.SetDrawColor(r, g, b, 255)
+		surface.DrawOutlinedRect(spos.x - size * 0.5, spos.y - size * 0.5, size, size)
+
+		surface.SetDrawColor(0, 0, 0, 255)
+		surface.DrawOutlinedRect(spos.x - size * 0.5 - 1, spos.y - size * 0.5 - 1, size + 2, size + 2)
+	end
+
+	local function changed_bones_hudpaint()
+		if not timeline.editing then return end
+		if not timeline.show_changed_bones then return end
+		if not pace.Focused then return end -- input passthrough: hide editor overlays
+		if not timeline.entity or not timeline.entity:IsValid() then return end
+
+		local kf = timeline.selected_keyframe
+		if not kf or not kf.IsValid or not kf:IsValid() then return end
+
+		local frameIndex = kf.GetAnimationIndex and kf:GetAnimationIndex()
+		if not frameIndex then return end
+
+		local changed = timeline.GetFrameChangedBones(frameIndex)
+		if not next(changed) then
+			timeline.bone_markers = nil
+			return
+		end
+
+		local ent = timeline.entity
+		local markers = {}
+
+		for boneReal, info in pairs(changed) do
+			local bone_id = ent:LookupBone(boneReal)
+			if bone_id and bone_id >= 0 then
+				local pos = pac.GetBonePosAng(ent, boneReal)
+				if pos then
+					local spos = pos:ToScreen()
+					if spos and spos.visible then
+						markers[boneReal] = {
+							x = spos.x,
+							y = spos.y,
+							friendly = info.friendly or boneReal,
+						}
+
+						if boneReal == timeline.selected_bone then
+							draw_bone_marker(spos, 12 + math.sin(RealTime() * 4) * 3, 148, 67, 201)
+						else
+							draw_bone_marker(spos, 9, 255, 200, 60)
+						end
+
+						draw.SimpleTextOutlined(info.friendly or boneReal, pace.CurrentFont, spos.x, spos.y + 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 200))
+					end
+				end
+			end
+		end
+
+		timeline.bone_markers = markers
+	end
+
+	timeline.changed_bones_hudpaint = changed_bones_hudpaint
+end
+
+do -- mirror keyframe pose
+	-- this sucks, I think a better way would be getting the bind pose or whatever
+	local function mirror_bone_info(info, has_mirror)
+		local out = table.Copy(info)
+		if has_mirror then
+			out.RR = -(info.RR or 0)
+			out.RF = -(info.RF or 0)
+		else
+			out.MR = -(info.MR or 0)
+			out.RU = -(info.RU or 0)
+			out.RF = -(info.RF or 0)
+		end
+		return out
+	end
+
+	local function mirror_bone_name(name, real_bones)
+		local function swap_word(word)
+			local lower = word:lower()
+			local replacement
+			if lower == "left" then replacement = "right"
+			elseif lower == "right" then replacement = "left"
+			elseif lower == "l" then replacement = "r"
+			elseif lower == "r" then replacement = "l"
+			else return end
+
+			-- keep the word's casing style
+			if word == word:upper() then
+				replacement = replacement:upper()
+			elseif word:sub(1, 1) == word:sub(1, 1):upper() then
+				replacement = replacement:sub(1, 1):upper() .. replacement:sub(2)
+			end
+
+			return replacement
+		end
+
+		local candidates = {}
+
+		candidates[#candidates + 1] = (name:gsub("%a+", swap_word))
+
+		for _, pair in ipairs({{"left", "right"}, {"Left", "Right"}, {"LEFT", "RIGHT"}}) do
+			candidates[#candidates + 1] = (name:gsub(pair[1], pair[2]))
+			candidates[#candidates + 1] = (name:gsub(pair[2], pair[1]))
+		end
+
+		-- trailing letter ("upperarml" -> "upperarmr")
+		local stem, last = name:sub(1, -2), name:sub(-1)
+		if last:lower() == "l" then
+			candidates[#candidates + 1] = stem .. (last == "l" and "r" or "R")
+		elseif last:lower() == "r" then
+			candidates[#candidates + 1] = stem .. (last == "r" and "l" or "L")
+		end
+
+		-- leading letter ("lthumb" -> "rthumb")
+		local head = name:sub(1, 1)
+		if head:lower() == "l" then
+			candidates[#candidates + 1] = (head == "l" and "r" or "R") .. name:sub(2)
+		elseif head:lower() == "r" then
+			candidates[#candidates + 1] = (head == "r" and "l" or "L") .. name:sub(2)
+		end
+
+		for _, candidate in ipairs(candidates) do
+			if candidate ~= name and candidate ~= "" and real_bones[candidate] then
+				return candidate
+			end
+		end
+
+		return nil -- no mirrored bone found
+	end
+
+	function timeline.MirrorKeyframe()
+		if not timeline.selected_keyframe or not timeline.data or not timeline.data.FrameData then return end
+
+		local frame = timeline.data.FrameData[timeline.selected_keyframe:GetAnimationIndex()]
+		if not frame then return end
+
+		local boneData = pac.GetModelBones(timeline.entity)
+		if not boneData then return end
+
+		local real_bones = {}
+		for _, v in pairs(boneData) do
+			if v.real and not v.is_attachment then
+				real_bones[v.real] = true
+			end
+		end
+
+		local mirrored = {}
+		for boneReal, info in pairs(frame.BoneInfo or {}) do
+			local target = mirror_bone_name(boneReal, real_bones) or boneReal
+			mirrored[target] = mirror_bone_info(info, target ~= boneReal)
+		end
+
+		frame.BoneInfo = mirrored
+
+		-- select the mirrored counterpart of the selected bone
+		local sel = timeline.selected_bone
+		if sel and timeline.dummy_bone and timeline.dummy_bone:IsValid() then
+			local target = mirror_bone_name(sel, real_bones)
+			if target and target ~= sel then
+				for friendly, v in pairs(boneData) do
+					if v.real == target and not v.is_special and not v.is_attachment then
+						timeline.dummy_bone:SetBone(friendly)
+						break
+					end
+				end
+			end
+		end
+
+		timeline.EditBone()
+		timeline.Save()
+		timeline.SyncPreview()
+		timeline.UpdateChangedBonesPanel()
+		pace.RecordUndoHistory()
+	end
 end
 
 function timeline.Reindex()
 	timeline.frame:Clear()
+
+	local keyframes = {}
 	for i, v in ipairs(timeline.data.FrameData) do
 		local keyframe = timeline.frame:AddKeyFrame(true)
 		keyframe:SetFrameData(i, v)
+		keyframes[i] = keyframe
 	end
+
+	timeline.UpdateChangedBonesPanel()
+	timeline.frame:InvalidateLayout(true)
+
+	return keyframes
 end
 
 function timeline.EditBone()
@@ -151,8 +970,31 @@ function timeline.EditBone()
 	check_tpose()
 end
 
+local function frames_equal(a, b)
+	for k, v in pairs(a) do
+		local bv = b[k]
+		if istable(v) then
+			if not istable(bv) or not frames_equal(v, bv) then return false end
+		elseif bv ~= v then
+			return false
+		end
+	end
+	for k in pairs(b) do
+		if a[k] == nil then return false end
+	end
+	return true
+end
+
 function timeline.Load(data)
-	timeline.data = data
+	timeline.data = data and table.Copy(data) or nil
+	data = timeline.data
+
+	local sel = timeline.selected_keyframe
+	local prev_index, prev_data
+	if sel and sel.IsValid and sel:IsValid() and sel.GetAnimationIndex and sel.GetData then
+		prev_index = sel:GetAnimationIndex()
+		prev_data = sel:GetData()
+	end
 
 	if data and data.FrameData then
 		animations.ConvertOldData(data)
@@ -171,12 +1013,24 @@ function timeline.Load(data)
 		timeline.animation_part:SetAnimationType(data.Type)
 		timeline.frame:Clear()
 
+		local keyframes = {}
 		for i, v in ipairs(data.FrameData) do
 			local keyframe = timeline.frame:AddKeyFrame(true)
 			keyframe:SetFrameData(i, v)
+			keyframes[i] = keyframe
 		end
 
-		timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[1])
+		local select_index = prev_index or 1
+		if prev_data and data.FrameData then
+			for i, frame in ipairs(data.FrameData) do
+				if frames_equal(frame, prev_data) then
+					select_index = i
+					break
+				end
+			end
+		end
+
+		timeline.SelectKeyframe(keyframes[math.Clamp(select_index, 1, #keyframes)])
 	else
 		timeline.data = {FrameData = {}, Type = timeline.animation_type, Interpolation = timeline.interpolation}
 		timeline.frame:Clear()
@@ -185,21 +1039,55 @@ function timeline.Load(data)
 	end
 
 	timeline.UpdateFrameData()
+
+	if timeline.frame and timeline.frame:IsValid() then
+		timeline.frame:InvalidateLayout(true)
+	end
+end
+
+local function refresh_entity_anim(id)
+	local ent = timeline.entity
+	if not ent or not ent:IsValid() or not timeline.data then return end
+
+	local anim = animations.GetEntityAnimation(ent, id)
+	if anim and anim.FrameData ~= timeline.data.FrameData then
+		anim.FrameData = timeline.data.FrameData
+
+		if timeline.editing and timeline.selected_keyframe and timeline.selected_keyframe:IsValid() then
+			animations.SetEntityAnimationFrame(ent, id, timeline.selected_keyframe:GetAnimationIndex(), 1)
+		end
+	end
+end
+
+function timeline.SyncPreview()
+	local ent = timeline.entity
+	if not ent or not ent:IsValid() or not timeline.animation_part then return end
+
+	local anim = animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID())
+	if anim and timeline.data and anim.FrameData ~= timeline.data.FrameData then
+		anim.FrameData = timeline.data.FrameData
+	end
 end
 
 function timeline.Save()
-	local data = table.Copy(timeline.data)
 	local part = timeline.animation_part
+
+	if part and part:IsValid() and part:GetURL() == "" then
+		part.Data = util.TableToJSON(timeline.data)
+	end
+
 	timer.Create("pace_timeline_save", 0.1, 1, function()
-		if part and part:IsValid() then
-			animations.RegisterAnimation(part:GetAnimID(), data)
-			if part:GetURL() ~= "" then
-				file.Write("pac3/__animations/" .. part:GetName() .. ".txt", util.TableToJSON(data))
-				part:SetData("")
-			else
-				part.Data = util.TableToJSON(data)
-				timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
-			end
+		if not (part and part:IsValid() and timeline.data) then return end
+
+		local data = table.Copy(timeline.data)
+		animations.RegisterAnimation(part:GetAnimID(), data)
+		refresh_entity_anim(part:GetAnimID())
+
+		if part:GetURL() ~= "" then
+			file.Write("pac3/__animations/" .. part:GetName() .. ".txt", util.TableToJSON(data))
+			part:SetData("")
+		else
+			timer.Create("pace_backup", 5, 1, function() pace.Backup() end)
 		end
 	end)
 end
@@ -210,8 +1098,14 @@ function timeline.SelectKeyframe(keyframe)
 	timeline.EditBone()
 	timeline.Save()
 
+	-- make sure a preview instance exists on the entity (gesture animations
+	-- remove themselves once they finish playing)
+	animations.SetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
+	timeline.SyncPreview()
 	animations.SetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID(), keyframe.AnimationKeyIndex, 1)
 	timeline.frame:Pause()
+
+	timeline.UpdateChangedBonesPanel()
 end
 
 function timeline.IsEditingBone()
@@ -220,6 +1114,11 @@ end
 
 function timeline.Close()
 	timeline.Save()
+
+	if timeline.bones_frame and timeline.bones_frame:IsValid() then
+		timeline.bones_frame:Remove()
+	end
+	timeline.bones_frame = nil
 
 	-- old animeditor behavior
 	if timeline.animation_part:GetURL() ~= "" then
@@ -241,6 +1140,8 @@ function timeline.Close()
 
 	pac.RemoveHook("pace_OnVariableChanged", "pac3_timeline")
 	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
+	pac.RemoveHook("HUDPaint", "pac3_timeline_bones")
+	pac.RemoveHook("GUIMousePressed", "pac3_timeline_bones_click")
 end
 
 function timeline.Open(part)
@@ -250,10 +1151,17 @@ function timeline.Open(part)
 
 	timeline.editing = false
 	timeline.first_pass = true
+	if timeline.show_bones == nil then
+		timeline.show_bones = false
+	end
 
 	timeline.editing = true
 	timeline.animation_part = part
 	timeline.entity = part:GetOwner()
+
+	if timeline.show_changed_bones == nil then
+		timeline.show_changed_bones = true
+	end
 
 	timeline.frame = vgui.Create("pac3_timeline")
 	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(), 93)
@@ -286,6 +1194,7 @@ function timeline.Open(part)
 				end
 
 				timer.Simple(0, function() timeline.EditBone() end) -- post variable changed?
+				timeline.UpdateChangedBonesPanel()
 			else
 				local data = timeline.selected_keyframe:GetData()
 				data.BoneInfo = data.BoneInfo or {}
@@ -299,6 +1208,10 @@ function timeline.Open(part)
 				data.BoneInfo[timeline.selected_bone].RU = data.BoneInfo[timeline.selected_bone].RU or 0
 				data.BoneInfo[timeline.selected_bone].RF = data.BoneInfo[timeline.selected_bone].RF or 0
 
+				data.BoneInfo[timeline.selected_bone].SX = data.BoneInfo[timeline.selected_bone].SX or 0
+				data.BoneInfo[timeline.selected_bone].SY = data.BoneInfo[timeline.selected_bone].SY or 0
+				data.BoneInfo[timeline.selected_bone].SZ = data.BoneInfo[timeline.selected_bone].SZ or 0
+
 				if key == "Position" then
 					data.BoneInfo[timeline.selected_bone].MF = val.x
 					data.BoneInfo[timeline.selected_bone].MR = -val.y
@@ -307,12 +1220,35 @@ function timeline.Open(part)
 					data.BoneInfo[timeline.selected_bone].RR = val.p
 					data.BoneInfo[timeline.selected_bone].RU = val.y
 					data.BoneInfo[timeline.selected_bone].RF = val.r
+				elseif key == "Scale" then
+					-- scale is stored as a delta from 1, so 0 means unchanged
+					data.BoneInfo[timeline.selected_bone].SX = val.x - 1
+					data.BoneInfo[timeline.selected_bone].SY = val.y - 1
+					data.BoneInfo[timeline.selected_bone].SZ = val.z - 1
 				end
 			end
+
 			timeline.Save()
+			timeline.SyncPreview()
+			timeline.UpdateChangedBonesPanel()
+
+			if key == "Position" or key == "Angles" or key == "Scale" then
+				timer.Create("pace_timeline_undo", 0.25, 1, function()
+					pace.RecordUndoHistory()
+				end)
+			end
 		elseif part == timeline.animation_part then
 			if key == "Data" or key == "URL" then
-				timeline.Load(animations.GetRegisteredAnimations()[part:GetAnimID()])
+				if timeline.editing and key == "Data" and isstring(val) and val ~= "" then
+					local restored = util.JSONToTable(val)
+					if restored and restored.FrameData then
+						timeline.Load(restored)
+					end
+				elseif timeline.editing then
+					timeline.Save()
+				elseif timeline.frame and timeline.frame:IsValid() then
+					timeline.Load(animations.GetRegisteredAnimations()[part:GetAnimID()])
+				end
 			elseif key == "AnimationType" then
 				timeline.SetAnimationType(val)
 			elseif key == "Interpolation" then
@@ -327,7 +1263,47 @@ function timeline.Open(part)
 		end
 	end)
 
+	pac.AddHook("HUDPaint", "pac3_timeline_bones", timeline.changed_bones_hudpaint)
+
+	pac.AddHook("GUIMousePressed", "pac3_timeline_bones_click", function(mc)
+		if mc ~= MOUSE_LEFT then return end
+		if not timeline.show_changed_bones then return end
+		if not pace.Focused then return end -- don't select bones while walking around
+
+		local markers = timeline.bone_markers
+		if not markers or not next(markers) then return end
+
+		local mx, my = input.GetCursorPos()
+		local best, best_dist
+		for bone, m in pairs(markers) do
+			if bone ~= timeline.selected_bone then
+				local dx, dy = mx - m.x, my - m.y
+				-- hit area: the marker square plus its label below
+				if math.abs(dx) <= 14 and dy >= -12 and dy <= 26 then
+					local dist = dx * dx + dy * dy
+					if not best_dist or dist < best_dist then
+						best, best_dist = m, dist
+					end
+				end
+			end
+		end
+
+		if best and timeline.dummy_bone and timeline.dummy_bone:IsValid() then
+			timeline.dummy_bone:SetBone(best.friendly)
+			timeline.EditBone()
+			return true -- don't start a camera drag from this click
+		end
+	end)
+
 	timeline.Load(animations.GetRegisteredAnimations()[part:GetAnimID()])
+
+	if timeline.show_bones then
+		timeline.OpenBonesPanel()
+	end
+
+	-- base undo snapshot: the state the timeline was opened in, so the first
+	-- edit can be undone
+	pace.RecordUndoHistory()
 
 	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 
@@ -337,8 +1313,12 @@ end
 local editing_part
 pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
 	if part.ClassName == "timeline_dummy_bone" then return end
+
+	if pace.undoing then return end
+
 	if part.ClassName == "custom_animation" then
 		if timeline.editing then
+			if part == editing_part then return end
 			timeline.Close()
 		end
 		timeline.Open(part)
@@ -354,6 +1334,26 @@ pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
 			end
 		end
 		timeline.Close()
+	end
+end)
+
+-- hide the timeline UI as well
+pac.AddHook("pace_OnToggleFocus", "pac3_timeline", function(show_editor)
+	if not timeline.editing then return end
+
+	local killing = pace.Focused
+	local hiding = killing and not show_editor
+
+	if timeline.frame and timeline.frame:IsValid() then
+		timeline.frame:SetVisible(not hiding)
+	end
+
+	local bf = timeline.bones_frame
+	if bf and bf:IsValid() then
+		bf:SetVisible(not hiding)
+
+		bf:SetMouseInputEnabled(not killing)
+		bf:SetKeyboardInputEnabled(not killing)
 	end
 end)
 
@@ -399,7 +1399,7 @@ do
 		do
 			local bottom = vgui.Create("DPanel", self)
 			bottom:Dock(RIGHT)
-			bottom:SetWide(72)
+			bottom:SetWide(92)
 			do -- time controls
 				local controls = bottom:Add("DPanel")
 				controls:SetWide(100)
@@ -453,18 +1453,29 @@ do
 				add:SetImage("icon16/add.png")
 				add:SetTooltip(L"add keyframe")
 				add:SizeToContents()
-				add.DoClick = function() timeline.SelectKeyframe(self:AddKeyFrame()) timeline.Save() end
+				add.DoClick = function() timeline.SelectKeyframe(self:AddKeyFrame()) timeline.Save() pace.RecordUndoHistory() end
 				add:Dock(LEFT)
 				add:SetDisabled(true)
 				self.add_keyframe_button = add
 
 				local bone = saveload:Add("DImageButton")
 				bone:SetImage("icon16/connect.png")
-				bone:SetTooltip(L"edit bones")
+				bone:SetTooltip(L"edit the selected bone")
 				bone:SizeToContents()
 				bone:Dock(LEFT)
 				bone.DoClick = function()
 					timeline.EditBone()
+				end
+
+				local bone_toggle = saveload:Add("DImageButton")
+				bone_toggle:SetImage("icon16/eye.png")
+				bone_toggle:SetTooltip(L"show changed bones")
+				bone_toggle:SizeToContents()
+				bone_toggle:Dock(LEFT)
+				bone_toggle.DoClick = function()
+					timeline.show_changed_bones = not timeline.show_changed_bones
+					bone_toggle:SetImage(timeline.show_changed_bones and "icon16/eye.png" or "icon16/cross.png")
+					bone_toggle:SetTooltip(timeline.show_changed_bones and L"show changed bones" or L"show changed bones (disabled)")
 				end
 
 				local save = saveload:Add("DImageButton")
@@ -709,7 +1720,7 @@ do
 		local noplay = false
 		if focus and (focus:GetClassName() == "TextEntry" or focus:GetClassName() == "DTextEntry") then noplay = true end
 
-		if input.IsKeyDown(KEY_SPACE) and not noplay then
+		if input.IsKeyDown(KEY_SPACE) and not input.IsMouseDown(MOUSE_LEFT) and not noplay and pace.Focused then
 			if not self.toggled then
 				self:Toggle()
 				self.toggled = true
@@ -720,7 +1731,12 @@ do
 	end
 
 	function TIMELINE:Play()
-		animations.RegisterAnimation(timeline.animation_part:GetAnimID(), timeline.data)
+		-- register a copy so the zero-backfill in RegisterAnimation doesn't
+		-- mutate the data we're editing
+		local data = table.Copy(timeline.data)
+		animations.RegisterAnimation(timeline.animation_part:GetAnimID(), data)
+		refresh_entity_anim(timeline.animation_part:GetAnimID())
+
 		animations.SetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
 
 		animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID()).Paused = false
@@ -919,6 +1935,7 @@ do
 				self:MouseCapture(false)
 				self:SetCursor("sizewe")
 				timeline.Save()
+				pace.RecordUndoHistory()
 			elseif self.move then
 				local panels = {}
 				local frames = {}
@@ -949,6 +1966,11 @@ do
 				self.move = nil
 				self.move_x = nil
 				timeline.frame.moving = false
+
+				-- the reorder rewrote timeline.data.FrameData above
+				timeline.Save()
+				timeline.SyncPreview()
+				pace.RecordUndoHistory()
 			end
 		end
 	end
@@ -981,7 +2003,7 @@ do
 				Derma_StringRequest(L"question",
 					L"how long should this frame be in seconds?",
 					tostring(self:GetWide()/secondDistance),
-					function(str) self:SetLength(tonumber(str)) end,
+					function(str) self:SetLength(tonumber(str)) timeline.Save() pace.RecordUndoHistory() end,
 					function() end,
 					L"set length",
 					L"cancel" )
@@ -991,11 +2013,16 @@ do
 				Derma_StringRequest(L"question",
 					L"multiply "..self:GetAnimationIndex().."'s length",
 					"1.0",
-					function(str) self:SetLength(1/tonumber(str)) end,
+					function(str) self:SetLength(1/tonumber(str)) timeline.Save() pace.RecordUndoHistory() end,
 					function() end,
 					L"multiply length",
 					L"cancel" )
 			end):SetImage("icon16/time_add.png")
+
+			menu:AddOption(L"edit bones", function()
+				timeline.SelectKeyframe(self)
+				timeline.OpenBonesPanel()
+			end):SetImage("icon16/application_view_list.png")
 
 			if not self:GetRestart() then
 				menu:AddOption(L"set restart", function()
@@ -1004,11 +2031,15 @@ do
 					end
 					self:SetRestart(true)
 					timeline.data.RestartFrame = self:GetAnimationIndex()
+					timeline.Save()
+					pace.RecordUndoHistory()
 				end):SetImage("icon16/control_repeat_blue.png")
 			else
 				menu:AddOption(L"unset restart", function()
 					self:SetRestart(false)
-					timeline.data.StartFrame = nil
+					timeline.data.RestartFrame = nil
+					timeline.Save()
+					pace.RecordUndoHistory()
 				end):SetImage("icon16/control_repeat.png")
 			end
 
@@ -1019,11 +2050,15 @@ do
 					end
 					self:SetStart(true)
 					timeline.data.StartFrame = self:GetAnimationIndex()
+					timeline.Save()
+					pace.RecordUndoHistory()
 				end):SetImage("icon16/control_play_blue.png")
 			else
 				menu:AddOption(L"unset start", function()
 					self:SetStart(false)
 					timeline.data.StartFrame = nil
+					timeline.Save()
+					pace.RecordUndoHistory()
 				end):SetImage("icon16/control_play.png")
 			end
 
@@ -1043,15 +2078,23 @@ do
 					self:GetData().BoneInfo[i].RF = v.RF * -1
 				end
 				timeline.UpdateFrameData()
+				timeline.Save()
+				timeline.SyncPreview()
+				pace.RecordUndoHistory()
 			end):SetImage("icon16/control_rewind_blue.png")
+
+			menu:AddOption(L"mirror", function()
+				timeline.MirrorKeyframe()
+			end):SetImage("icon16/arrow_switch.png")
 
 			local function duplicateTo(index)
 				local data = self:GetData();
 				table.insert(timeline.data.FrameData, index, table.Copy(data))
-				timeline.Reindex()
+				local keyframes = timeline.Reindex()
 
 				timer.Simple(0, function()
-					timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[index])
+					timeline.SelectKeyframe(keyframes[math.Clamp(index, 1, #keyframes)])
+					pace.RecordUndoHistory()
 				end)
 			end
 
@@ -1085,6 +2128,8 @@ do
 				local count = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
 				local offset = remove_i >= count and count - 1 or remove_i + 1
 				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
+				timeline.Save()
+				pace.RecordUndoHistory()
 			end):SetImage("icon16/page_delete.png")
 
 			menu:AddOption(L"set easing style", function()
@@ -1153,12 +2198,14 @@ do
 		self:GetData().EaseStyle = style
 		self.estyle = style
 		timeline.Save()
+		pace.RecordUndoHistory()
 	end
 
 	function KEYFRAME:RemoveEaseStyle()
 		self:GetData().EaseStyle = nil
 		self.estyle = nil
 		timeline.Save()
+		pace.RecordUndoHistory()
 	end
 
 	vgui.Register("pac3_timeline_keyframe", KEYFRAME, "DPanel")

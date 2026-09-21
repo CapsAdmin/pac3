@@ -91,6 +91,8 @@ pace.ClearUndo()
 local last_json
 
 function pace.RecordUndoHistory()
+	if pace.undoing then return end
+
 	local data = get_current_outfit()
 
 	local json = util.TableToJSON(data)
@@ -106,25 +108,35 @@ function pace.RecordUndoHistory()
 end
 
 function pace.Undo()
-	pace.UndoPosition = math.Clamp(pace.UndoPosition - 1, 0, #pace.UndoHistory)
-	local data = pace.UndoHistory[pace.UndoPosition]
+	pace.undoing = true
+	local ok, err = pcall(function()
+		pace.UndoPosition = math.Clamp(pace.UndoPosition - 1, 0, #pace.UndoHistory)
+		local data = pace.UndoHistory[pace.UndoPosition]
 
-	if data then
-		pace.ApplyDifference(data)
-		pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
-	else
-		pace.FlashNotification('Nothing to undo')
-	end
+		if data then
+			pace.ApplyDifference(data)
+			pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
+		else
+			pace.FlashNotification('Nothing to undo')
+		end
+	end)
+	pace.undoing = nil
+	if not ok then ErrorNoHalt(err) end
 end
 
 function pace.Redo()
-	pace.UndoPosition = math.Clamp(pace.UndoPosition + 1, 1, #pace.UndoHistory + 1)
-	local data = pace.UndoHistory[pace.UndoPosition]
+	pace.undoing = true
+	local ok, err = pcall(function()
+		pace.UndoPosition = math.Clamp(pace.UndoPosition + 1, 1, #pace.UndoHistory + 1)
+		local data = pace.UndoHistory[pace.UndoPosition]
 
-	if data then
-		pace.ApplyDifference(data)
-		pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
-	else
-		pace.FlashNotification('Nothing to redo')
-	end
+		if data then
+			pace.ApplyDifference(data)
+			pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
+		else
+			pace.FlashNotification('Nothing to redo')
+		end
+	end)
+	pace.undoing = nil
+	if not ok then ErrorNoHalt(err) end
 end
