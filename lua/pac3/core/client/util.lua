@@ -582,3 +582,324 @@ end
 function pac.FlashlightDisable(b)
 	pac.flashlight_disabled = b
 end
+
+
+do
+	-- CCT: correlated color temperature
+	--[[
+		credit for pseudocode : Tanner Helland, from equations plotted based on data from Mitchell Charity
+		credit for some keywords' reference values : Alcon Lighting, Westinghouse Lighting, XenonPro
+	]]
+	pac.temperature_color_keywords_categorized = {
+		["simplified temperatures"] = {
+			{["cold"] = 10000},
+			{["cool"] = 6000},
+			{["neutral"] = 4300},
+			{["warm"] = 2000},
+			{["hot"] = 1000},
+		},
+
+		["sunlight"] = {
+			{["daylight"] = 6200},
+			{["sunset"] = 3200},
+			{["sky"] = 10000},
+			{["horizon"] = 5000},
+			{["overcast"] = 5000},
+		},
+
+		["astronomical references"] = {
+			{["white dwarf"] = 20000},
+			{["sun"] = 5800},
+			{["red giant"] = 5000},
+			{["neutron star"] = 40000},
+		},
+
+		["human spaces"] ={
+			{["home"] = 2700},
+			{["home workspace"] = 4000},
+			{["executive"] = 3500},
+			{["surgical"] = 5000},
+			{["industrial"] = 7000},
+			{["office"] = 4000},
+			{["warehouse"] = 5000},
+		},
+
+		["variations of white"] = {
+			{["true white"] = 6600},
+			{["bright white"] = 5300},
+			{["neutral white"] = 4000},
+			{["cool white"] = 7000},
+			{["soft white"] = 3000},
+			{["warm white"] = 2700},
+		},
+
+		["technologies"] = {
+			{["LCD"] = 9000},
+			{["CRT"] = 7000},
+			{["xenon"] = 6200},
+			{["fluorescent"] = 4200},
+			{["halogen"] = 3000},
+			{["incandescent"] = 2500},
+			{["candle"] = 1800},
+			{["match"] = 1700},
+			{["fire"] = 1500},
+			{["heat"] = 1000},
+		}
+	}
+
+	--extra keywords
+	pac.temperature_color_keywords = {
+		["white"] = 6600,
+		["yellow"] = 4300,
+		["golden yellow"] = 3000,
+		["red"] = 900,
+		["orange"] = 1400,
+		["gold"] = 4000,
+		["golden"] = 4000,
+		["blue"] = 10000,
+		["ice blue"] = 10000,
+		["alpine white"] = 6000,
+
+		["candlelight"] = 1800,
+		["candle light"] = 1800,
+		["candle flame"] = 1800,
+		["lcd"] = 9000,
+		["crt"] = 7000,
+		["cathode"] = 7000,
+		["cathode ray"] = 7000,
+		["flame"] = 2000,
+
+		["library"] = 2700,
+		["friendly"] = 2700,
+		["cozy"] = 2700,
+		["inviting"] = 2700,
+		["relaxing"] = 2500,
+		["bedroom"] = 2700,
+		["kitchen"] = 2800,
+		["relax"] = 2500,
+		["welcoming"] = 3000,
+		["soft"] = 3500,
+
+		["sharp"] = 4100,
+		["focus"] = 4100,
+		["alert"] = 4100,
+		["neutral"] = 4500,
+		["clean"] = 4000,
+		["bright"] = 5000,
+		["crisp"] = 4100,
+		["harsh"] = 7000,
+		["intense"] = 7000,
+		["stasis"] = 10000,
+
+		["hospital"] = 4000,
+		["kitchen"] = 4000,
+		["scientific"] = 6000,
+		["laboratory"] = 6000,
+		["lab"] = 6000,
+		["stadium"] = 5000,
+		["showroom"] = 5000,
+
+		["task lighting"] = 4000,
+		["security lighting"] = 5000,
+		["overhead lighting"] = 3000,
+		["vanity"] = 3000,
+		["chandelier"] = 2700,
+		["table lamp"] = 2700,
+		["floor lamp"] = 2700,
+		["fog light"] = 3200,
+		["fog lights"] = 3200,
+		["car headlights"] = 5000,
+		["headlights"] = 5000,
+	}
+
+	for category,tbl in pairs(pac.temperature_color_keywords_categorized) do
+		for i,tbl2 in ipairs(tbl) do
+			local k,v = next(tbl2)
+			pac.temperature_color_keywords[k] = v
+		end
+	end
+
+	local function convert_temperature(kelvins)
+		kelvins = kelvins / 100
+		local r = 0
+		if kelvins < 66 then
+			r = 255
+		else
+			r = kelvins - 60
+			r = math.Clamp(329.698727446 * (r ^ -0.1332047592),0,255)
+		end
+
+		local g = 0
+		if kelvins <= 66 then
+			g = kelvins
+			g = math.Clamp(99.4708025861 * math.log(g) - 161.1195681661, 0, 255)
+		else
+			g = kelvins - 60
+			g = 288.1221695283 * (g ^ -0.0755148492)
+			g = math.Clamp(g, 0, 255)
+		end
+
+		local b = 0
+		if kelvins >= 66 then
+			b = 255
+		else
+			if kelvins <= 19 then
+				b = 0
+			else
+				b = kelvins - 10
+				b = math.Clamp(138.5177312231 * math.log(b) - 305.0447927307, 0, 255)
+			end
+		end
+		return Color(r,g,b)
+	end
+
+	function pac.TemperatureToColor(kelvins)
+		if not kelvins then return nil end
+		if isstring(kelvins) then
+			kelvins = string.lower(kelvins)
+			if isnumber(tonumber(kelvins)) then
+				return convert_temperature(tonumber(kelvins)), tonumber(kelvins)
+			elseif pac.temperature_color_keywords[kelvins] then
+				return convert_temperature(pac.temperature_color_keywords[kelvins]), pac.temperature_color_keywords[kelvins]
+			elseif kelvins == "help" then
+				pac.Message("Temperature to Color:")
+				print("categorized list, slightly compressed so the combo box can be a bit more compact:")
+				PrintTable(pac.temperature_color_keywords_categorized)
+				print("=================")
+				print("combined list:")
+				PrintTable(pac.temperature_color_keywords)
+				return nil
+			end
+		elseif isnumber(kelvins) then
+			return convert_temperature(kelvins), kelvins
+		end
+		return nil
+	end
+
+	local collapsed_categories = {}
+	function pac.OpenTemperatureToColorMenu(part, key, callback)
+		pace.color_temperature_active_temp = 0
+		if not part then part = pace.current_part end
+		if not key then
+			key = "Color"
+			if part and part.ClassName == "material_3d" or part.ClassName == "material_2d" then
+				key = "color2"
+			end
+		end
+		if not callback then
+			callback = function(str)
+				local color, temp = pac.TemperatureToColor(str)
+				if temp ~= nil then pace.color_temperature_active_temp = temp end
+				local vec = color
+				if part.ProperColorRange then
+					vec = Vector(color.r/255,color.g/255,color.b/255)
+				else
+					vec = Vector(color.r,color.g,color.b)
+				end
+				part:SetProperty(key, vec)
+			end
+		end
+		local frame = vgui.Create("DFrame")
+		frame:SetSize(600, 200)
+		frame:Center() frame:MakePopup()
+		frame:SetTitle("Correlated Color Temperature Explorer")
+
+		local pnl = vgui.Create("DPanel", frame)
+		pnl:Dock(FILL)
+
+		local combo = vgui.Create("DComboBox", pnl)
+		combo:SetSortItems(false)
+		combo:SetSize(300,20) combo:SetText("select references")
+		combo:SetPos(0, 10)
+
+		local text = vgui.Create("DTextEntry", pnl)
+		text:SetSize(300,20) text:SetPlaceholderText("Temperature or keyword")
+		text:SetPos(300, 10)
+
+		local function add_category(key)
+			local tbl = pac.temperature_color_keywords_categorized[key]
+			combo:AddSpacer()
+			combo:AddChoice(key, "collapse " .. key)
+			combo:AddSpacer()
+			if collapsed_categories[key] then return end
+			for i,tbl2 in ipairs(tbl) do
+				local k,v = next(tbl2)
+				combo:AddChoice(k, v)
+			end
+			combo:AddChoice("")
+		end
+		--I want this order
+		add_category("simplified temperatures")
+		add_category("variations of white")
+		add_category("human spaces")
+		add_category("sunlight")
+		add_category("technologies")
+		add_category("astronomical references")
+		
+		local last_str = ""
+		function text:OnEnter(str)
+			if last_str ~= str then
+				if str ~= nil and str ~= "" then
+					callback(str)
+				end
+			end
+			last_str = str
+		end
+		
+		function combo:OnSelect(index, op_text, data)
+			if data == nil then return end
+			if string.StartsWith(data, "collapse ") then
+				collapsed_categories[string.gsub(data, "collapse ", "")] = not collapsed_categories[string.gsub(data, "collapse ", "")]
+				combo:Clear()
+				add_category("simplified temperatures")
+				add_category("variations of white")
+				add_category("human spaces")
+				add_category("sunlight")
+				add_category("technologies")
+				add_category("astronomical references")
+				timer.Simple(0, function() combo:OpenMenu() end)
+				return
+			end
+			text:OnEnter(data)
+			text:SetText(op_text .. ": " .. data .. "K")
+		end
+
+		local strip = vgui.Create("DPanel", frame)
+		strip:SetSize(500,50) strip:SetPos(50, 80)
+		local strip_sub = vgui.Create("DLabel", frame)
+		strip_sub:SetFont("TargetID")
+		strip_sub:SetSize(500,15) strip_sub:SetPos(50, 80 + 5 + 50)
+		strip_sub:SetTextColor(frame:GetSkin().Colours.Category.Line.Text)
+		strip_sub:SetText("Hover over the strip...")
+		local precalculated_pixel_tempcolors = {}
+		for i=1,500 do
+			precalculated_pixel_tempcolors[i] = pac.TemperatureToColor(math.Remap(i, 1, 500, 1000, 15000))
+		end
+		strip.Paint = function(w,h)
+			for i=1,500 do
+				local clr = precalculated_pixel_tempcolors[i]
+				surface.SetDrawColor(clr)
+				surface.DrawRect(i-1,0,1,h)
+			end
+			if CurTime() * 4 % 2 > 1 then
+				surface.SetDrawColor(Color(0,0,0))
+			else
+				surface.SetDrawColor(Color(255,255,255))
+			end
+			surface.DrawRect(math.Remap(pace.color_temperature_active_temp,1000,15000,1,500),0,1,h)
+		end
+		strip.Think = function()
+			local x,y = strip:ScreenToLocal(input.GetCursorPos())
+			local kelvin = math.floor(math.Remap(x, 1, 500, 1000, 15000))
+			if strip:IsHovered() and precalculated_pixel_tempcolors[x] ~= nil then
+				pace.color_temperature_active_temp = kelvin
+				strip_sub:SetText(kelvin .. "K : " .. tostring(precalculated_pixel_tempcolors[x]) .. " - Click to apply")
+				strip_sub:SetTextColor(precalculated_pixel_tempcolors[x])
+				if input.IsMouseDown(MOUSE_LEFT) then
+					text:SetValue(kelvin)
+					text:OnEnter(kelvin)
+				end
+			end
+		end
+	end
+end

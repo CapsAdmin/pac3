@@ -2977,6 +2977,67 @@ do -- vector
 							if input.IsKeyDown(KEY_ESCAPE) then pac.RemoveHook("DrawOverlay", "colorpicker") end
 						end)
 					end
+
+					--light color tools
+					local btn3 = vgui.Create("DImageButton", self)
+					btn3:SetSize(line_height / 1.5, line_height / 1.5)
+					btn3:Dock(RIGHT) btn3:DockPadding(0,0,2 * line_height / 1.5,0)
+					btn3:SetTooltip("Light tools")
+					btn3:SetImage("icon16/lightbulb.png")
+					btn3.DoClick = function()
+						local menu = DermaMenu()
+						menu:SetPos(input.GetCursorPos())
+						menu:MakePopup()
+
+						local part = pace.current_part
+						local key = self.CurrentKey
+						local function apply_kelvin_color(str)
+							local color, temp = pac.TemperatureToColor(str)
+							if temp ~= nil then pace.color_temperature_active_temp = temp end
+							if color == nil then return end
+							local vec = color
+							if part.ProperColorRange then
+								vec = Vector(color.r/255,color.g/255,color.b/255)
+							else
+								vec = Vector(color.r,color.g,color.b)
+							end
+							if self:IsValid() then
+								self:SetValue(vec)
+								self.OnValueChanged(vec)
+							elseif part:IsValid() then
+								part:SetProperty(key, vec)
+								pace.PopulateProperties(part)
+							end
+						end
+
+						menu:AddOption("From a Kelvin value or keyword", function()
+							Derma_StringRequest("Temperature to Color", "Provide a temperature in Kelvins between 1000-40000, or from the list of preselected keywords\ntype help to print the full list in the console", "1000", apply_kelvin_color)
+						end):SetImage("icon16/textfield.png")
+						menu:AddOption("Temperature explorer", function()
+							pac.OpenTemperatureToColorMenu(part, key, apply_kelvin_color)
+						end):SetImage("icon16/page_white_wrench.png")
+						menu:AddOption("Sample local lighting (raw)", function()
+							local color = render.GetLightColor(part:GetWorldPosition())
+							local vec = color
+							if not part.ProperColorRange then
+								vec = 255*Vector(color.r,color.g,color.b)
+							end
+							self:SetValue(vec)
+							self.OnValueChanged(vec)
+						end):SetImage("icon16/lightbulb_off.png")
+						menu:AddOption("Sample local lighting (normalized)", function()
+							local color = render.GetLightColor(part:GetWorldPosition())
+							local vec = color
+							local max_component = math.max(color.x, color.y, color.z)
+							--normalize the light
+							if max_component ~= 0 then color = color * (1/max_component) end
+							if not part.ProperColorRange then
+								vec = 255*Vector(color.r,color.g,color.b)
+							end
+							self:SetValue(vec)
+							self.OnValueChanged(vec)
+						end):SetImage("icon16/weather_sun.png")
+					end
 				end
 			end
 
