@@ -347,7 +347,8 @@ do -- file extension
 		end
 		--decode the header
 		if file:StartsWith("LZMA COMPRESSED\n") then
-			file = util.Decompress(file:gsub("^LZMA COMPRESSED\n", ""))
+			file = file:gsub("^LZMA COMPRESSED\n", "")
+			file = util.Decompress(file)
 			if not file then
 				return false, "file is LZMA compressed but could not be decompressed (the file is corrupted)"
 			end
