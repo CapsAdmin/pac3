@@ -385,7 +385,8 @@ function pace.LoadParts(name, clear, override_part)
 				end
 
 				if str:StartsWith("LZMA COMPRESSED\n") then
-					str = util.Decompress(str:gsub("^LZMA COMPRESSED\n", ""))
+					str = str:gsub("^LZMA COMPRESSED\n", "")
+					str = util.Decompress(str)
 					if not str then
 						pace.MessagePrompt("The outfit at the URL is LZMA compressed but could not be decompressed. The file may be corrupted or truncated.", "URL Failed", "OK")
 						return
