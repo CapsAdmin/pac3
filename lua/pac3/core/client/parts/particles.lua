@@ -157,7 +157,7 @@ local function spritecard2(particle)
 	local chosen_frame = 0
 	particle.next_frame = particle.next_frame or CurTime()
 	if CurTime() > particle.next_frame then
-		particle.frame = particle.frame + math.Sign(particle.frame_per_second)
+		particle.frame = particle.frame + (particle.frame_per_second > 0 and 1 or -1)
 
 		if particle.FrameWrap then
 			local max = #particle.mat_series
