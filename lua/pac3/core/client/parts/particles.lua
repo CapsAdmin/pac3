@@ -70,7 +70,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Sliding", true)
 		--BUILDER:GetSet("AddVelocityFromOwner", false)
 		BUILDER:GetSet("OwnerVelocityMultiplier", 0)
-	BUILDER:SetPropertyGroup("particle function")
+	BUILDER:SetPropertyGroup("particle function - EXPERIMENTAL")
 		BUILDER:GetSet("Animated", false)
 		BUILDER:GetSet("BrownianMotion", false)
 		BUILDER:GetSet("ThinkTime", 0)
@@ -78,6 +78,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("AnimatedParticleStartFrame", 1)
 		BUILDER:GetSet("AnimatedParticleMaxFrame", 0)
 		BUILDER:GetSet("AnimatedParticleFps", 0)
+		BUILDER:GetSet("AnimatedTextureType", "$basetexture", {enums = function() return {["$basetexture"] = "$basetexture", ["$detail"] = "$detail", ["$normalmap"] = "$normalmap", ["$dudvmap"] = "$dudvmap"} end})
 		BUILDER:GetSet("IndividualBrownianStrength", 0, {description = "Base chaos amount the particle starts with. NOT adjustable post-emission."})
 		BUILDER:GetSet("SharedBrownianStrength", 0, {description = "All of the part's particles share this chaos amount. Adjustable post-emission."})
 		BUILDER:GetSet("FlockBrownianStrength", 0, {description = "All of the part's particles share the same direction contributed by this factor to simulate one type of flock behavior. Adjustable post-emission."})
@@ -288,6 +289,23 @@ function PART:SetAdditive(b)
 	self:SetMaterial(self:GetMaterial())
 end
 
+
+--CURRENT ISSUES WITH ANIMATED PARTICLES
+--material creation is one-way and unlinked. Changes to pac materials won't be reflected after the particle samples the raw material
+--currently, keyvalues aren't imported properly
+local disclaimer = "BEWARE. The way to setup animated particles needs to be done BEFORE the particle samples your material when attempting to create the series of material copies in a ONE-WAY process.\n\n"..
+"It doesn't transfer all the keyvalues correctly. And several shaders are unusable.\n\n"..
+"1-Use UnlitGeneric or Refract. Other shaders are shown not to work. If you need a specific texture, create a pac material instead.\n"..
+"2-If it's a pac material, create your material FIRST. And MAKE SURE it loads before the particle, using draw order and hierarchy.\n"..
+"3-Make sure it has frames AND those frames match the texture type. The particle can control one type at a time\n\n"..
+"Only if you understand this, you can run pac_prompt_animated_textures 0"
+
+function PART:SetAnimated(b)
+	self.Animated = b
+	if self.Animated then
+		self:SetWarning(disclaimer)
+	end
+end
 function PART:SetMaterial(var)
 	var = var or ""
 
@@ -308,7 +326,8 @@ function PART:SetMaterial(var)
 	self.Material = var
 end
 
---many shaders crash instantly!
+--many shaders crash instantly
+--or just not work properly
 local allowed_shaders = {
 	["sprite"] = true,
 	["unlittwotexture"] = true,
@@ -316,7 +335,15 @@ local allowed_shaders = {
 	["refract"] = true,
 	["spritecard"] = true,
 	["sprite_dx9"] = true,
+	["refract_dx90"] = true,
 }
+local texture_frame_key = {
+	["$basetexture"] = "$frame",
+	["$normalmap"] = "$bumpframe",
+	["$detail"] = "$detailframe",
+	["$dudvmap"] = "$dudvframe"
+}
+
 
 function PART:EmitParticles(pos, ang, real_ang)
 	self.number_particles = self.number_particles or 0
@@ -413,22 +440,35 @@ function PART:EmitParticles(pos, ang, real_ang)
 
 						if not owner_mats_pool[matname] or self.FireOnce then
 							if not allowed_shaders[basematerial:GetShader():lower()] then
+								self:SetError("Forbidden material! " .. basematerial:GetShader():lower() .. " shader will probably cause an instant crash."..
+									"Only use one of the following shader types:" ..
+									"\n  sprite\n  unlittwotexture\n  unlitgeneric\n  refract\n  spritecard\n  sprite_dx9"
+								)
 								return
 							end
 							
 							owner_mats_pool[matname] = {}
 							mats = owner_mats_pool[matname]
-							for i=1, basematerial:GetTexture("$basetexture"):GetNumAnimationFrames(), 1 do
-								owner_mats_pool[matname][i] = pac.CreateMaterial(matname .. "_" .. i, "UnlitGeneric", kvs)
-								owner_mats_pool[matname][i]:SetTexture("$basetexture", basematerial:GetTexture("$basetexture"))
-								owner_mats_pool[matname][i]:SetInt("$frame", i)
-								owner_mats_pool[matname][i]:SetInt("$flags", basematerial:GetInt("$flags"))
+							if basematerial:GetTexture(self.AnimatedTextureType) then
+								for i=1, basematerial:GetTexture(self.AnimatedTextureType):GetNumAnimationFrames(), 1 do
+									owner_mats_pool[matname][i] = pac.CreateMaterial(matname .. "_" .. i, basematerial:GetShader(), kvs)
+									for _,texture_type in ipairs({"$basetexture", "$normalmap", "$detail", "$dudvmap"}) do
+										owner_mats_pool[matname][i]:SetTexture(texture_type, basematerial:GetTexture(texture_type))
+										owner_mats_pool[matname][i]:SetInt(
+											texture_frame_key[texture_type],
+											self.AnimatedTextureType == texture_type and i or 1
+										)
+									end
+									owner_mats_pool[matname][i]:SetInt("$flags", basematerial:GetInt("$flags"))
+								end
 							end
+							
 						end
 						mats = owner_mats_pool[matname]
-						if not mats then continue end
+						if not mats then self:SetError("Looks like the material might've failed to be created") continue end
 
 						local sane_frame = math.Clamp(math.ceil(self.AnimatedParticleStartFrame),1,#mats)
+						if not mats[sane_frame] then self:SetError("Looks like the material might've failed to be selected") continue end
 						particle:SetMaterial(mats[sane_frame])
 
 						particle.frame = self.AnimatedParticleStartFrame
