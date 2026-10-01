@@ -1,10 +1,11 @@
 -- based on starfall
-CreateClientConVar("pac_asset_browser_close_on_select", "1")
-CreateClientConVar("pac_asset_browser_remember_layout", "1")
-CreateClientConVar("pac_asset_browser_extra_options", "1")
-CreateClientConVar("pac_favorites_try_to_get_asset_series", "1")
-CreateClientConVar("pac_favorites_try_to_build_asset_series", "0")
+local close_on_select = CreateClientConVar("pac_asset_browser_close_on_select", "1", true)
+local remember_layout = CreateClientConVar("pac_asset_browser_remember_layout", "1", true)
+local extra_options = CreateClientConVar("pac_asset_browser_extra_options", "1", true) --asset series favoriting, sound quicklist build mode
+local asset_series_get = CreateClientConVar("pac_favorites_try_to_get_asset_series", "1", true) --adds options for favoriting a series as a favorite
+local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_asset_series", "0", true) --related, but it's used in properties
 local preview_mats = CreateClientConVar("pac_asset_browser_preview_materials_on_hover", "1")
+local multiframe_icons = CreateClientConVar("pac_asset_browser_texture_multiframe_indicator", "1", true)
 
 local function rebuild_bookmarks()
 	pace.bookmarked_ressources = pace.bookmarked_ressources or {}
@@ -138,6 +139,34 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 	local old = icon.OnMouseReleased
 	icon.OnMouseReleased = function(_, code)
 		if code == MOUSE_LEFT then
+			--asset quick list build mode only applies to sound (handled by separate function) and particles
+			if pace.model_browser.QuickListBuildMode then
+				if pace.current_part == pace.model_browser.quicklist_particle_part_selected and pace.current_part.ClassName == "particles" then
+					if pattern then
+						for _, pattern in ipairs(isstring(pattern) and {pattern} or pattern) do
+							local test = path:match(pattern)
+							if test then
+								path = test
+								break
+							end
+						end
+					end
+					pace.model_browser.mats = pace.model_browser.mats or ""
+					if pace.model_browser.mats ~= "" then
+						pace.model_browser.mats = pace.model_browser.mats .. ";" .. path
+					else
+						pace.model_browser.mats = path
+					end
+					pace.current_part:SetMaterial(pace.model_browser.mats)
+					pace.current_part.pace_properties["Material"]:SetText(pace.model_browser.mats)
+					pace.FlashNotification(pace.model_browser.mats)
+					local sub_icon = vgui.Create("DImage", icon)
+					sub_icon:SetImage("icon16/accept.png")
+					local size = icon:GetWide() / 8
+					sub_icon:SetSize(size,size) sub_icon:SetPos(icon:GetWide() - size, icon:GetTall() - size)
+					return old(_, code)
+				end
+			end
 			pace.model_browser_callback(path, pathid)
 		elseif code == MOUSE_RIGHT then
 			local menu = DermaMenu()
@@ -162,8 +191,8 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 			elseif not pace.bookmarked_ressources[resource_type] then
 				pace.SaveRessourceBookmarks()
 			end
-			if GetConVar("pac_asset_browser_extra_options"):GetBool() and pace.bookmarked_ressources[resource_type] then
-				if GetConVar("pac_favorites_try_to_get_asset_series"):GetBool() then
+			if extra_options:GetBool() and pace.bookmarked_ressources[resource_type] then
+				if asset_series_get:GetBool() then
 					if not table.HasValue(pace.bookmarked_ressources[resource_type], path) then
 						menu:AddOption(L"add series to favorites", function()
 							table.insert(pace.bookmarked_ressources[resource_type], path)
@@ -186,6 +215,20 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 						table.remove(pace.bookmarked_ressources[resource_type], table.KeyFromValue( pace.bookmarked_ressources[resource_type], path ))
 						pace.SaveRessourceBookmarks()
 					end):SetImage("icon16/cross.png")
+				end
+			end
+			if extra_options:GetBool() and pace.current_part.ClassName == "particles" then
+				if not pace.model_browser.QuickListBuildMode then
+					local pnl = menu:AddOption("Enable Quick list build mode", function()
+						pace.model_browser.QuickListBuildMode = true
+						pace.model_browser.mats = ""
+						pace.model_browser.quicklist_particle_part_selected = pace.current_part
+					end)
+					pnl:SetTooltip("Left click will concatenate a new material to the part's list using semicolon notation.")
+				else
+					menu:AddOption("Disable Quick list build mode", function()
+						pace.model_browser.QuickListBuildMode = nil pace.model_browser.mats = ""
+					end)
 				end
 			end
 
@@ -344,6 +387,12 @@ local function create_material_icon(path, grid_panel)
 		end
 	)
 
+	local texture_keys = {
+		"$basetexture",
+		"$normalmap",
+		"$detail",
+		"$dudvmap"
+	}
 	function icon:SetupMaterial()
 		local mat = Material(mat_path)
 		local shader = mat:GetShader():lower()
@@ -446,6 +495,23 @@ local function create_material_icon(path, grid_panel)
 			pnl:Dock(FILL)
 			pnl:SetImage(mat_path)
 		end
+
+		if multiframe_icons:GetBool() then
+			local multiframes = {}
+			for i,k in ipairs(texture_keys) do
+				if mat:GetTexture(k) and mat:GetTexture(k):GetNumAnimationFrames() > 1 then
+					table.insert(multiframes, k .. " frames : " .. mat:GetTexture(k):GetNumAnimationFrames())
+				end
+			end
+			
+			if #multiframes > 0 then
+				local sub_icon = vgui.Create("DImage", icon)
+				sub_icon:SetImage("icon16/pictures.png")
+				local size = icon:GetWide() / 8
+				sub_icon:SetSize(size,size) sub_icon:SetPos(icon:GetWide() - size, icon:GetTall() - size)
+				icon:SetTooltip(path .. "\n" .. table.concat(multiframes,"\n"))
+			end
+		end
 	end
 
 	install_click(icon, path, "^materials/(.+)%.vmt$", function(menu)
@@ -495,7 +561,7 @@ local function create_material_icon(path, grid_panel)
 
 	end)
 
-	
+
 	icon.Think = function()
 		if not preview_mats:GetBool() then return end
 		if not pace.model_browser_part_key then return end
@@ -754,7 +820,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 		if callback(...) == false then return end
 
-		if GetConVar("pac_asset_browser_close_on_select"):GetBool() then
+		if close_on_select:GetBool() then
 			pace.model_browser:SetVisible(false)
 		end
 	end
@@ -774,7 +840,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	frame.title = L"asset browser" .. " - " .. (browse_types_str:gsub(";", " "))
 
 
-	if GetConVar("pac_asset_browser_remember_layout"):GetBool() then
+	if remember_layout:GetBool() then
 		frame:SetCookieName("pac_asset_browser")
 	end
 
@@ -852,6 +918,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	options_menu:AddCVar(L"remember layout", "pac_asset_browser_remember_layout", "1", "0")
 	options_menu:AddCVar(L"additional right click options", "pac_asset_browser_extra_options", "1", "0")
 	options_menu:AddCVar(L"preview materials when hovering", "pac_asset_browser_preview_materials_on_hover", "1", "0")
+	options_menu:AddCVar(L"indicate animated textures", "pac_asset_browser_texture_multiframe_indicator", "1", "0")
 	options_menu:AddCVar(L"try to find asset series for saving favorites", "pac_favorites_try_to_get_asset_series", "1", "0")
 	options_menu:AddCVar(L"try to build asset series in the editor", "pac_favorites_try_to_build_asset_series", "1", "0")
 
@@ -993,10 +1060,10 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 				menu:AddOption(L"copy path", function()
 					SetClipboardText(sound)
 				end)
-				if GetConVar("pac_asset_browser_extra_options"):GetBool() then
+				if extra_options:GetBool() then
 					pace.bookmarked_ressources["sound"] = pace.bookmarked_ressources["sound"] or {}
 					local resource_type = "sound"
-					if GetConVar("pac_favorites_try_to_get_asset_series"):GetBool() then
+					if asset_series_get:GetBool() then
 						--print(sound)
 						local extension = string.GetExtensionFromFilename(sound)
 						local base_name = string.gsub(sound, "%d+."..extension.."$", "")
@@ -1018,6 +1085,10 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 								pace.SaveRessourceBookmarks()
 
 							end):SetImage("icon16/star.png")
+							local preview_list, pnl = menu:AddSubMenu("preview series contents") pnl:SetImage("icon16/text_list_numbers.png")
+								for i=1,#series_results.all_paths do
+									preview_list:AddOption(series_results.all_paths[i])
+								end
 						else
 							menu:AddOption(L"remove series from favorites", function()
 								table.remove(pace.bookmarked_ressources[resource_type], table.KeyFromValue( pace.bookmarked_ressources[resource_type], series_str ))
