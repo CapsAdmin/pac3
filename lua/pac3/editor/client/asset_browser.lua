@@ -134,6 +134,7 @@ end
 
 local L = pace.LanguageString
 
+local quicklist_buildmode_sub_icons = {}
 --icon is the item's panel, path is the item's full file path, on_menu is a function that can extend the function
 local function install_click(icon, path, pattern, on_menu, pathid)
 	local old = icon.OnMouseReleased
@@ -157,10 +158,10 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 					else
 						pace.model_browser.mats = path
 					end
-					pace.current_part:SetMaterial(pace.model_browser.mats)
-					pace.current_part.pace_properties["Material"]:SetText(pace.model_browser.mats)
-					pace.FlashNotification(pace.model_browser.mats)
+					pace.current_part.pace_properties["Material"]:SetValue(pace.model_browser.mats)
+					pace.current_part.pace_properties["Material"].OnValueChanged(pace.model_browser.mats)
 					local sub_icon = vgui.Create("DImage", icon)
+					table.insert(quicklist_buildmode_sub_icons, sub_icon)
 					sub_icon:SetImage("icon16/accept.png")
 					local size = icon:GetWide() / 8
 					sub_icon:SetSize(size,size) sub_icon:SetPos(icon:GetWide() - size, icon:GetTall() - size)
@@ -217,17 +218,21 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 					end):SetImage("icon16/cross.png")
 				end
 			end
-			if extra_options:GetBool() and pace.current_part.ClassName == "particles" then
-				if not pace.model_browser.QuickListBuildMode then
+			if extra_options:GetBool() then
+				if not pace.model_browser.QuickListBuildMode and pace.current_part.ClassName == "particles" then
 					local pnl = menu:AddOption("Enable Quick list build mode", function()
 						pace.model_browser.QuickListBuildMode = true
 						pace.model_browser.mats = ""
 						pace.model_browser.quicklist_particle_part_selected = pace.current_part
 					end)
 					pnl:SetTooltip("Left click will concatenate a new material to the part's list using semicolon notation.")
-				else
+				elseif pace.model_browser.QuickListBuildMode then
 					menu:AddOption("Disable Quick list build mode", function()
 						pace.model_browser.QuickListBuildMode = nil pace.model_browser.mats = ""
+						for i, icon in ipairs(quicklist_buildmode_sub_icons) do
+							if icon and IsValid(icon) then icon:Remove() end
+						end
+						quicklist_buildmode_sub_icons = {}
 					end)
 				end
 			end
