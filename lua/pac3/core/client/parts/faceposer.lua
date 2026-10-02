@@ -33,7 +33,14 @@ BUILDER:StartStorableVars()
 				local i = tonumber(key:match("faceposer_flex(%d+)"))
 				if i then
 					local name = ent:GetFlexName(i)
+                    
 					if name then
+                        weight = tonumber(weight) or 0
+                        
+                        if part.UseRange then
+                            weight = pac.ToFlexRange(ent, i, weight)
+                        end
+                        
 						preset[name] = tonumber(weight)
 					end
 				end
@@ -49,6 +56,8 @@ BUILDER:StartStorableVars()
 	end})
 	:GetSet("FlexWeights", "", {hidden = true})
 	:GetSet("Scale", 1)
+    :GetSet("UseRange", false, {description="When enabled, the ranges defined in its Flex Controller will be used as opposed to the legacy global [0, 1] range"})
+    :GetSet("Clamped", false, {description="Limits the output range of the Flex to be within the legal ranges defined by its Flex Controller"})
 	:GetSet("Additive", false)
 :EndStorableVars()
 
@@ -165,10 +174,23 @@ function PART:UpdateFlex()
 	for name, weight in pairs(self:GetWeightMap()) do
 		local id = ent:GetFlexIDByName(name)
 		if id then
+            if not self.UseRange then
+                weight = pac.ToFlexRange( ent, id, weight )
+            end
+            
 			if self.Additive then
-				weight = ent:GetFlexWeight(id) + weight
+				weight = pac.GetFlexWeight(ent, id) + weight
 			end
-			ent:SetFlexWeight(id, weight)
+            
+            if self.Clamped then
+                weight = math.Clamp(
+                    weight, 
+                    ent:GetFlexBounds(id)
+                )
+            end
+            
+			pac.SetFlexWeight(ent, id, weight)
+            
 			ent.pac_touching_flexes[id] = pac.RealTime + 0.1
 		end
 	end

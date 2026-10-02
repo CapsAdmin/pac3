@@ -18,6 +18,8 @@ BUILDER:StartStorableVars()
 		:PropertyOrder("Name")
 		:PropertyOrder("Hide")
 		:PropertyOrder("ParentName")
+		:GetSet("IgnoreBodygroups", false, {description = "This part can change your rendered bodygroups. But there are now console commands to change your bodygroups, flexes and poseparams to save up on proxy costs and such.\nYou'll need this setting turned on to stop the entity from overwriting your bodygroups...\n\nRead up more in the console:\npac_override_bodygroup\npac_override_flexweights\npac_override_poseparameter"})
+
 	:SetPropertyGroup("appearance")
 		:GetSet("NoDraw", false)
 		:GetSet("DrawShadow", true)

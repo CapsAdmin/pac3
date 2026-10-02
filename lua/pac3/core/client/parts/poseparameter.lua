@@ -9,6 +9,7 @@ PART.Icon = 'icon16/disconnect.png'
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
 	BUILDER:GetSet("Range", 0)
+    BUILDER:GetSet("RawRange", false, {description="Passes the raw value of Range to SetPoseParameter instead of remapping.\nFor example with head_yaw, a range of [-1,1] would then need to use [-75,75]"})
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
@@ -49,7 +50,13 @@ function PART:UpdateParams()
 		local data = self.pose_params[self.PoseParameter]
 
 		if data then
-			local num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
+			local num
+
+            if self.RawRange then 
+                num = self.Range
+            else
+                num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
+            end
 
 			ent.pac_pose_params = ent.pac_pose_params or {}
 			ent.pac_pose_params[self.UniqueID] = ent.pac_pose_params[self.UniqueID] or {}
@@ -60,6 +67,10 @@ function PART:UpdateParams()
 			ent:SetPoseParameter(data.name, num)
 		end
 	end
+end
+
+function PART:OnBuildBonePositions()
+    self:UpdateParams()
 end
 
 function PART:OnHide()

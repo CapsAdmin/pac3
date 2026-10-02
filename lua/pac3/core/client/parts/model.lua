@@ -403,7 +403,7 @@ function PART:PreEntityDraw(ent, pos, ang)
 		end
 	end
 
-	if self.draw_bodygroups then
+	if self.draw_bodygroups and not self.IgnoreBodygroups then
 		for _, v in ipairs(self.draw_bodygroups) do
 			ent:SetBodygroup(v[1], v[2])
 		end
