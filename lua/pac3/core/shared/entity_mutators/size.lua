@@ -8,18 +8,19 @@ local allow_viewoffset = CreateConVar("pac_modifier_viewoffset", "0", CLIENT and
 
 function MUTATOR:WriteArguments(multiplier, other)
 	net.WriteFloat(multiplier)
-	if other and (other.StandingHullHeight ~= nil and other.CrouchingHullHeight ~= nil and other.HullWidth ~= nil and other.StandingHullHeight ~= nil and other.StepSize ~= nil and other.StandingViewOffset ~= nil and other.CrouchingViewOffset ~= nil) then
-		net.WriteBool(true)
-		net.WriteFloat(other.StandingHullHeight)
-		net.WriteFloat(other.CrouchingHullHeight)
-		net.WriteFloat(other.HullWidth)
-		if other.OverrideStepAndView and (allow_step:GetBool() or allow_viewoffset:GetBool()) then
+	if other then
+		if (other.StandingHullHeight ~= nil and other.CrouchingHullHeight ~= nil and other.HullWidth ~= nil) then
 			net.WriteBool(true)
-			net.WriteFloat(other.StepSize)
-			net.WriteFloat(other.StandingViewOffset)
-			net.WriteFloat(other.CrouchingViewOffset)
-		else
-			net.WriteBool(false)
+			net.WriteFloat(other.StandingHullHeight)
+			net.WriteFloat(other.CrouchingHullHeight)
+			net.WriteFloat(other.HullWidth)
+		end
+		if allow_step:GetBool() or allow_viewoffset:GetBool() then
+			if (other.StepSize ~= nil and other.StandingViewOffset ~= nil and other.CrouchingViewOffset ~= nil) then
+				net.WriteFloat(other.StepSize)
+				net.WriteFloat(other.StandingViewOffset)
+				net.WriteFloat(other.CrouchingViewOffset)
+			end
 		end
 	else
 		net.WriteBool(false)
@@ -48,9 +49,11 @@ function MUTATOR:ReadArguments()
 		other.StandingHullHeight = net.ReadFloat()
 		other.CrouchingHullHeight = net.ReadFloat()
 		other.HullWidth = net.ReadFloat()
-		other.OverrideStepAndView = net.ReadBool()
-		if other.OverrideStepAndView then
+		other.OverrideStepAndView = allow_step:GetBool() or allow_viewoffset:GetBool()
+		if allow_step:GetBool() then
 			other.StepSize = net.ReadFloat()
+		end
+		if allow_viewoffset:GetBool() then
 			other.StandingViewOffset = net.ReadFloat()
 			other.CrouchingViewOffset = net.ReadFloat()
 		end
@@ -137,10 +140,10 @@ function MUTATOR:Mutate(multiplier, other, hidden_state)
 				end
 				if allow_viewoffset:GetBool() then
 					local soffset = other.StandingViewOffset
+					local coffset = other.CrouchingViewOffset
 					if ent.SetViewOffset then
 						ent:SetViewOffset(Vector(0,0,soffset))
 					end
-					local coffset = other.CrouchingViewOffset
 					if ent.SetViewOffsetDucked then
 						ent:SetViewOffsetDucked(Vector(0,0,coffset))
 					end
@@ -148,7 +151,9 @@ function MUTATOR:Mutate(multiplier, other, hidden_state)
 			end
 
 		else
+
 			ent:ResetHull()
+
 		end
 	end
 end
