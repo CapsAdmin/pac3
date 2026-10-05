@@ -160,9 +160,6 @@ function MUTATOR:Mutate(multiplier, other, hidden_state)
 				end
 			end
 
-			print("cvars", allow_step:GetBool(), allow_viewoffset:GetBool())
-			print("editor", other.OverrideStepSize, other.OverrideView)
-
 		else
 
 			ent:ResetHull()
