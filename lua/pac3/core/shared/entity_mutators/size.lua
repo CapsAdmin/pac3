@@ -9,18 +9,26 @@ local allow_viewoffset = CreateConVar("pac_modifier_viewoffset", "0", CLIENT and
 function MUTATOR:WriteArguments(multiplier, other)
 	net.WriteFloat(multiplier)
 	if other then
-		if (other.StandingHullHeight ~= nil and other.CrouchingHullHeight ~= nil and other.HullWidth ~= nil) then
-			net.WriteBool(true)
-			net.WriteFloat(other.StandingHullHeight)
-			net.WriteFloat(other.CrouchingHullHeight)
-			net.WriteFloat(other.HullWidth)
-		end
-		if allow_step:GetBool() or allow_viewoffset:GetBool() then
-			if (other.StepSize ~= nil and other.StandingViewOffset ~= nil and other.CrouchingViewOffset ~= nil) then
+		net.WriteBool(true)
+		net.WriteFloat(other.StandingHullHeight)
+		net.WriteFloat(other.CrouchingHullHeight)
+		net.WriteFloat(other.HullWidth)
+		if allow_step:GetBool() then
+			if other.OverrideStepSize ~= nil and other.StepSize ~= nil then
+				net.WriteBool(other.OverrideStepSize)
 				net.WriteFloat(other.StepSize)
+			end
+		else
+			net.WriteBool(false)
+		end
+		if allow_viewoffset:GetBool() then
+			if other.OverrideView ~= nil and other.StandingViewOffset ~= nil and other.CrouchingViewOffset ~= nil then
+				net.WriteBool(other.OverrideView)
 				net.WriteFloat(other.StandingViewOffset)
 				net.WriteFloat(other.CrouchingViewOffset)
 			end
+		else
+			net.WriteBool(false)
 		end
 	else
 		net.WriteBool(false)
@@ -49,10 +57,11 @@ function MUTATOR:ReadArguments()
 		other.StandingHullHeight = net.ReadFloat()
 		other.CrouchingHullHeight = net.ReadFloat()
 		other.HullWidth = net.ReadFloat()
-		other.OverrideStepAndView = allow_step:GetBool() or allow_viewoffset:GetBool()
+		other.OverrideStepSize = net.ReadBool()
 		if allow_step:GetBool() then
 			other.StepSize = net.ReadFloat()
 		end
+		other.OverrideView = net.ReadBool()
 		if allow_viewoffset:GetBool() then
 			other.StandingViewOffset = net.ReadFloat()
 			other.CrouchingViewOffset = net.ReadFloat()
@@ -82,7 +91,7 @@ end
 local functions = {
 	"ViewOffset",
 	"ViewOffsetDucked",
-	"StepSize",
+	"StepSize"
 }
 
 function MUTATOR:Mutate(multiplier, other, hidden_state)
@@ -134,21 +143,25 @@ function MUTATOR:Mutate(multiplier, other, hidden_state)
 			ent:SetHull(smin, smax)
 			ent:SetHullDuck(cmin, cmax)
 
-			if other.OverrideStepAndView then
-				if ent.SetStepSize and allow_step:GetBool() then
-					ent:SetStepSize(math.max(other.StepSize,0))
-				end
-				if allow_viewoffset:GetBool() then
-					local soffset = other.StandingViewOffset
-					local coffset = other.CrouchingViewOffset
-					if ent.SetViewOffset then
-						ent:SetViewOffset(Vector(0,0,soffset))
-					end
-					if ent.SetViewOffsetDucked then
-						ent:SetViewOffsetDucked(Vector(0,0,coffset))
-					end
+			if other.OverrideStepSize then
+				local SSize = other.StepSize
+				if ent.SetStepSize then
+					ent:SetStepSize(math.max(SSize,0))
 				end
 			end
+			if other.OverrideView then
+				local soffset = other.StandingViewOffset
+				local coffset = other.CrouchingViewOffset
+				if ent.SetViewOffset then
+					ent:SetViewOffset(Vector(0,0,soffset))
+				end
+				if ent.SetViewOffsetDucked then
+					ent:SetViewOffsetDucked(Vector(0,0,coffset))
+				end
+			end
+
+			print("cvars", allow_step:GetBool(), allow_viewoffset:GetBool())
+			print("editor", other.OverrideStepSize, other.OverrideView)
 
 		else
 
