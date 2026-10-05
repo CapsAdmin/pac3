@@ -8,7 +8,7 @@ local allow_viewoffset = CreateConVar("pac_modifier_viewoffset", "0", CLIENT and
 
 function MUTATOR:WriteArguments(multiplier, other)
 	net.WriteFloat(multiplier)
-	if other then
+	if other and (other.StandingHullHeight ~= nil and other.CrouchingHullHeight ~= nil and other.HullWidth ~= nil and other.OverrideView and other.OverrideStepSize ~= nil and other.StepSize ~= nil and other.StandingViewOffset ~= nil and other.CrouchingViewOffset ~= nil) then
 		net.WriteBool(true)
 		net.WriteFloat(other.StandingHullHeight)
 		net.WriteFloat(other.CrouchingHullHeight)
