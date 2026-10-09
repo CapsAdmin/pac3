@@ -930,3 +930,117 @@ pace.AddTool(L"clone and mirror this and children", function(part)
 		end
 	end)
 end)
+
+local function radial_sym(part, axis, num, i)
+	local rotD = (360/num)*i
+
+	if part.SetPosition then
+		local pos, posO = part:GetPosition()	
+		local x, y, z = pos:Unpack()
+		local xA, yA, zA = axis:Unpack()
+		
+		local rotR = math.rad(rotD)
+		local s, c = math.sin(rotR), math.cos(rotR)
+		
+		part:SetPosition(Vector(
+			(c+(xA^2)*(1-c))*x+(xA*yA*(1-c)-zA*s)*y+(xA*zA*(1-c)+yA*s)*z,
+			(yA*xA*(1-c)+zA*s)*x+(c+(yA^2)*(1-c))*y+(yA*zA*(1-c)-xA*s)*z,
+			(zA*xA*(1-c)-yA*s)*x+(zA*yA*(1-c)+xA*s)*y+(c+(zA^2)*(1-c))*z))
+	else -- if the part is a group, we should still make its children radially symmetric
+		for _, part in ipairs(part:GetChildren()) do
+			radial_sym(part, axis, num, i)
+		end
+	end
+
+	if part.SetAngles then
+		local ang = Angle(part:GetAngles()) -- cloning required, or else bad stuff happens
+
+		ang:RotateAroundAxis(axis, rotD)
+
+		part:SetAngles(ang)
+	end
+end
+
+pace.AddTool(L"radial symmetry", function(part)
+	Derma_StringRequest(L"axis & number", L"input the axis to mirror around and the degree of symmetry.\ncan accept arbitrary vectors, e.g. 1 1 0 4", "z 4", function(input)
+		if input and part:IsValid() then
+			local args = string.Split(input, " ")
+			local axis, num
+			
+			if #args == 2 then
+				axis = axis_planes[string.lower(args[1])]
+				num = tonumber(args[2])
+			elseif #args == 4 then
+				axis = Vector(args[1].." "..args[2].." "..args[3])
+				if not axis:IsZero() then -- cannot work with zero vectors
+					axis:Normalize()
+					num = tonumber(args[4])
+				end
+			end
+		
+			if axis and num and num >= 2 then -- try to avoid errors and weird situations
+				num = math.floor(num)
+				for i = 1, num-1 do
+					radial_sym(part:Clone(), axis, num, i)
+				end
+			end
+		end
+	end)
+end)
+
+local function radial_sym_offset(part, axis, num, i)
+	local rotD = (360/num)*i
+
+	if part.SetPositionOffset then
+		local pos, posO = part:GetPositionOffset()	
+		local x, y, z = pos:Unpack()
+		local xA, yA, zA = axis:Unpack()
+		
+		local rotR = math.rad(rotD)
+		local s, c = math.sin(rotR), math.cos(rotR)
+		
+		part:SetPositionOffset(Vector(
+			(c+(xA^2)*(1-c))*x+(xA*yA*(1-c)-zA*s)*y+(xA*zA*(1-c)+yA*s)*z,
+			(yA*xA*(1-c)+zA*s)*x+(c+(yA^2)*(1-c))*y+(yA*zA*(1-c)-xA*s)*z,
+			(zA*xA*(1-c)-yA*s)*x+(zA*yA*(1-c)+xA*s)*y+(c+(zA^2)*(1-c))*z))
+	else -- if the part is a group, we should still make its children radially symmetric
+		for _, part in ipairs(part:GetChildren()) do
+			radial_sym_offset(part, axis, num, i)
+		end
+	end
+
+	if part.SetAngleOffset then
+		local ang = Angle(part:GetAngleOffset()) -- cloning required, or else bad stuff happens
+
+		ang:RotateAroundAxis(axis, rotD)
+
+		part:SetAngleOffset(ang)
+	end
+end
+
+pace.AddTool(L"radial symmetry offset", function(part)
+	Derma_StringRequest(L"axis & number", L"input the axis to mirror around and the degree of symmetry for position and angle offsets.\ncan accept arbitrary vectors, e.g. 1 1 0 4", "z 4", function(input)
+		if input and part:IsValid() then
+			local args = string.Split(input, " ")
+			local axis, num
+			
+			if #args == 2 then
+				axis = axis_planes[string.lower(args[1])]
+				num = tonumber(args[2])
+			elseif #args == 4 then
+				axis = Vector(args[1].." "..args[2].." "..args[3])
+				if not axis:IsZero() then -- cannot work with zero vectors
+					axis:Normalize()
+					num = tonumber(args[4])
+				end
+			end
+		
+			if axis and num and num >= 2 then -- try to avoid errors and weird situations
+				num = math.floor(num)
+				for i = 1, num-1 do
+					radial_sym_offset(part:Clone(), axis, num, i)
+				end
+			end
+		end
+	end)
+end)
