@@ -78,6 +78,7 @@ function PART:SetOverrideStepAndView(b)
 	if b == true then
 		self:SetOverrideStepSize(true)
 		self:SetOverrideView(true)
+		self:SetOverrideStepAndView(false)
 	end
 end
 
