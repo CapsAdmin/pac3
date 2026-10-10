@@ -4317,7 +4317,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				MsgC(Color(200,200,200), " of total local parts)\n")
 			end
 		end)
-	elseif option_name == "arraying_menu" then
+	elseif option_name == "arraying_menu" and obj then
 		local arraying_menu, pnl = menu:AddSubMenu(L"arraying menu", function() pace.OpenArrayingMenu(obj) end) pnl:SetImage("icon16/table_multiple.png")
 		if obj.GetWorldPosition then
 			local icon = obj.pace_tree_node.ModelPath or obj.Icon
