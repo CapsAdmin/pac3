@@ -27,6 +27,7 @@ BUILDER:StartStorableVars()
 		:GetSet("CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
 		:GetSet("HullWidth", 32, {editor_panel = "hull"})
 	:SetPropertyGroup("step size and view offset")
+		:GetSet("OverrideStepAndView", false, {hidden = true}) --legacy property, now split in two
 		:GetSet("OverrideStepSize", false, {description = "When changing size, pac scales the step size. This overrides that."})
 		:GetSet("StepSize", 18, {description = "Height that you can step up or down without jumping. Slightly tricky and may create view transition issues."})
 		:GetSet("OverrideView", false, {description = "When changing size, pac scales the view offsets. This overrides that."})
@@ -71,6 +72,15 @@ function PART:SetOverrideStepSize(b)
 	self.OverrideStepSize = b
 	self:ApplyMatrix()
 end
+
+--backward compatibility
+function PART:SetOverrideStepAndView(b)
+	if b == true then
+		self:SetOverrideStepSize(true)
+		self:SetOverrideView(true)
+	end
+end
+
 function PART:SetStandingViewOffset(val)
 	self.StandingViewOffset = val
 	self:ApplyMatrix()
