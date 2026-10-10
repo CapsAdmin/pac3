@@ -22,13 +22,15 @@ BUILDER:StartStorableVars()
 		:GetSet("NoDraw", false)
 		:GetSet("DrawShadow", true)
 		:GetSet("InverseKinematics", true)
-
 	:SetPropertyGroup("hull")
 		:GetSet("StandingHullHeight", 72, {editor_panel = "hull"})
 		:GetSet("CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
 		:GetSet("HullWidth", 32, {editor_panel = "hull"})
-		:GetSet("OverrideStepAndView", false, {description = "When changing size, pac scales the step size and view offsets together. This overrides that."})
+	:SetPropertyGroup("step size and view offset")
+		:GetSet("OverrideStepAndView", false, {hidden = true}) --legacy property, now split in two
+		:GetSet("OverrideStepSize", false, {description = "When changing size, pac scales the step size. This overrides that."})
 		:GetSet("StepSize", 18, {description = "Height that you can step up or down without jumping. Slightly tricky and may create view transition issues."})
+		:GetSet("OverrideView", false, {description = "When changing size, pac scales the view offsets. This overrides that."})
 		:GetSet("StandingViewOffset", 64, {description = "Eye height when standing"})
 		:GetSet("CrouchingViewOffset", 28, {description = "Eye height when crouching"})
 :EndStorableVars()
@@ -62,6 +64,24 @@ function PART:SetHullWidth(val)
 	self.HullWidth = val
 	self:ApplyMatrix()
 end
+function PART:SetOverrideView(b)
+	self.OverrideView = b
+	self:ApplyMatrix()
+end
+function PART:SetOverrideStepSize(b)
+	self.OverrideStepSize = b
+	self:ApplyMatrix()
+end
+
+--backward compatibility
+function PART:SetOverrideStepAndView(b)
+	if b == true then
+		self.OverrideStepSize = b
+		self.OverrideView = b
+		self:ApplyMatrix()
+	end
+end
+
 function PART:SetStandingViewOffset(val)
 	self.StandingViewOffset = val
 	self:ApplyMatrix()
@@ -72,10 +92,6 @@ function PART:SetCrouchingViewOffset(val)
 end
 function PART:SetStepSize(val)
 	self.StepSize = val
-	self:ApplyMatrix()
-end
-function PART:SetOverrideStepAndView(b)
-	self.OverrideStepAndView = b
 	self:ApplyMatrix()
 end
 
