@@ -76,9 +76,9 @@ end
 --backward compatibility
 function PART:SetOverrideStepAndView(b)
 	if b == true then
-		self:SetOverrideStepSize(true)
-		self:SetOverrideView(true)
-		self:SetOverrideStepAndView(false)
+		self.OverrideStepSize = b
+		self.OverrideView = b
+		self:ApplyMatrix()
 	end
 end
 
