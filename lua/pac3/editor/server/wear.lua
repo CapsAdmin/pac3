@@ -358,6 +358,14 @@ function pace.HandleReceivedData(ply, data)
 	data.owner = ply
 	data.uid = pac.Hash(ply)
 
+	-- security: clients must never dictate internal part state that gets
+	-- rebroadcast to everyone (PlayerOwner injection -> clientside RCE, V1/V2)
+	if istable(data.part) and istable(data.part.self) then
+		for _, key in ipairs({"PlayerOwner", "PlayerOwnerHash", "Owner", "ShowInEditor"}) do
+			data.part.self[key] = nil
+		end
+	end
+
 	if data.wear_filter and #data.wear_filter > game.MaxPlayers() then
 		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
 		data.wear_filter = nil
