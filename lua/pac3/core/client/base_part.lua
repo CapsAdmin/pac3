@@ -1125,13 +1125,17 @@ do -- serializing
 			for key, value in next, tbl.self do
 				if key == "UniqueID" then goto CONTINUE end
 
-				if self["Set" .. key] then
+				-- security: only apply declared (storable) properties. Internal
+				-- setters (SetPlayerOwner, SetShowInEditor, SetOwner, ...) must
+				-- never be reachable from network-provided part data.
+				-- Legit outfits always contain StorableVars only (see ToTable).
+				if self.StorableVars[key] and self["Set" .. key] then
 					if key == "Material" then
 						table_insert(self.delayed_variables, {key = key, val = value})
 					end
 					self["Set" .. key](self, value)
 				elseif key ~= "ClassName" then
-					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
+					pac.dprint("settable: ignored non-storable key [%q] = %q", key, tostring(value))
 				end
 
 		        ::CONTINUE::
