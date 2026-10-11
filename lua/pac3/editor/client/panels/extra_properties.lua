@@ -1348,40 +1348,103 @@ do -- hull
 
 	PANEL.ClassName = "properties_hull"
 	PANEL.Base = "pace_properties_number"
+	local hull_color = Color(255, 204, 51, 255)
 
 	function PANEL:OnValueSet()
 		local function stop()
 			RunConsoleCommand("-duck")
 			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_hull")
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_hull2")
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_hull3")
 		end
 
 		local time = os.clock() + 3
 
-		hook.Add("PostDrawOpaqueRenderables", "pace_draw_hull", function()
+		local udata = self.udata
+		if udata then
+			if udata.step then
+				if not self.first_time then self.first_time = true return end
+				hook.Add("PostDrawOpaqueRenderables", "pace_draw_hull3", function()
 
-			if not pace.current_part:IsValid() then stop() return end
-			if pace.current_part.ClassName ~= "entity2" then stop() return end
+					if not pace.current_part:IsValid() then stop() return end
+					if pace.current_part.ClassName ~= "entity2" then stop() return end
 
-			local ent = pace.current_part:GetOwner()
-			if not ent.GetHull then stop() return end
-			if not ent.GetHullDuck then stop() return end
+					local ent = pace.current_part:GetOwner()
+					if not ent.GetHull then stop() return end
+					if not ent.GetHullDuck then stop() return end
 
-			local min, max = ent:GetHull()
+					local min, max = ent:GetHull()
 
-			if self.udata and self.udata.crouch then
-				min, max = ent:GetHullDuck()
-				RunConsoleCommand("+duck")
+					local part = pace.current_part
+					local height = part.StepSize
+					min = Vector(-part.HullWidth/2,-part.HullWidth/2,0)
+					max = Vector(part.HullWidth/2,part.HullWidth/2,0)
+					render.DrawWireframeBox( ent:GetPos() + Vector(0,0,height), Angle(0), min, max, hull_color, true )
+
+					if time < os.clock() then
+						stop()
+					end
+				end)
+			elseif udata.view then
+				if not self.first_time then self.first_time = true return end
+				hook.Add("PostDrawOpaqueRenderables", "pace_draw_hull2", function()
+
+					if not pace.current_part:IsValid() then stop() return end
+					if pace.current_part.ClassName ~= "entity2" then stop() return end
+
+					local ent = pace.current_part:GetOwner()
+					if not ent.GetHull then stop() return end
+					if not ent.GetHullDuck then stop() return end
+
+					local min, max = ent:GetHull()
+
+					if udata.crouch then
+						min, max = ent:GetHullDuck()
+						RunConsoleCommand("+duck")
+					end
+
+					min = min * ent:GetModelScale()
+					max = max * ent:GetModelScale()
+
+					local part = pace.current_part
+					local height = part.StandingViewOffset
+					if udata.crouch then
+						height = part.CrouchingViewOffset
+					end
+					render.DrawWireframeSphere( ent:GetPos() + Vector(0, 0, height), 8, 8, 8, hull_color, true )
+
+					if time < os.clock() then
+						stop()
+					end
+				end)
+			else
+				hook.Add("PostDrawOpaqueRenderables", "pace_draw_hull", function()
+
+					if not pace.current_part:IsValid() then stop() return end
+					if pace.current_part.ClassName ~= "entity2" then stop() return end
+
+					local ent = pace.current_part:GetOwner()
+					if not ent.GetHull then stop() return end
+					if not ent.GetHullDuck then stop() return end
+
+					local min, max = ent:GetHull()
+
+					if udata.crouch then
+						min, max = ent:GetHullDuck()
+						RunConsoleCommand("+duck")
+					end
+
+					min = min * ent:GetModelScale()
+					max = max * ent:GetModelScale()
+
+					render.DrawWireframeBox( ent:GetPos(), Angle(0), min, max, hull_color, true )
+
+					if time < os.clock() then
+						stop()
+					end
+				end)
 			end
-
-			min = min * ent:GetModelScale()
-			max = max * ent:GetModelScale()
-
-			render.DrawWireframeBox( ent:GetPos(), Angle(0), min, max, Color(255, 204, 51, 255), true )
-
-			if time < os.clock() then
-				stop()
-			end
-		end)
+		end
 	end
 
 	pace.RegisterPanel(PANEL)
