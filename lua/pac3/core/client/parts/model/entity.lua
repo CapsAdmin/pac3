@@ -29,10 +29,10 @@ BUILDER:StartStorableVars()
 	:SetPropertyGroup("step size and view offset")
 		:GetSet("OverrideStepAndView", false, {hidden = true}) --legacy property, now split in two
 		:GetSet("OverrideStepSize", false, {description = "When changing size, pac scales the step size. This overrides that."})
-		:GetSet("StepSize", 18, {description = "Height that you can step up or down without jumping. Slightly tricky and may create view transition issues."})
+		:GetSet("StepSize", 18, {description = "Height that you can step up or down without jumping. Slightly tricky and may create view transition issues.", editor_panel = "hull", step = true})
 		:GetSet("OverrideView", false, {description = "When changing size, pac scales the view offsets. This overrides that."})
-		:GetSet("StandingViewOffset", 64, {description = "Eye height when standing"})
-		:GetSet("CrouchingViewOffset", 28, {description = "Eye height when crouching"})
+		:GetSet("StandingViewOffset", 64, {description = "Eye height when standing", editor_panel = "hull", view = true})
+		:GetSet("CrouchingViewOffset", 28, {description = "Eye height when crouching", editor_panel = "hull", crouch = true, view = true})
 :EndStorableVars()
 
 BUILDER:RemoveProperty("BoneMerge")
