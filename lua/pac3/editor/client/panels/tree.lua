@@ -265,6 +265,7 @@ end
 
 
 function PANEL:OnMouseReleased(mc)
+	self:MouseCapture(false)
 	if mc == MOUSE_RIGHT then
 		pace.Call("PartMenu")
 	end
