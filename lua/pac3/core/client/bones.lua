@@ -432,14 +432,14 @@ do -- bone manipulation for boneanimlib
 			for id, time in pairs(ent.pac_touching_flexes) do
 
 				if not reset_scale then
-					ent:SetFlexScale(1)
+					ent:SetFlexScale(1) 
 					reset_scale = true
 				end
 
 				if time < pac.RealTime then
-					ent:SetFlexWeight(id, 0)
+					pac.SetFlexWeight(ent, id, 0)
 				else
-					if ent:GetFlexWeight(id) == 0 then
+					if pac.GetFlexWeight(ent, id) == 0 then
 						ent.pac_touching_flexes[id] = nil
 					end
 				end
