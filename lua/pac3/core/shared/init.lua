@@ -7,6 +7,7 @@ include("entity_mutator.lua")
 include("hash.lua")
 
 pac.StringStream = include("pac3/libraries/string_stream.lua")
+pac.pcfparser = include("pac3/libraries/pcfparser.lua")
 
 CreateConVar("pac_sv_draw_distance", 0, CLIENT and FCVAR_REPLICATED or bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 
@@ -63,3 +64,14 @@ do
 		pac.BlacklistedParticleSystems[val] = true
 	end
 end
+
+pac.EffectsBlackList =
+{
+	frozen_steam = true,
+	portal_rift_01 = true,
+	explosion_silo = true,
+	citadel_shockwave_06 = true,
+	citadel_shockwave = true,
+	choreo_launch_rocket_start = true,
+	choreo_launch_rocket_jet = true,
+}

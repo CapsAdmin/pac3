@@ -4,11 +4,11 @@ local ParticleEffect = ParticleEffect
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "effect"
-PART.Groups = {'effects', 'model', 'entity'}
-PART.Icon = 'icon16/wand.png'
+PART.Groups = {"effects", "model", "entity"}
+PART.Icon = "icon16/wand.png"
 
 BUILDER:StartStorableVars()
-	BUILDER:GetSet("Effect", "default", {enums = function() return pac.particle_list end})
+	BUILDER:GetSet("Effect", "default", {enums = function() return pac.pcfprovider.GetParticleList() end})
 	BUILDER:GetSet("Loop", true)
 	BUILDER:GetSet("Follow", true)
 	BUILDER:GetSet("Rate", 1, {editor_sensitivity = 0.1})
@@ -24,7 +24,7 @@ BUILDER:EndStorableVars()
 BUILDER:RemoveProperty("Translucent")
 PART.Translucent = false -- otherwise OnDraw won't be called
 
-local BaseClass_GetOwner = PART.GetOwner
+--local BaseClass_GetOwner = PART.GetOwner
 
 function PART:GetNiceName()
 	return pac.PrettifyName(self:GetEffect())
@@ -32,89 +32,18 @@ end
 
 function PART:Initialize()
 	self:SetEffect(self.Effect)
-
-	if not pac.particle_list then
-		local found = {}
-
-		for file_name in pairs(pac_loaded_particle_effects) do
-			local ok, err = pcall(function()
-				local data = file.Read("particles/"..file_name, "GAME", "b")
-				if data then
-					for str in data:gmatch("\3%c([%a_]+)%c") do
-						if #str > 1 then
-							found[str] = str
-						end
-					end
-				end
-			end)
-
-			if not ok then
-				local msg = "unable to parse particle file " .. file_name .. ": " .. err
-				self:SetError(msg)
-				pac.Message(Color(255, 50, 50), msg)
-			end
-		end
-
-		pac.particle_list = found
-	end
 end
 
 PART.last_spew = 0
 
-if not pac_loaded_particle_effects then
-	pac_loaded_particle_effects = {}
-
-	for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
-			game.AddParticles("particles/" .. file_name)
-		end
-
-		pac_loaded_particle_effects[file_name] = true
-	end
-end
-
-local already = {}
-local alreadyServer = {}
-local function pac_request_precache(name)
-	if already[name] then return end
-	already[name] = true
-	PrecacheParticleSystem(name)
-	net.Start("pac_request_precache")
-	net.WriteString(name)
-	net.SendToServer()
-end
-
 function PART:SetEffect(name)
-	self.waitingForServer = true
 	self.Effect = name
-	self.Ready = alreadyServer[name] or false
-
-	if not alreadyServer[name] then
-		pac_request_precache(name)
-	else
-		self.waitingForServer = false
-	end
-end
-
-pac.AddHook("pac_EffectPrecached", "pac_Effects", function(name)
-	if alreadyServer[name] then return end
-	alreadyServer[name] = true
-	pac.dprint("effect %q precached!", name)
-	pac.CallRecursiveOnAllParts("OnEffectPrecached", name)
-end)
-
-function PART:OnEffectPrecached(name)
-	if self.Effect == name then
-		self.Ready = true
-		self.waitingForServer = false
-	end
+	self.Ready = false
 end
 
 function PART:OnDraw()
 	if not self.Ready then
-		if not self.waitingForServer then
-			self:SetEffect(self.Effect)
-		end
+		self.Ready = pac.pcfprovider.LoadEffect(self.Effect)
 		return
 	end
 
@@ -143,7 +72,7 @@ function PART:OnHide()
 end
 
 function PART:OnShow(from_rendering)
-	if from_rendering then
+	if from_rendering and self.Ready then
 		self:Emit(self:GetDrawPosition())
 	end
 end

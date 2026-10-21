@@ -195,8 +195,3 @@ pac.AddHook("pac_PlayerFootstep", "events", function(ply, pos, snd, vol)
 		return true
 	end
 end)
-
-net.Receive("pac_effect_precached", function()
-	local name = net.ReadString()
-	pac.CallHook("EffectPrecached", name)
-end)

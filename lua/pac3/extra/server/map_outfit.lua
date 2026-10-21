@@ -1,5 +1,7 @@
 pacx.SpawnedMapEntities = pacx.SpawnedMapEntities or {}
 
+util.AddNetworkString("pac_map_outfit_effect")
+
 local VEC0 = Vector(0, 0, 0)
 local ANG0 = Angle(0, 0, 0)
 local VEC1 = Vector(1, 1, 1)
@@ -93,8 +95,13 @@ local spawn_handlers = {
 	end,
 
 	effect = function(part, parent)
-		if parent:IsValid() and part.data.Effect then
-			ParticleEffectAttach(part.data.Effect, PATTACH_ABSORIGIN_FOLLOW, parent, 0)
+		local effect = part.self.Effect
+
+		if parent:IsValid() and effect and effect ~= "" then
+			net.Start("pac_map_outfit_effect")
+				net.WriteUInt(parent:EntIndex(), 16)
+				net.WriteString(effect)
+			net.Broadcast()
 		end
 	end,
 }
