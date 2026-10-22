@@ -6,8 +6,6 @@ local effect_files = {}
 local effect_list = {}
 local loaded_files = {}
 local precached = {}
-local pending_files
-local pending_index = 1
 local indexed = false
 
 local function index_file(file_name)
@@ -29,32 +27,28 @@ local function index_file(file_name)
 	end
 end
 
-function pcfprovider.StepIndex(budget)
-	if indexed then return true end
+local step_index = coroutine.wrap(function()
+	local deadline = SysTime() + FRAME_BUDGET
 
-	pending_files = pending_files or file.Find("particles/*.pcf", "GAME")
+	for _, file_name in ipairs(file.Find("particles/*.pcf", "GAME")) do
+		index_file(file_name)
 
-	local deadline = budget and SysTime() + budget
-
-	while pending_index <= #pending_files do
-		index_file(pending_files[pending_index])
-		pending_index = pending_index + 1
-
-		if deadline and SysTime() > deadline then return false end
+		if SysTime() > deadline then
+			coroutine.yield(false)
+			deadline = SysTime() + FRAME_BUDGET
+		end
 	end
 
 	indexed = true
-	pending_files = nil
 
 	return true
-end
+end)
 
 function pcfprovider.IsIndexed()
 	return indexed
 end
 
 function pcfprovider.GetParticleList()
-	pcfprovider.StepIndex()
 	return effect_list
 end
 
@@ -81,7 +75,7 @@ function pcfprovider.LoadEffect(name)
 end
 
 pac.AddHook("Think", "pcfprovider_index", function()
-	if pcfprovider.StepIndex(FRAME_BUDGET) then
+	if step_index() then
 		pac.RemoveHook("Think", "pcfprovider_index")
 	end
 end)

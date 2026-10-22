@@ -1,91 +1,101 @@
 local pcfparser = {}
 
+local string_find = string.find
+local string_sub = string.sub
+local string_match = string.match
+local string_lower = string.lower
+local file_Open = file.Open
+
 local DEFINITION_TYPE = "DmeParticleSystemDefinition"
+local HEADER_PREFIX = "<!-- dmx encoding binary "
+local STRING_CHUNK = 64
+local GUID_SIZE = 16
 
-local function read_u16(data, pos)
-	local a, b = data:byte(pos, pos + 1)
-	if not b then return end
-	return a + b * 256, pos + 2
+local function read_u16(f, size)
+	if f:Tell() + 2 > size then return end
+	return f:ReadUShort()
 end
 
-local function read_u32(data, pos)
-	local a, b, c, d = data:byte(pos, pos + 3)
-	if not d then return end
-	return a + b * 256 + c * 65536 + d * 16777216, pos + 4
+local function read_u32(f, size)
+	if f:Tell() + 4 > size then return end
+	return f:ReadULong()
 end
 
-local function read_string(data, pos)
-	local stop = data:find("\0", pos, true)
-	if not stop then return end
-	return data:sub(pos, stop - 1), stop + 1
+local function read_index(f, size, wide)
+	if wide then return read_u32(f, size) end
+	return read_u16(f, size)
 end
 
-function pcfparser.ParseEffectNames(data)
+local function read_string(f)
+	local start = f:Tell()
+	local str = ""
+
+	while true do
+		local chunk = f:Read(STRING_CHUNK)
+		if not chunk or chunk == "" then return end
+
+		local stop = string_find(chunk, "\0", 1, true)
+		if stop then
+			str = str .. string_sub(chunk, 1, stop - 1)
+			f:Seek(start + #str + 1)
+			return str
+		end
+
+		str = str .. chunk
+	end
+end
+
+function pcfparser.ParseEffectNames(f)
 	local names = {}
-	if not data then return names end
+	local size = f:Size()
 
-	local header_start = data:find("<!-- dmx encoding binary ", 1, true)
-	if header_start ~= 1 then return names end
+	if f:Read(#HEADER_PREFIX) ~= HEADER_PREFIX then return names end
 
-	local version = tonumber(data:match("^(%d+)", header_start + 25))
-	local header_end = data:find(" -->", header_start, true)
-	if not version or not header_end or version > 5 then return names end
+	local header = read_string(f)
+	local version = header and tonumber(string_match(header, "^(%d+)"))
+	if not version or version > 5 then return names end
 
-	local pos = header_end + 6
 	local dict = {}
 
 	if version >= 2 then
-		local count
-		if version <= 3 then
-			count, pos = read_u16(data, pos)
-		else
-			count, pos = read_u32(data, pos)
-		end
+		local count = read_index(f, size, version > 3)
 		if not count then return names end
 
 		for i = 0, count - 1 do
-			dict[i], pos = read_string(data, pos)
-			if not pos then return names end
+			dict[i] = read_string(f)
+			if not dict[i] then return names end
 		end
 	end
 
-	local element_count
-	element_count, pos = read_u32(data, pos)
+	local element_count = read_u32(f, size)
 	if not element_count then return names end
 
 	for _ = 1, element_count do
 		local type_name, name
 
 		if version < 2 then
-			type_name, pos = read_string(data, pos)
-		elseif version <= 4 then
-			local index
-			index, pos = read_u16(data, pos)
-			type_name = index and dict[index]
+			type_name = read_string(f)
+			if not type_name then return names end
 		else
-			local index
-			index, pos = read_u32(data, pos)
-			type_name = index and dict[index]
+			local index = read_index(f, size, version > 4)
+			if not index then return names end
+			type_name = dict[index]
 		end
-		if not pos then return names end
 
 		if version <= 3 then
-			name, pos = read_string(data, pos)
-		elseif version == 4 then
-			local index
-			index, pos = read_u16(data, pos)
-			name = index and dict[index]
+			name = read_string(f)
+			if not name then return names end
 		else
-			local index
-			index, pos = read_u32(data, pos)
-			name = index and dict[index]
+			local index = read_index(f, size, version > 4)
+			if not index then return names end
+			name = dict[index]
 		end
-		if not pos then return names end
 
-		pos = pos + 16
+		if f:Tell() + GUID_SIZE > size then return names end
+		f:Skip(GUID_SIZE)
 
 		if type_name == DEFINITION_TYPE and name and name ~= "" then
-			names[name:lower()] = name
+			names[string_lower(name)] = name
 		end
 	end
 
@@ -93,13 +103,15 @@ function pcfparser.ParseEffectNames(data)
 end
 
 function pcfparser.ReadEffectNames(path, game_path)
-	local f = file.Open(path, "rb", game_path or "GAME")
+	local f = file_Open(path, "rb", game_path or "GAME")
 	if not f then return {} end
 
-	local data = f:Read(f:Size())
+	local ok, names = pcall(pcfparser.ParseEffectNames, f)
 	f:Close()
 
-	return pcfparser.ParseEffectNames(data)
+	if not ok then error(names, 0) end
+
+	return names
 end
 
 return pcfparser
