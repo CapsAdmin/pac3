@@ -28,7 +28,7 @@ end
 
 local function read_string(f)
 	local start = f:Tell()
-	local str = ""
+	local str = {}
 
 	while true do
 		local chunk = f:Read(STRING_CHUNK)
@@ -36,12 +36,12 @@ local function read_string(f)
 
 		local stop = string_find(chunk, "\0", 1, true)
 		if stop then
-			str = str .. string_sub(chunk, 1, stop - 1)
+			table.insert(str, string_sub(chunk, 1, stop - 1))
 			f:Seek(start + #str + 1)
-			return str
+			return table.concat(str)
 		end
 
-		str = str .. chunk
+		table.insert(str, chunk)
 	end
 end
 
