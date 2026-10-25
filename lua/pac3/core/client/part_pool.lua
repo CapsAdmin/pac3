@@ -75,7 +75,7 @@ do
 			for key, part in next, parts do
 				if part:IsValid() then
 					if not part:HasParent() then
-						part:CallRecursive("BuildBonePositions")
+						part:CallRecursiveBuildBonePositions()
 					end
 				else
 					parts[key] = nil
@@ -101,7 +101,7 @@ do
 							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands"
 						then
 							if not part:IsDrawHidden() then
-								part:CallRecursive("Draw", type)
+								part:CallRecursiveDraw(type)
 							end
 						end
 					end
@@ -459,6 +459,8 @@ function pac.UpdatePartsWithMetatable(META)
 					part[k] = v
 				end
 			end
+
+			part:InvalidateChildrenList()
 		end
 	end
 end

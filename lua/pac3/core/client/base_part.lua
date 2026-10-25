@@ -487,6 +487,83 @@ do -- scene graph
 		end
 	end
 
+	do
+		local function filter_list(source, keep)
+			local out = {}
+
+			for i = 1, #source do
+				local part = source[i]
+
+				if keep(part) then
+					out[#out + 1] = part
+				end
+			end
+
+			return out
+		end
+
+		local function can_draw(part)
+			if not part.Draw then return false end
+
+			if not part.OnDraw then
+				local drawable = pac.GetTemplate("base_drawable")
+				if drawable and part.Draw == drawable.PART.Draw then return false end
+			end
+
+			return true
+		end
+
+		local function can_build_bones(part)
+			return part.BuildBonePositions ~= PART.BuildBonePositions or part.OnBuildBonePositions ~= PART.OnBuildBonePositions
+		end
+
+		function PART:GetDrawableChildrenList()
+			local source = self:GetChildrenList()
+
+			if self.drawable_children_source ~= source then
+				self.drawable_children_source = source
+				self.drawable_children_list = filter_list(source, can_draw)
+			end
+
+			return self.drawable_children_list
+		end
+
+		function PART:GetBoneBuilderChildrenList()
+			local source = self:GetChildrenList()
+
+			if self.bone_builder_children_source ~= source then
+				self.bone_builder_children_source = source
+				self.bone_builder_children_list = filter_list(source, can_build_bones)
+			end
+
+			return self.bone_builder_children_list
+		end
+
+		function PART:CallRecursiveDraw(draw_type)
+			if self.Draw then
+				self:Draw(draw_type)
+			end
+
+			local list = self:GetDrawableChildrenList()
+
+			for i = 1, #list do
+				list[i]:Draw(draw_type)
+			end
+		end
+
+		function PART:CallRecursiveBuildBonePositions()
+			if self.BuildBonePositions then
+				self:BuildBonePositions()
+			end
+
+			local list = self:GetBoneBuilderChildrenList()
+
+			for i = 1, #list do
+				list[i]:BuildBonePositions()
+			end
+		end
+	end
+
 	function PART:CallRecursiveOnClassName(class_name, func, a,b,c)
 		assert(c == nil, "EXTEND ME")
 		if self[func] and self.ClassName == class_name then
