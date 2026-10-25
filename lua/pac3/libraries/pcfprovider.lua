@@ -68,7 +68,7 @@ function pcfprovider.LoadEffect(name)
 
 	if not precached[lower_name] then
 		precached[lower_name] = true
-		PrecacheParticleSystem(name)
+		PrecacheParticleSystem(lower_name)
 	end
 
 	return true
