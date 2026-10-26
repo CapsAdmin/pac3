@@ -1,20 +1,11 @@
 pacx.SpawnedMapEntities = pacx.SpawnedMapEntities or {}
 
+util.AddNetworkString("pac_map_outfit_effect")
+
 local VEC0 = Vector(0, 0, 0)
 local ANG0 = Angle(0, 0, 0)
-local VEC1 = Vector(1, 1, 1)
 
 local function tocolor(v, a) return Color(v.x, v.y, v.z, a) end
-
-local function has_clip(part)
-	for key, part in pairs(part.children) do
-		if part.self.ClassName == "clip" then
-			return true
-		end
-	end
-
-	return false
-end
 
 local function set_pos(ent, data, parent)
 	local ppos = Vector()
@@ -25,7 +16,7 @@ local function set_pos(ent, data, parent)
 		pang = parent:GetAngles()
 	end
 
-	local pos, ang = LocalToWorld((data.Position or VEC0)+ (data.PositionOffset or VEC0), (data.Angles or ANG0) + (data.AngleOffset or ANG0), ppos, pang)
+	local pos, ang = LocalToWorld((data.Position or VEC0) + (data.PositionOffset or VEC0), (data.Angles or ANG0) + (data.AngleOffset or ANG0), ppos, pang)
 
 	ent:SetPos(pos)
 	ent:SetAngles(ang)
@@ -93,8 +84,13 @@ local spawn_handlers = {
 	end,
 
 	effect = function(part, parent)
-		if parent:IsValid() and part.data.Effect then
-			ParticleEffectAttach(part.data.Effect, PATTACH_ABSORIGIN_FOLLOW, parent, 0)
+		local effect = part.self.Effect
+
+		if parent:IsValid() and effect and effect ~= "" then
+			net.Start("pac_map_outfit_effect")
+				net.WriteUInt(parent:EntIndex(), 16)
+				net.WriteString(effect)
+			net.Broadcast()
 		end
 	end,
 }
@@ -137,7 +133,7 @@ concommand.Add("pac_spawn_map", function(ply, _, args)
 		return ply:PrintMessage(HUD_PRINTCONSOLE, "Please enter a pac name")
 	end
 
-	for _,v in pairs(pacx.SpawnedMapEntities) do
+	for _, v in pairs(pacx.SpawnedMapEntities) do
 		SafeRemoveEntity(v)
 	end
 

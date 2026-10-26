@@ -57,13 +57,13 @@ do
 			if ply.pac_global_animation_rate == 0 then
 				animrate = ply:GetModelScale() * 2
 			elseif ply.pac_global_animation_rate ~= 1 then
-				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate) % 1)
 				animrate = ply.pac_global_animation_rate
 			end
 		end
 
 		if ply.pac_animation_sequences then
-			local part, thing = next(ply.pac_animation_sequences)
+			local part = next(ply.pac_animation_sequences)
 
 			if part and part:IsValid() then
 
@@ -194,9 +194,4 @@ pac.AddHook("pac_PlayerFootstep", "events", function(ply, pos, snd, vol)
 	if ply.pac_mute_footsteps then
 		return true
 	end
-end)
-
-net.Receive("pac_effect_precached", function()
-	local name = net.ReadString()
-	pac.CallHook("EffectPrecached", name)
 end)
