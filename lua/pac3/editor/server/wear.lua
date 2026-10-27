@@ -46,11 +46,11 @@ local function make_copy(tbl, input)
 	end
 end
 
-local function net_write_table(tbl)
+local function net_write_table(tbl, players)
 	local buffer = pac.StringStream()
 	buffer:writeTable(tbl)
 	local data = buffer:getString()
-	net.WriteStream(data)
+	net.WriteStream(data, nil, nil, players)
 	return #data
 end
 
@@ -267,7 +267,7 @@ function pace.SubmitPartNow(data, filter)
 		if ret == nil then
 			net.Start("pac_submit")
 			net.WriteEntity(owner)
-			local ok, err = pcall(net_write_table, data)
+			local ok, err = pcall(net_write_table, data, players)
 
 			if ok then
 				net.Send(players)
