@@ -19,7 +19,9 @@ BUILDER:StartStorableVars()
 	})
 
 	BUILDER:GetSet("Weight", 0)
-	BUILDER:GetSet("Additive", false)
+    BUILDER:GetSet("Additive", false)
+	BUILDER:GetSet("UseRange", false, {description="When enabled, the ranges defined in its Flex Controller will be used as opposed to the legacy global [0, 1] range"})
+    BUILDER:GetSet("Clamped", false, {description="Limits the output range of the Flex to be within the legal ranges defined by its Flex Controller"})
 	BUILDER:GetSet("RootOwner", false, { hide_in_editor = true })
 BUILDER:EndStorableVars()
 
@@ -41,14 +43,49 @@ function PART:GetFlexID()
 	return flex and flex.i, ent
 end
 
+function PART:OnHide()
+    local id, ent = self:GetFlexID()
+	if not id then return end
+    ent.pac_touching_flexes = ent.pac_touching_flexes or {}
+	ent.pac_touching_flexes[id] = nil
+    pac.SetFlexWeight(ent, id, 0) -- added reset!
+end
+
+function PART:OnRemove()
+    local id, ent = self:GetFlexID()
+	if not id then return end
+    ent.pac_touching_flexes = ent.pac_touching_flexes or {}
+	ent.pac_touching_flexes[id] = nil
+    pac.SetFlexWeight(ent, id, 0) -- added reset!
+end
+
 function PART:OnBuildBonePositions()
 	local id, ent = self:GetFlexID()
 	if not id then return end
-	local weight = self.Weight
-	if self.Additive then
-		weight = weight + ent:GetFlexWeight(id)
-	end
-	ent:SetFlexWeight(id, weight)
+	
+    local weight
+    
+    if self.UseRange then
+        weight = self.Weight
+    else
+        -- backwards compatibility
+        weight = pac.ToFlexRange( ent, id, self.Weight )
+    end
+    
+    if self.Additive then
+        weight = weight + pac.GetFlexWeight(ent, id)
+    end
+    
+    -- added clamping to prevent explosion, particularly when using additive flexes
+    if self.Clamped then
+        weight = math.Clamp(
+            weight, 
+            ent:GetFlexBounds(id)
+        )
+    end
+
+	pac.SetFlexWeight(ent, id, weight)
+    
 	ent.pac_touching_flexes = ent.pac_touching_flexes or {}
 	ent.pac_touching_flexes[id] = pac.RealTime + 0.1
 end
