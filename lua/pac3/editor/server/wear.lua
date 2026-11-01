@@ -205,7 +205,7 @@ function pace.SubmitPartNow(data, filter)
 			end
 		end
 	else
-		players = player.GetAll()
+		players = player.GetHumans()
 	end
 
 	if filter == false then
@@ -255,12 +255,17 @@ function pace.SubmitPartNow(data, filter)
 					end
 				end
 			end
-		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= owner) then
-			data.transmissionID = nil
+		elseif type(players) == "Player" then
+			if (not players.pac_requested_outfits and players ~= owner) then
+				data.transmissionID = nil
+				return true
+			end
+			players = {players}
+		else
 			return true
 		end
 
-		if not players or istable(players) and not next(players) then return true end
+		if not players[1] then return true end
 
 		-- Alternative transmission system
 		local ret = pac.CallHook("SendData", players, data)
