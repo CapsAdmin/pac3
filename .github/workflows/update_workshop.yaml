@@ -6,21 +6,40 @@ on:
       - develop
       - master
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Verify the Steam login token and the packer without publishing anything"
+        type: boolean
+        default: false
+
+# we just need read access
+permissions:
+  contents: read
 
 jobs:
   update-workshop:
-      if: github.repository == 'CapsAdmin/pac3'
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+    if: github.repository == 'CapsAdmin/pac3' && (github.event_name != 'workflow_dispatch' || contains(fromJSON(vars.deploy_actors || '[]'), github.actor))
+    runs-on: ubuntu-latest
+    environment: steam-workshop
+    timeout-minutes: 15
+    # steamcmd can hang, and Steam rate limits failed logins (~1h), so serialize per item.
+    concurrency:
+      group: steam-workshop-${{ github.ref }}
+      cancel-in-progress: false
 
-        - name: Publish to Steam Workshop
-          uses: PAC3-Server/gmod-upload@master
-          env:
-            STEAM_USERNAME: ${{ secrets.STEAM_NAME }}
-            STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
-          with:
-            id: ${{ github.ref == 'refs/heads/master' && '104691717' || '3038093543' }}
-            changelog: ${{ github.event.head_commit.message }}
-            config: ${{ github.ref == 'refs/heads/master' && 'addon.json' || 'addon_develop.json' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish to Steam Workshop
+        uses: PAC3-Server/gmod-upload@7979dbc876ae86194f57b53bd4b8436d70593b25
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        with:
+          id: ${{ github.ref == 'refs/heads/master' && '104691717' || '3038093543' }}
+          config: ${{ github.ref == 'refs/heads/master' && 'addon.json' || 'addon_develop.json' }}
+          changelog: ${{ github.event.head_commit.message }}
+          icon: icon.jpg
+          version: ${{ github.sha }}
+          dry_run: ${{ inputs.dry_run }}
