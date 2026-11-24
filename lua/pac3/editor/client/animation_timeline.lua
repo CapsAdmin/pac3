@@ -96,6 +96,24 @@ function timeline.SetAnimationType(str)
 	timeline.Save()
 end
 
+function timeline.GetEntity()
+	if IsValid(timeline.entity) then return timeline.entity end
+
+	local part = timeline.animation_part
+	if not part or not part:IsValid() then return end
+
+	local ent = part:GetOwner()
+	if not IsValid(ent) then return end
+
+	timeline.entity = ent
+
+	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
+		timeline.dummy_bone:SetOwner(ent)
+	end
+
+	return ent
+end
+
 function timeline.SetCycle(f)
 	animations.SetEntityAnimationCycle(timeline.entity, timeline.animation_part:GetAnimID(), f)
 end
@@ -1100,9 +1118,12 @@ function timeline.SelectKeyframe(keyframe)
 
 	-- make sure a preview instance exists on the entity (gesture animations
 	-- remove themselves once they finish playing)
-	animations.SetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
-	timeline.SyncPreview()
-	animations.SetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID(), keyframe.AnimationKeyIndex, 1)
+	local ent = timeline.GetEntity()
+	if ent then
+		animations.SetEntityAnimation(ent, timeline.animation_part:GetAnimID())
+		timeline.SyncPreview()
+		animations.SetEntityAnimationFrame(ent, timeline.animation_part:GetAnimID(), keyframe.AnimationKeyIndex, 1)
+	end
 	timeline.frame:Pause()
 
 	timeline.UpdateChangedBonesPanel()
@@ -1731,15 +1752,22 @@ do
 	end
 
 	function TIMELINE:Play()
+		local ent = timeline.GetEntity()
+		if not ent then return end
+
 		-- register a copy so the zero-backfill in RegisterAnimation doesn't
 		-- mutate the data we're editing
+		local id = timeline.animation_part:GetAnimID()
 		local data = table.Copy(timeline.data)
-		animations.RegisterAnimation(timeline.animation_part:GetAnimID(), data)
-		refresh_entity_anim(timeline.animation_part:GetAnimID())
+		animations.RegisterAnimation(id, data)
+		refresh_entity_anim(id)
 
-		animations.SetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
+		animations.SetEntityAnimation(ent, id)
 
-		animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID()).Paused = false
+		local anim = animations.GetEntityAnimation(ent, id)
+		if not anim then return end
+
+		anim.Paused = false
 
 		self.playing = true
 	end
@@ -1751,10 +1779,13 @@ do
 	end
 
 	function TIMELINE:Pause()
-		local anim = animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
+		local ent = timeline.GetEntity()
+		if not ent then return end
+
+		local anim = animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID())
 		if not anim then return end
 
-		animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID()).Paused = true
+		anim.Paused = true
 
 		self.playing = false
 	end
@@ -1774,8 +1805,11 @@ do
 	function TIMELINE:Stop()
 		self:Pause()
 
-		animations.StopAllEntityAnimations(timeline.entity)
-		animations.ResetEntityBoneMatrix(timeline.entity)
+		local ent = timeline.GetEntity()
+		if not ent then return end
+
+		animations.StopAllEntityAnimations(ent)
+		animations.ResetEntityBoneMatrix(ent)
 	end
 
 	function TIMELINE:Clear()
